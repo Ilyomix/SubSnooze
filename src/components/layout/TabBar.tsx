@@ -1,0 +1,59 @@
+import { cn } from "@/lib/utils"
+import { House, List, Settings } from "lucide-react"
+import { type ReactNode } from "react"
+
+type TabId = "home" | "subs" | "settings"
+
+interface TabBarProps {
+  activeTab: TabId
+  onTabChange: (tab: TabId) => void
+}
+
+interface TabItemProps {
+  icon: ReactNode
+  label: string
+  isActive: boolean
+  onClick: () => void
+}
+
+function TabItem({ icon, label, isActive, onClick }: TabItemProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex flex-1 flex-col items-center gap-1",
+        isActive ? "text-primary" : "text-text-muted"
+      )}
+    >
+      {icon}
+      <span className={cn("text-[10px]", isActive ? "font-semibold" : "font-medium")}>
+        {label}
+      </span>
+    </button>
+  )
+}
+
+export function TabBar({ activeTab, onTabChange }: TabBarProps) {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 flex h-[84px] items-start justify-around bg-surface px-6 pb-[34px] pt-3">
+      <TabItem
+        icon={<House className="h-[22px] w-[22px]" />}
+        label="Home"
+        isActive={activeTab === "home"}
+        onClick={() => onTabChange("home")}
+      />
+      <TabItem
+        icon={<List className="h-[22px] w-[22px]" />}
+        label="Subs"
+        isActive={activeTab === "subs"}
+        onClick={() => onTabChange("subs")}
+      />
+      <TabItem
+        icon={<Settings className="h-[22px] w-[22px]" />}
+        label="Settings"
+        isActive={activeTab === "settings"}
+        onClick={() => onTabChange("settings")}
+      />
+    </div>
+  )
+}
