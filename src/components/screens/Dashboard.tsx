@@ -1,7 +1,7 @@
 "use client"
 
-import { PiggyBank, Plus } from "lucide-react"
-import { TabBar, Header } from "@/components/layout"
+import { PiggyBank, Plus, XCircle } from "lucide-react"
+import { AppShell } from "@/components/layout"
 import { Card, Button, SectionHeader, SubscriptionRow } from "@/components/ui"
 import type { Subscription } from "@/types/subscription"
 
@@ -30,16 +30,21 @@ export function Dashboard({
 }: DashboardProps) {
   const renewingSoon = subscriptions.filter((s) => s.status === "renewing_soon")
   const allGood = subscriptions.filter((s) => s.status === "good")
+  const cancelled = subscriptions.filter((s) => s.status === "cancelled")
 
   return (
-    <div className="flex min-h-screen flex-col bg-background pb-[84px] pt-12">
-      <div className="flex flex-1 flex-col gap-6 px-6">
-        <Header
-          greeting={`Hi, ${userName}`}
-          showNotification
-          onNotificationClick={onNotificationClick}
-          notificationCount={notificationCount}
-        />
+    <AppShell
+      activeTab={activeTab}
+      onTabChange={onTabChange}
+      showNotification
+      onNotificationClick={onNotificationClick}
+      notificationCount={notificationCount}
+    >
+      <div className="flex flex-col gap-6 px-6 pt-4">
+        {/* Greeting */}
+        <h1 className="text-2xl font-semibold text-text-primary">
+          Hi, {userName}
+        </h1>
 
         {/* Money Saved Card */}
         <Card className="flex flex-col gap-2">
@@ -91,6 +96,29 @@ export function Dashboard({
           </div>
         )}
 
+        {/* Cancelled Section */}
+        {cancelled.length > 0 && (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-text-muted" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                Cancelled ({cancelled.length})
+              </span>
+            </div>
+            <Card padding="none" className="overflow-hidden">
+              {cancelled.map((sub, index) => (
+                <div key={sub.id}>
+                  {index > 0 && <div className="h-px bg-divider" />}
+                  <SubscriptionRow
+                    subscription={sub}
+                    onClick={() => onSubscriptionClick(sub.id)}
+                  />
+                </div>
+              ))}
+            </Card>
+          </div>
+        )}
+
         {/* Add Button */}
         <Button
           variant="primary"
@@ -101,8 +129,6 @@ export function Dashboard({
           Add subscription
         </Button>
       </div>
-
-      <TabBar activeTab={activeTab} onTabChange={onTabChange} />
-    </div>
+    </AppShell>
   )
 }

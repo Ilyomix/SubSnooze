@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dashboard,
   AllSubscriptions,
@@ -14,92 +14,12 @@ import {
   ConfirmCancellationModal,
   CancellationSuccessModal,
 } from "@/components"
-import type { Subscription, Notification } from "@/types/subscription"
-
-// Sample data
-const SAMPLE_SUBSCRIPTIONS: Subscription[] = [
-  {
-    id: "netflix",
-    name: "Netflix",
-    logo: "N",
-    logoColor: "#E50914",
-    price: 15.99,
-    billingCycle: "monthly",
-    renewalDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
-    status: "renewing_soon",
-    cancelUrl: "https://netflix.com/cancel",
-  },
-  {
-    id: "spotify",
-    name: "Spotify",
-    logo: "S",
-    logoColor: "#1DB954",
-    price: 10.99,
-    billingCycle: "monthly",
-    renewalDate: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000), // 6 days
-    status: "renewing_soon",
-  },
-  {
-    id: "gym",
-    name: "Gym",
-    logo: "G",
-    logoColor: "#FF6B35",
-    price: 29.99,
-    billingCycle: "monthly",
-    renewalDate: new Date(Date.now() + 18 * 24 * 60 * 60 * 1000),
-    status: "good",
-  },
-  {
-    id: "disney",
-    name: "Disney+",
-    logo: "D+",
-    logoColor: "#113CCF",
-    price: 7.99,
-    billingCycle: "monthly",
-    renewalDate: new Date(Date.now() + 22 * 24 * 60 * 60 * 1000),
-    status: "good",
-  },
-  {
-    id: "adobe",
-    name: "Adobe",
-    logo: "Ai",
-    logoColor: "#FF0000",
-    price: 54.99,
-    billingCycle: "monthly",
-    renewalDate: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
-    status: "good",
-  },
-]
-
-const SAMPLE_NOTIFICATIONS: Notification[] = [
-  {
-    id: "1",
-    subscriptionId: "netflix",
-    title: "Netflix renewing soon",
-    message: "Your Netflix subscription renews in 3 days. Review it now.",
-    type: "warning",
-    date: new Date(),
-    read: false,
-  },
-  {
-    id: "2",
-    subscriptionId: "spotify",
-    title: "Spotify renewing soon",
-    message: "Your Spotify subscription renews in 6 days.",
-    type: "warning",
-    date: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    read: false,
-  },
-  {
-    id: "3",
-    subscriptionId: "gym",
-    title: "Price change detected",
-    message: "Your Gym membership price increased by $5.",
-    type: "info",
-    date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    read: true,
-  },
-]
+import { useUser } from "@/hooks/useUser"
+import { useSubscriptions } from "@/hooks/useSubscriptions"
+import { useNotifications } from "@/hooks/useNotifications"
+import { usePushNotifications } from "@/hooks/usePushNotifications"
+import type { Subscription } from "@/types/subscription"
+import type { BillingCycle } from "@/types/database"
 
 type Screen =
   | "dashboard"
@@ -113,13 +33,65 @@ type Screen =
 type Modal = "upgrade" | "cancelRedirect" | "confirmCancel" | "cancelSuccess" | null
 
 export default function Home() {
+  const { firstName, loading: userLoading, isAuthenticated } = useUser()
+  const {
+    subscriptions,
+    totalMonthly,
+    loading: subsLoading,
+    addSubscription,
+    updateSubscription,
+    deleteSubscription,
+    recordCancelAttempt,
+    verifyCancellation,
+    restoreSubscription,
+  } = useSubscriptions()
+  const { notifications, unreadCount, markAsRead } = useNotifications()
+  const { requestPermission, permission } = usePushNotifications()
+
   const [screen, setScreen] = useState<Screen>("dashboard")
   const [modal, setModal] = useState<Modal>(null)
   const [activeTab, setActiveTab] = useState<"home" | "subs" | "settings">("home")
-  const [subscriptions, setSubscriptions] = useState(SAMPLE_SUBSCRIPTIONS)
-  const [notifications] = useState(SAMPLE_NOTIFICATIONS)
   const [selectedSub, setSelectedSub] = useState<Subscription | null>(null)
   const [selectedService, setSelectedService] = useState<string | null>(null)
+  const [totalSaved, setTotalSaved] = useState(0)
+
+  // Request push notification permission on first load (if not already granted)
+  useEffect(() => {
+    if (isAuthenticated && permission === "default") {
+      // Delay the permission request slightly to not overwhelm new users
+      const timer = setTimeout(() => {
+        requestPermission()
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [isAuthenticated, permission, requestPermission])
+
+  // Calculate total saved from cancelled subscriptions
+  useEffect(() => {
+    const cancelledTotal = subscriptions
+      .filter((s) => s.status === "cancelled")
+      .reduce((sum, s) => {
+        if (s.billingCycle === "yearly") return sum + s.price / 12
+        if (s.billingCycle === "weekly") return sum + s.price * 4.33
+        return sum + s.price
+      }, 0)
+    setTotalSaved(Math.round(cancelledTotal))
+  }, [subscriptions])
+
+  // Show loading state while auth is being checked
+  if (userLoading || subsLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 motion-safe:animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-text-secondary">Loading...</p>
+          <p className="text-xs text-text-tertiary">
+            {userLoading ? "Auth loading..." : "Subscriptions loading..."}
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   const handleTabChange = (tab: "home" | "subs" | "settings") => {
     setActiveTab(tab)
@@ -140,17 +112,30 @@ export default function Home() {
     setModal("cancelRedirect")
   }
 
-  const handleExternalCancel = () => {
-    // Open external URL
-    if (selectedSub?.cancelUrl) {
-      window.open(selectedSub.cancelUrl, "_blank")
+  const handleExternalCancel = async () => {
+    if (selectedSub) {
+      // Open external URL
+      if (selectedSub.cancelUrl) {
+        window.open(selectedSub.cancelUrl, "_blank")
+      }
+
+      // Record the cancel attempt in the database
+      try {
+        await recordCancelAttempt(selectedSub.id)
+      } catch (error) {
+        console.error("Failed to record cancel attempt:", error)
+      }
     }
     setModal("confirmCancel")
   }
 
-  const handleConfirmCancellation = () => {
+  const handleConfirmCancellation = async () => {
     if (selectedSub) {
-      setSubscriptions((prev) => prev.filter((s) => s.id !== selectedSub.id))
+      try {
+        await verifyCancellation(selectedSub.id)
+      } catch (error) {
+        console.error("Failed to verify cancellation:", error)
+      }
     }
     setModal("cancelSuccess")
   }
@@ -162,7 +147,53 @@ export default function Home() {
     setActiveTab("home")
   }
 
-  const unreadCount = notifications.filter((n) => !n.read).length
+  const handleAddSubscription = async (data: {
+    name: string
+    logo: string
+    logoColor: string
+    price: number
+    billingCycle: BillingCycle
+    renewalDate: Date
+    cancelUrl?: string
+  }) => {
+    try {
+      await addSubscription({
+        name: data.name,
+        logo: data.logo,
+        logo_color: data.logoColor,
+        price: data.price,
+        billing_cycle: data.billingCycle,
+        renewal_date: data.renewalDate.toISOString().split("T")[0],
+        cancel_url: data.cancelUrl,
+      })
+      setScreen("dashboard")
+      setActiveTab("home")
+    } catch (error) {
+      console.error("Failed to add subscription:", error)
+    }
+  }
+
+  const handleNotificationClick = (id: string) => {
+    markAsRead(id)
+    // Could navigate to related subscription here if needed
+  }
+
+  const handleVerifyCancellationFromNotification = async (subscriptionId: string) => {
+    try {
+      await verifyCancellation(subscriptionId)
+    } catch (error) {
+      console.error("Failed to verify cancellation:", error)
+    }
+  }
+
+  const handleRemindAgain = async (subscriptionId: string) => {
+    try {
+      const { resetCancelAttempt } = await import("@/lib/api/subscriptions")
+      await resetCancelAttempt(subscriptionId)
+    } catch (error) {
+      console.error("Failed to reset cancel attempt:", error)
+    }
+  }
 
   // Render screens
   if (screen === "notifications") {
@@ -170,7 +201,9 @@ export default function Home() {
       <Notifications
         notifications={notifications}
         onBack={() => setScreen("dashboard")}
-        onNotificationClick={() => {}}
+        onNotificationClick={handleNotificationClick}
+        onVerifyCancellation={handleVerifyCancellationFromNotification}
+        onRemindAgain={handleRemindAgain}
       />
     )
   }
@@ -199,7 +232,22 @@ export default function Home() {
       <AddSubscriptionStep2
         service={service}
         onBack={() => setScreen("addStep1")}
-        onSave={() => setScreen("dashboard")}
+        onSave={(data) => {
+          const priceNum = parseFloat(data.price.replace(/[^0-9.]/g, "")) || 0
+          const cycleMap: Record<string, BillingCycle> = {
+            "Monthly": "monthly",
+            "Yearly": "yearly",
+            "Weekly": "weekly",
+          }
+          handleAddSubscription({
+            name: service.name,
+            logo: service.logo,
+            logoColor: service.logoColor,
+            price: priceNum,
+            billingCycle: cycleMap[data.cycle] || "monthly",
+            renewalDate: data.date,
+          })
+        }}
       />
     )
   }
@@ -214,14 +262,34 @@ export default function Home() {
             setScreen("dashboard")
           }}
           onCancel={handleCancelFlow}
-          onSave={(data) => {
-            setSubscriptions((prev) =>
-              prev.map((s) =>
-                s.id === selectedSub.id
-                  ? { ...s, price: data.price, billingCycle: data.billingCycle as "monthly" | "yearly" | "weekly", renewalDate: data.renewalDate }
-                  : s
-              )
-            )
+          onRestore={async () => {
+            try {
+              await restoreSubscription(selectedSub.id)
+            } catch (error) {
+              console.error("Failed to restore subscription:", error)
+            }
+            setSelectedSub(null)
+            setScreen("dashboard")
+          }}
+          onDelete={async () => {
+            try {
+              await deleteSubscription(selectedSub.id)
+            } catch (error) {
+              console.error("Failed to delete subscription:", error)
+            }
+            setSelectedSub(null)
+            setScreen("dashboard")
+          }}
+          onSave={async (data) => {
+            try {
+              await updateSubscription(selectedSub.id, {
+                price: data.price,
+                billingCycle: data.billingCycle as BillingCycle,
+                renewalDate: data.renewalDate,
+              })
+            } catch (error) {
+              console.error("Failed to update subscription:", error)
+            }
             setSelectedSub(null)
             setScreen("dashboard")
           }}
@@ -285,8 +353,8 @@ export default function Home() {
   // Default: Dashboard
   return (
     <Dashboard
-      userName="Sarah"
-      totalSaved={247}
+      userName={firstName}
+      totalSaved={totalSaved}
       subscriptions={subscriptions}
       onAddSubscription={() => setScreen("addStep1")}
       onSubscriptionClick={handleSubscriptionClick}

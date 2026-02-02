@@ -19,7 +19,13 @@ export function CancelRedirectModal({
   const [remindMe, setRemindMe] = useState(false)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6 overscroll-contain"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cancel-redirect-title"
+    >
       <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-3xl bg-surface p-6" onClick={(e) => e.stopPropagation()}>
         {/* Logo */}
         <div
@@ -30,7 +36,7 @@ export function CancelRedirectModal({
         </div>
 
         {/* Title */}
-        <h2 className="text-xl font-bold text-text-primary">
+        <h2 id="cancel-redirect-title" className="text-xl font-bold text-text-primary">
           Cancel {subscription.name}
         </h2>
 
@@ -67,7 +73,7 @@ export function CancelRedirectModal({
 
         <button
           onClick={onClose}
-          className="text-sm text-text-tertiary hover:text-text-secondary"
+          className="text-sm text-text-tertiary hover:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
         >
           Not now
         </button>
@@ -75,7 +81,10 @@ export function CancelRedirectModal({
         {/* Reminder checkbox */}
         <button
           onClick={() => setRemindMe(!remindMe)}
-          className="flex items-center gap-2"
+          role="checkbox"
+          aria-checked={remindMe}
+          aria-label="Remind me if I forget to cancel"
+          className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
         >
           <div className={`flex h-5 w-5 items-center justify-center rounded border ${remindMe ? "border-primary bg-primary" : "border-divider bg-surface"}`}>
             {remindMe && <Check className="h-3 w-3 text-white" />}

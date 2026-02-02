@@ -31,7 +31,8 @@ export function Header({
         {showBack && (
           <button
             onClick={onBack}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-surface"
+            aria-label="Go back"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             <ArrowLeft className="h-5 w-5 text-text-primary" />
           </button>
@@ -53,7 +54,8 @@ export function Header({
       {showNotification && (
         <button
           onClick={onNotificationClick}
-          className="relative flex h-11 w-11 items-center justify-center rounded-full bg-surface"
+          aria-label={`Notifications${notificationCount > 0 ? `, ${notificationCount} unread` : ""}`}
+          className="relative flex h-11 w-11 items-center justify-center rounded-full bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           <Bell className="h-[22px] w-[22px] text-text-primary" />
           {notificationCount > 0 && (

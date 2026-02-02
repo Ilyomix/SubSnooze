@@ -16,7 +16,13 @@ const FEATURES = [
 
 export function UpgradeModal({ onUpgrade, onClose }: UpgradeModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6 overscroll-contain"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="upgrade-modal-title"
+    >
       <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-3xl bg-surface p-8" onClick={(e) => e.stopPropagation()}>
         {/* Star Icon */}
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/10">
@@ -24,7 +30,7 @@ export function UpgradeModal({ onUpgrade, onClose }: UpgradeModalProps) {
         </div>
 
         {/* Title */}
-        <h2 className="text-xl font-bold text-text-primary">Unlock SubSnooze Pro</h2>
+        <h2 id="upgrade-modal-title" className="text-xl font-bold text-text-primary">Unlock SubSnooze Pro</h2>
 
         {/* Features */}
         <div className="flex flex-col items-center gap-1">
@@ -48,7 +54,7 @@ export function UpgradeModal({ onUpgrade, onClose }: UpgradeModalProps) {
           </Button>
           <button
             onClick={onClose}
-            className="text-sm text-text-tertiary hover:text-text-secondary"
+            className="text-sm text-text-tertiary hover:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
           >
             No thanks, stay on free
           </button>

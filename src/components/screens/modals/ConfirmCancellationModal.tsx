@@ -18,7 +18,13 @@ export function ConfirmCancellationModal({
   onClose,
 }: ConfirmCancellationModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6 overscroll-contain"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-cancel-title"
+    >
       <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-3xl bg-surface p-6" onClick={(e) => e.stopPropagation()}>
         {/* Question Icon */}
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/10">
@@ -26,7 +32,7 @@ export function ConfirmCancellationModal({
         </div>
 
         {/* Title */}
-        <h2 className="text-xl font-bold text-text-primary">
+        <h2 id="confirm-cancel-title" className="text-xl font-bold text-text-primary">
           Did you cancel {subscription.name}?
         </h2>
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { Search, Music, Dumbbell, Package } from "lucide-react"
-import { Header } from "@/components/layout"
+import { DetailShell } from "@/components/layout"
 import { Card } from "@/components/ui"
 import { type ReactNode } from "react"
 
@@ -33,9 +33,8 @@ export function AddSubscriptionStep1({
   onSearch,
 }: AddSubscriptionStep1Props) {
   return (
-    <div className="flex min-h-screen flex-col bg-background pt-12">
-      <div className="flex flex-col gap-6 px-6">
-        <Header title="Add Subscription" showBack onBack={onBack} />
+    <DetailShell title="Add Subscription" onBack={onBack}>
+      <div className="flex flex-col gap-6 px-6 pt-4">
 
         {/* Progress Indicator */}
         <div className="flex flex-col items-center gap-2 py-2">
@@ -56,7 +55,8 @@ export function AddSubscriptionStep1({
               <button
                 key={service.id}
                 onClick={() => onSelectService(service.id)}
-                className="flex flex-col items-center gap-2 rounded-xl bg-surface p-4 transition-colors hover:bg-surface/80"
+                aria-label={`Select ${service.name}`}
+                className="flex flex-col items-center gap-2 rounded-xl bg-surface p-4 motion-safe:transition-colors hover:bg-surface/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 <div
                   className="flex h-12 w-12 items-center justify-center rounded-xl text-white"
@@ -77,13 +77,14 @@ export function AddSubscriptionStep1({
             <Search className="h-[18px] w-[18px] text-text-tertiary" />
             <input
               type="text"
-              placeholder="Type service name..."
+              name="service-search"
+              placeholder="Type service name\u2026"
               onChange={(e) => onSearch(e.target.value)}
-              className="flex-1 bg-transparent text-[15px] text-text-primary placeholder:text-text-tertiary focus:outline-none"
+              className="flex-1 bg-transparent text-[15px] text-text-primary placeholder:text-text-tertiary focus-visible:outline-none"
             />
           </Card>
         </div>
       </div>
-    </div>
+    </DetailShell>
   )
 }

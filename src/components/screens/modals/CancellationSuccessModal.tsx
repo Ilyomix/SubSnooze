@@ -18,7 +18,13 @@ export function CancellationSuccessModal({
   const yearlySavings = monthlySavings * 12
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6 overscroll-contain"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cancellation-success-title"
+    >
       <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl bg-surface p-6" onClick={(e) => e.stopPropagation()}>
         {/* Party Icon */}
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
@@ -26,7 +32,7 @@ export function CancellationSuccessModal({
         </div>
 
         {/* Title */}
-        <h2 className="text-xl font-bold text-primary">You did it!</h2>
+        <h2 id="cancellation-success-title" className="text-xl font-bold text-primary">You did it!</h2>
 
         {/* Subtitle */}
         <p className="text-[15px] font-medium text-text-primary">

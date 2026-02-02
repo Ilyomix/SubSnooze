@@ -20,8 +20,11 @@ function TabItem({ icon, label, isActive, onClick }: TabItemProps) {
   return (
     <button
       onClick={onClick}
+      role="tab"
+      aria-selected={isActive}
+      aria-label={label}
       className={cn(
-        "flex flex-1 flex-col items-center gap-1",
+        "flex flex-1 flex-col items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg",
         isActive ? "text-primary" : "text-text-muted"
       )}
     >

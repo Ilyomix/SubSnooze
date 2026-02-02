@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { ChevronDown, Calendar } from "lucide-react"
-import { Header } from "@/components/layout"
+import { DetailShell } from "@/components/layout"
 import { Card, Button } from "@/components/ui"
 
 interface ServiceInfo {
@@ -28,19 +28,19 @@ export function AddSubscriptionStep2({
   const [date, setDate] = useState<Date>(new Date())
 
   return (
-    <div className="flex min-h-screen flex-col bg-background pt-12">
-      <div className="flex flex-1 flex-col gap-8 px-6">
-        <Header showBack onBack={onBack}>
-          <div className="flex items-center gap-3">
-            <div
-              className="flex h-11 w-11 items-center justify-center rounded-[10px] text-lg font-bold text-white"
-              style={{ backgroundColor: service.logoColor }}
-            >
-              {service.logo}
-            </div>
-            <span className="text-[22px] font-semibold text-text-primary">{service.name}</span>
-          </div>
-        </Header>
+    <DetailShell
+      title={service.name}
+      onBack={onBack}
+      headerRight={
+        <div
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-sm font-bold text-white"
+          style={{ backgroundColor: service.logoColor }}
+        >
+          {service.logo}
+        </div>
+      }
+    >
+      <div className="flex flex-1 flex-col gap-8 px-6 pt-4">
 
         {/* Progress Indicator */}
         <div className="flex flex-col items-center gap-2">
@@ -50,7 +50,7 @@ export function AddSubscriptionStep2({
             <div className="h-0.5 w-10 rounded-sm bg-primary" />
             <div className="h-2.5 w-2.5 rounded-full bg-primary" />
           </div>
-          <span className="text-xs text-text-tertiary">Almost there! Add the details</span>
+          <span className="text-xs text-text-tertiary">Almost there\u2026 Add the details</span>
         </div>
 
         {/* Form */}
@@ -61,10 +61,12 @@ export function AddSubscriptionStep2({
             <Card padding="none" className="h-12">
               <input
                 type="text"
+                name="price"
+                inputMode="decimal"
                 placeholder="$0.00"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="h-full w-full rounded-2xl bg-transparent px-4 text-[15px] text-text-primary placeholder:text-text-tertiary focus:outline-none"
+                className="h-full w-full rounded-2xl bg-transparent px-4 text-[15px] text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               />
             </Card>
           </div>
@@ -103,6 +105,6 @@ export function AddSubscriptionStep2({
           </Button>
         </div>
       </div>
-    </div>
+    </DetailShell>
   )
 }

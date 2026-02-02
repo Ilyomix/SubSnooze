@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next"
 import { Outfit, Inter } from "next/font/google"
+import { AuthProvider } from "@/contexts/AuthContext"
 import "@/styles/globals.css"
 
 const outfit = Outfit({
@@ -26,8 +27,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: "#F8F7F4",
 }
 
@@ -37,8 +36,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${outfit.variable} ${inter.variable}`}>
-      <body className="font-sans">{children}</body>
+    <html lang="en" className={`${outfit.variable} ${inter.variable}`} style={{ colorScheme: "light" }}>
+      <body className="font-sans">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   )
 }
