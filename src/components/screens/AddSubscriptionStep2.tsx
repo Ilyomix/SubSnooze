@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { ChevronDown, Calendar, Check } from "lucide-react"
+import { useState } from "react"
+import { ChevronDown } from "lucide-react"
 import Image from "next/image"
 import { DetailShell } from "@/components/layout"
 import { Card, Button } from "@/components/ui"
-import { getInitials, getFallbackLogoUrl, type SubscriptionService } from "@/lib/services"
+import { getInitials, getFallbackLogoUrl } from "@/lib/services"
 
 interface ServiceInfo {
   id: string
@@ -85,6 +85,19 @@ function ServiceLogoHeader({ service }: { service: ServiceInfo }) {
   )
 }
 
+function calculateNextRenewalDate(cycle: string): string {
+  const today = new Date()
+  const nextDate = new Date(today)
+  if (cycle === "weekly") {
+    nextDate.setDate(today.getDate() + 7)
+  } else if (cycle === "yearly") {
+    nextDate.setFullYear(today.getFullYear() + 1)
+  } else {
+    nextDate.setMonth(today.getMonth() + 1)
+  }
+  return nextDate.toISOString().split("T")[0]
+}
+
 export function AddSubscriptionStep2({
   service,
   onBack,
@@ -96,37 +109,21 @@ export function AddSubscriptionStep2({
     : ""
 
   const [price, setPrice] = useState(defaultPrice)
-  const [cycle, setCycle] = useState("Monthly")
-  // Default to tomorrow (next renewal should be in the future)
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  const [date, setDate] = useState<Date>(tomorrow)
+  const [cycle, setCycle] = useState("monthly")
+  const [renewalDate, setRenewalDate] = useState(calculateNextRenewalDate("monthly"))
 
   // Minimum date is today
   const today = new Date().toISOString().split("T")[0]
-  const [showCycleDropdown, setShowCycleDropdown] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowCycleDropdown(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
-
-  // Update price when cycle changes (if we have yearly pricing)
+  // Update price and renewal date when cycle changes
   const handleCycleChange = (newCycle: string) => {
     setCycle(newCycle)
-    setShowCycleDropdown(false)
+    setRenewalDate(calculateNextRenewalDate(newCycle))
 
     // Auto-fill price based on cycle if we have database pricing
-    if (newCycle === "Yearly" && service.priceYearly) {
+    if (newCycle === "yearly" && service.priceYearly) {
       setPrice(service.priceYearly.toFixed(2))
-    } else if (newCycle === "Monthly" && service.priceMonthly) {
+    } else if (newCycle === "monthly" && service.priceMonthly) {
       setPrice(service.priceMonthly.toFixed(2))
     }
   }
@@ -150,92 +147,77 @@ export function AddSubscriptionStep2({
           <span className="text-xs text-text-tertiary">Almost there… Add the details</span>
         </div>
 
-        {/* Form */}
-        <div className="flex flex-col gap-4">
-          {/* Price */}
-          <div className="flex flex-col gap-2">
-            <label className="text-[15px] font-medium text-text-primary">
-              {cycle === "Yearly" ? "Yearly price" : "Monthly price"}
-            </label>
-            <Card padding="none" className="h-12">
+        {/* Form - Card row layout matching subscription detail */}
+        <Card padding="none" className="overflow-hidden">
+          {/* Price Row */}
+          <div className="flex items-center justify-between px-[18px] py-4">
+            <span className="text-[15px] font-medium text-text-primary">
+              {cycle === "yearly" ? "Yearly price" : "Monthly price"}
+            </span>
+            <div className="flex items-center gap-1">
+              <span className="text-[15px] font-semibold text-text-primary">$</span>
               <input
                 type="text"
                 name="price"
                 inputMode="decimal"
-                placeholder="$0.00"
+                placeholder="0.00"
+                aria-label="Price"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="h-full w-full rounded-2xl bg-transparent px-4 text-[15px] text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="min-w-1 tabular-nums bg-transparent text-right text-[15px] font-semibold text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                style={{ width: `${Math.max(price.length || 4, 4) / 1.66}em` }}
               />
-            </Card>
-            {/* Show pricing hint if we have database pricing */}
-            {(service.priceMonthly || service.priceYearly) && (
-              <p className="text-xs text-text-tertiary">
-                {service.priceMonthly && `$${service.priceMonthly.toFixed(2)}/mo`}
-                {service.priceMonthly && service.priceYearly && " · "}
-                {service.priceYearly && `$${service.priceYearly.toFixed(2)}/yr`}
-              </p>
-            )}
+            </div>
           </div>
+          <div className="h-px bg-divider" />
 
-          {/* Billing Cycle */}
-          <div className="flex flex-col gap-2">
-            <label className="text-[15px] font-medium text-text-primary">Billing cycle</label>
-            <div className="relative" ref={dropdownRef}>
-              <button
-                type="button"
-                onClick={() => setShowCycleDropdown(!showCycleDropdown)}
-                className="flex h-12 w-full items-center justify-between rounded-2xl border border-divider bg-surface px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          {/* Billing Cycle Row */}
+          <div className="flex items-center justify-between px-[18px] py-4">
+            <span className="text-[15px] font-medium text-text-primary">Billing cycle</span>
+            <div className="relative flex items-center">
+              <select
+                name="billingCycle"
+                aria-label="Billing cycle"
+                value={cycle}
+                onChange={(e) => handleCycleChange(e.target.value)}
+                className="min-w-20 appearance-none bg-transparent pr-5 text-right text-[15px] font-semibold capitalize text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
               >
-                <span className="text-[15px] text-text-primary">{cycle}</span>
-                <ChevronDown className={`h-5 w-5 text-text-tertiary transition-transform duration-200 ${showCycleDropdown ? "rotate-180" : ""}`} />
-              </button>
-              {showCycleDropdown && (
-                <div className="absolute left-0 right-0 top-14 z-10 overflow-hidden rounded-2xl border border-divider bg-surface shadow-lg">
-                  {["Weekly", "Monthly", "Yearly"].map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => handleCycleChange(option)}
-                      className="flex h-12 w-full items-center justify-between px-4 text-left text-[15px] text-text-primary hover:bg-background focus-visible:bg-background focus-visible:outline-none"
-                    >
-                      {option}
-                      {cycle === option && <Check className="h-5 w-5 text-primary" />}
-                    </button>
-                  ))}
-                </div>
-              )}
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+                <option value="weekly">Weekly</option>
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-0 h-4 w-4 text-text-muted" />
             </div>
           </div>
+          <div className="h-px bg-divider" />
 
-          {/* Renewal Date */}
-          <div className="flex flex-col gap-2">
-            <label className="text-[15px] font-medium text-text-primary">Next renewal date</label>
-            <div className="relative h-12 rounded-2xl border border-divider bg-surface">
-              <input
-                type="date"
-                value={date.toISOString().split("T")[0]}
-                min={today}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    const selectedDate = new Date(e.target.value + "T00:00:00")
-                    // Extra safety: ensure date is not in the past
-                    if (selectedDate >= new Date(today + "T00:00:00")) {
-                      setDate(selectedDate)
-                    }
-                  }
-                }}
-                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-              />
-              <div className="pointer-events-none flex h-full items-center justify-between px-4">
-                <span className="text-[15px] text-text-primary">
-                  {date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                </span>
-                <Calendar className="h-5 w-5 text-text-tertiary" />
-              </div>
-            </div>
+          {/* Renewal Date Row */}
+          <div className="flex items-center justify-between px-[18px] py-4">
+            <span className="text-[15px] font-medium text-text-primary">Next renewal</span>
+            <input
+              type="date"
+              name="renewalDate"
+              aria-label="Next renewal date"
+              value={renewalDate}
+              min={today}
+              onChange={(e) => {
+                if (e.target.value && e.target.value >= today) {
+                  setRenewalDate(e.target.value)
+                }
+              }}
+              className="min-w-28 appearance-none bg-transparent text-[15px] font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+            />
           </div>
-        </div>
+        </Card>
+
+        {/* Pricing hint if available */}
+        {(service.priceMonthly || service.priceYearly) && (
+          <p className="text-xs text-text-tertiary text-center">
+            {service.priceMonthly && `$${service.priceMonthly.toFixed(2)}/mo`}
+            {service.priceMonthly && service.priceYearly && " · "}
+            {service.priceYearly && `$${service.priceYearly.toFixed(2)}/yr`}
+          </p>
+        )}
 
         <div className="flex-1" />
 
@@ -243,7 +225,7 @@ export function AddSubscriptionStep2({
         <div className="pb-8">
           <Button
             variant="primary"
-            onClick={() => onSave({ price, cycle, date })}
+            onClick={() => onSave({ price, cycle, date: new Date(renewalDate) })}
             className="w-full"
           >
             Save subscription
