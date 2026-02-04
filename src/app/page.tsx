@@ -10,9 +10,6 @@ import {
   AddSubscriptionStep2,
   SubscriptionManagement,
   UpgradeModal,
-  CancelRedirectModal,
-  ConfirmCancellationModal,
-  CancellationSuccessModal,
 } from "@/components"
 import { useUser } from "@/hooks/useUser"
 import { useSubscriptions } from "@/hooks/useSubscriptions"
@@ -30,7 +27,7 @@ type Screen =
   | "addStep2"
   | "manage"
 
-type Modal = "upgrade" | "cancelRedirect" | "confirmCancel" | "cancelSuccess" | null
+type Modal = "upgrade" | null
 
 export default function Home() {
   const { firstName, loading: userLoading, isAuthenticated } = useUser()
@@ -41,7 +38,6 @@ export default function Home() {
     addSubscription,
     updateSubscription,
     deleteSubscription,
-    recordCancelAttempt,
     verifyCancellation,
     restoreSubscription,
   } = useSubscriptions()
@@ -106,45 +102,6 @@ export default function Home() {
       setSelectedSub(sub)
       setScreen("manage")
     }
-  }
-
-  const handleCancelFlow = () => {
-    setModal("cancelRedirect")
-  }
-
-  const handleExternalCancel = async () => {
-    if (selectedSub) {
-      // Open external URL
-      if (selectedSub.cancelUrl) {
-        window.open(selectedSub.cancelUrl, "_blank")
-      }
-
-      // Record the cancel attempt in the database
-      try {
-        await recordCancelAttempt(selectedSub.id)
-      } catch (error) {
-        console.error("Failed to record cancel attempt:", error)
-      }
-    }
-    setModal("confirmCancel")
-  }
-
-  const handleConfirmCancellation = async () => {
-    if (selectedSub) {
-      try {
-        await verifyCancellation(selectedSub.id)
-      } catch (error) {
-        console.error("Failed to verify cancellation:", error)
-      }
-    }
-    setModal("cancelSuccess")
-  }
-
-  const handleCancellationComplete = () => {
-    setModal(null)
-    setSelectedSub(null)
-    setScreen("dashboard")
-    setActiveTab("home")
   }
 
   const handleAddSubscription = async (data: {
@@ -261,7 +218,6 @@ export default function Home() {
             setSelectedSub(null)
             setScreen("dashboard")
           }}
-          onCancel={handleCancelFlow}
           onRestore={async () => {
             try {
               await restoreSubscription(selectedSub.id)
@@ -294,28 +250,6 @@ export default function Home() {
             setScreen("dashboard")
           }}
         />
-        {modal === "cancelRedirect" && (
-          <CancelRedirectModal
-            subscription={selectedSub}
-            onProceed={handleExternalCancel}
-            onClose={() => setModal(null)}
-          />
-        )}
-        {modal === "confirmCancel" && (
-          <ConfirmCancellationModal
-            subscription={selectedSub}
-            onConfirm={handleConfirmCancellation}
-            onNotYet={() => setModal("cancelRedirect")}
-            onClose={() => setModal(null)}
-          />
-        )}
-        {modal === "cancelSuccess" && (
-          <CancellationSuccessModal
-            subscription={selectedSub}
-            monthlySavings={selectedSub.price}
-            onClose={handleCancellationComplete}
-          />
-        )}
       </>
     )
   }

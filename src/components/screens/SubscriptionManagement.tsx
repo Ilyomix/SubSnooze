@@ -4,28 +4,34 @@ import { useState } from "react"
 import { Flame, ChevronDown, XCircle, Trash2, RotateCcw } from "lucide-react"
 import { DetailShell } from "@/components/layout"
 import { Card, Button } from "@/components/ui"
+import { daysUntilRenewal } from "@/types/subscription"
 import type { Subscription } from "@/types/subscription"
 import type { BillingCycle } from "@/types/database"
 
 interface SubscriptionManagementProps {
   subscription: Subscription
   onBack: () => void
-  onCancel: () => void
   onRestore?: () => void
   onDelete?: () => void
   onSave?: (data: { price: number; billingCycle: string; renewalDate: Date }) => void
 }
 
-function getDaysUntilRenewal(date: Date): number {
+function calculateNextRenewalDate(billingCycle: BillingCycle): string {
   const today = new Date()
-  const diffTime = date.getTime() - today.getTime()
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  const nextDate = new Date(today)
+  if (billingCycle === "weekly") {
+    nextDate.setDate(today.getDate() + 7)
+  } else if (billingCycle === "yearly") {
+    nextDate.setFullYear(today.getFullYear() + 1)
+  } else {
+    nextDate.setMonth(today.getMonth() + 1)
+  }
+  return nextDate.toISOString().split("T")[0]
 }
 
 export function SubscriptionManagement({
   subscription,
   onBack,
-  onCancel,
   onRestore,
   onDelete,
   onSave,
@@ -38,7 +44,7 @@ export function SubscriptionManagement({
   const [billingCycle, setBillingCycle] = useState<BillingCycle>(originalCycle)
   const [renewalDate, setRenewalDate] = useState(originalDate)
 
-  const daysUntil = getDaysUntilRenewal(subscription.renewalDate)
+  const daysUntil = daysUntilRenewal(subscription.renewalDate)
   const isRenewingSoon = subscription.status === "renewing_soon"
   const isCancelled = subscription.status === "cancelled"
 
@@ -105,7 +111,11 @@ export function SubscriptionManagement({
                   name="billingCycle"
                   aria-label="Billing cycle"
                   value={billingCycle}
-                  onChange={(e) => setBillingCycle(e.target.value as BillingCycle)}
+                  onChange={(e) => {
+                    const newCycle = e.target.value as BillingCycle
+                    setBillingCycle(newCycle)
+                    setRenewalDate(calculateNextRenewalDate(newCycle))
+                  }}
                   className="min-w-20 appearance-none bg-transparent pr-5 text-right text-[15px] font-semibold capitalize text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
                 >
                   <option value="monthly">Monthly</option>
@@ -148,34 +158,23 @@ export function SubscriptionManagement({
         {/* Sticky CTA Section */}
         <div className="fixed bottom-0 left-0 right-0 border-t border-divider bg-surface px-6 pb-8 pt-4">
           <div className="flex flex-col gap-3">
-            {isCancelled ? (
-              <>
-                <Button
-                  variant="primary"
-                  icon={<RotateCcw className="h-[18px] w-[18px]" />}
-                  onClick={onRestore}
-                  className="w-full"
-                >
-                  Restore subscription
-                </Button>
-                <button
-                  onClick={onDelete}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-text-muted hover:bg-background/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span className="text-sm">Remove from list</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <Button variant="danger" onClick={onCancel} className="w-full">
-                  Cancel subscription
-                </Button>
-                <p className="text-center text-xs text-text-tertiary">
-                  You can resubscribe anytime
-                </p>
-              </>
+            {isCancelled && (
+              <Button
+                variant="primary"
+                icon={<RotateCcw className="h-[18px] w-[18px]" />}
+                onClick={onRestore}
+                className="w-full"
+              >
+                Restore subscription
+              </Button>
             )}
+            <button
+              onClick={onDelete}
+              className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-text-muted hover:bg-background/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="text-sm">Remove from list</span>
+            </button>
           </div>
         </div>
       </div>
