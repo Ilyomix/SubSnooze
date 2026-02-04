@@ -118,9 +118,14 @@ export function dbToNotification(db: DbNotification): Notification {
 
 // Helper to calculate days until renewal
 export function daysUntilRenewal(renewalDate: Date): number {
+  // Compare dates only, ignoring time, to avoid timezone issues
+  // When a date string like "2026-02-04" is parsed, it becomes midnight UTC,
+  // but new Date() returns current local time. We need to compare just the dates.
   const now = new Date()
-  const diffTime = renewalDate.getTime() - now.getTime()
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
+  const renewalUTC = Date.UTC(renewalDate.getFullYear(), renewalDate.getMonth(), renewalDate.getDate())
+  const diffDays = Math.round((renewalUTC - todayUTC) / (1000 * 60 * 60 * 24))
+  return diffDays
 }
 
 // Helper to advance renewal date to next cycle if in the past
