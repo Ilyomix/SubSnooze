@@ -1,10 +1,12 @@
-// SubSnooze 3-Touch Reminder System
+// SubSnooze Configurable Reminder System
 // This Edge Function runs daily via cron to send subscription renewal reminders
-// at 7, 3, and 1 days before renewal
+// Supports presets: aggressive (7,3,1), relaxed (14,3), minimal (3)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { getSupabaseClient } from "../_shared/supabase.ts"
 import { sendPushNotification } from "../_shared/fcm.ts"
+
+type ReminderPreset = "aggressive" | "relaxed" | "minimal"
 
 interface SubscriptionReminder {
   id: string
@@ -16,14 +18,21 @@ interface SubscriptionReminder {
   fcm_token: string | null
   push_enabled: boolean
   email_reminders_enabled: boolean
+  reminder_preset: ReminderPreset
   days_until_renewal: number
+  reminder_14_day_sent: boolean
   reminder_7_day_sent: boolean
   reminder_3_day_sent: boolean
   reminder_1_day_sent: boolean
 }
 
 function getReminderMessage(subName: string, daysUntil: number, price: number): { title: string; body: string } {
-  if (daysUntil === 7) {
+  if (daysUntil === 14) {
+    return {
+      title: `${subName} renews in 2 weeks`,
+      body: `Heads up! Your $${price.toFixed(2)}/mo subscription renews in 2 weeks. Plenty of time to decide.`,
+    }
+  } else if (daysUntil === 7) {
     return {
       title: `${subName} renews in 1 week`,
       body: `Your $${price.toFixed(2)}/mo subscription renews soon. Review it now if you want to cancel.`,
@@ -88,21 +97,28 @@ serve(async (req) => {
       const days = sub.days_until_renewal
       const { title, body } = getReminderMessage(sub.name, days, sub.price)
 
-      // Determine which reminder stage this is
+      // Determine which reminder stage this is based on days and preset
       let reminderField: string
       let reminderType: "warning" | "info"
 
-      if (days === 7 && !sub.reminder_7_day_sent) {
+      if (days === 14 && !sub.reminder_14_day_sent) {
+        // Only for relaxed preset (view already filters this)
+        reminderField = "reminder_14_day_sent"
+        reminderType = "info"
+      } else if (days === 7 && !sub.reminder_7_day_sent) {
+        // Only for aggressive preset (view already filters this)
         reminderField = "reminder_7_day_sent"
         reminderType = "info"
       } else if (days === 3 && !sub.reminder_3_day_sent) {
+        // For all presets
         reminderField = "reminder_3_day_sent"
         reminderType = "warning"
       } else if (days === 1 && !sub.reminder_1_day_sent) {
+        // Only for aggressive preset (view already filters this)
         reminderField = "reminder_1_day_sent"
         reminderType = "warning"
       } else {
-        continue // Skip if reminder already sent
+        continue // Skip if reminder already sent or not applicable
       }
 
       // Send push notification if enabled

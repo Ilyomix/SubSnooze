@@ -7,7 +7,7 @@ import type { Subscription } from "@/types/subscription"
 
 interface CancelRedirectModalProps {
   subscription: Subscription
-  onProceed: () => void
+  onProceed: (remindMe: boolean) => void
   onClose: () => void
 }
 
@@ -27,10 +27,13 @@ export function CancelRedirectModal({
       aria-labelledby="cancel-redirect-title"
     >
       <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-3xl bg-surface p-6" onClick={(e) => e.stopPropagation()}>
-        {/* Logo */}
+        {/* Logo - squircle style */}
         <div
-          className="flex h-14 w-14 items-center justify-center rounded-2xl text-2xl font-bold text-white"
-          style={{ backgroundColor: subscription.logoColor }}
+          className="flex h-14 w-14 items-center justify-center text-2xl font-bold text-white"
+          style={{
+            backgroundColor: subscription.logoColor,
+            borderRadius: 12, // ~22% of 56px for squircle
+          }}
         >
           {subscription.logo}
         </div>
@@ -65,7 +68,7 @@ export function CancelRedirectModal({
         <Button
           variant="danger"
           icon={<ExternalLink className="h-[18px] w-[18px]" />}
-          onClick={onProceed}
+          onClick={() => onProceed(remindMe)}
           className="w-full"
         >
           Go to {subscription.name}

@@ -1,9 +1,12 @@
 "use client"
 
 import { useAuth } from "@/contexts/AuthContext"
+import { createClient } from "@/lib/supabase/client"
+import type { ReminderPreset } from "@/types/database"
 
 export function useUser() {
   const { authUser, profile, loading, signOut, refreshProfile } = useAuth()
+  const supabase = createClient()
 
   // Compute display name from profile or auth user metadata
   const displayName =
@@ -35,6 +38,7 @@ export function useUser() {
     smsRemindersEnabled: profile?.sms_reminders_enabled ?? false,
     phoneNumber: profile?.phone_number ?? null,
     fcmToken: profile?.fcm_token ?? null,
+    reminderPreset: (profile?.reminder_preset ?? "aggressive") as ReminderPreset,
 
     // State
     isAuthenticated: !!authUser,
@@ -43,5 +47,20 @@ export function useUser() {
     // Actions
     signOut,
     refreshProfile,
+
+    // Update reminder preset
+    updateReminderPreset: async (preset: ReminderPreset) => {
+      if (!authUser) return
+      const { error } = await supabase
+        .from("users")
+        .update({ reminder_preset: preset })
+        .eq("id", authUser.id)
+
+      if (error) {
+        console.error("Failed to update reminder preset:", error)
+        throw error
+      }
+      await refreshProfile()
+    },
   }
 }

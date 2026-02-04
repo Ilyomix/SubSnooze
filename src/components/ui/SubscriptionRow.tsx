@@ -12,7 +12,16 @@ interface SubscriptionRowProps {
 
 function getReminderBadge(daysUntil: number) {
   // Show urgency badge based on days until renewal
-  if (daysUntil <= 1) {
+  if (daysUntil <= 0) {
+    return (
+      <Badge variant="urgent">
+        <Bell className="h-3 w-3" />
+        Today!
+      </Badge>
+    )
+  }
+
+  if (daysUntil === 1) {
     return (
       <Badge variant="urgent">
         <Bell className="h-3 w-3" />
@@ -74,10 +83,13 @@ export function SubscriptionRow({ subscription, onClick, showReminderStage = tru
       {/* Content */}
       <div className="flex flex-1 items-center justify-between p-4">
         <div className="flex items-center gap-3">
-          {/* Logo */}
+          {/* Logo - squircle style */}
           <div
-            className="flex h-11 w-11 items-center justify-center rounded-[10px] text-lg font-bold text-white"
-            style={{ backgroundColor: subscription.logoColor }}
+            className="flex h-11 w-11 items-center justify-center text-lg font-bold text-white"
+            style={{
+              backgroundColor: subscription.logoColor,
+              borderRadius: 10, // ~22% of 44px for squircle
+            }}
           >
             {subscription.logo}
           </div>
@@ -92,7 +104,7 @@ export function SubscriptionRow({ subscription, onClick, showReminderStage = tru
             </span>
             <span className="text-sm text-text-tertiary">
               {isCancelled
-                ? "Cancelled"
+                ? `Cancelled · Was ${subscription.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
                 : `Renews ${subscription.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
               }
             </span>
@@ -103,7 +115,9 @@ export function SubscriptionRow({ subscription, onClick, showReminderStage = tru
         <div className="flex items-center gap-2">
           {showReminderStage && !isCancelled && getReminderBadge(daysUntil)}
           {!showReminderStage && isRenewingSoon && (
-            <Badge variant="warning">in {daysUntil} days</Badge>
+            <Badge variant="warning">
+              {daysUntil <= 0 ? "Today" : daysUntil === 1 ? "Tomorrow" : `in ${daysUntil} days`}
+            </Badge>
           )}
           <span className={cn(
             "font-semibold text-text-primary",

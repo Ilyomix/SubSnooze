@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useUser } from "./useUser"
 import type { Subscription, SubscriptionStatus } from "@/types/subscription"
-import { dbToSubscription, daysUntilRenewal } from "@/types/subscription"
+import { dbToSubscription, daysUntilRenewal, getNextRenewalDate } from "@/types/subscription"
 import type { Insertable, Updatable, BillingCycle } from "@/types/database"
 import * as api from "@/lib/api/subscriptions"
 
@@ -16,7 +16,7 @@ export function useSubscriptions() {
 
   const supabase = createClient()
 
-  // Fetch subscriptions
+  // Fetch subscriptions and auto-renew past dates
   const fetchSubscriptions = useCallback(async () => {
     if (!userId) {
       setSubscriptions([])
@@ -27,6 +27,43 @@ export function useSubscriptions() {
     try {
       setLoading(true)
       const data = await api.getSubscriptions(userId)
+
+      // Check for subscriptions that need auto-renewal (past dates)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      const renewalUpdates: Promise<unknown>[] = []
+
+      for (const sub of data) {
+        if (sub.status === "cancelled") continue
+
+        const renewalDate = new Date(sub.renewal_date)
+        renewalDate.setHours(0, 0, 0, 0)
+
+        if (renewalDate <= today) {
+          // Calculate next renewal date
+          const nextDate = getNextRenewalDate(renewalDate, sub.billing_cycle)
+
+          // Update in background - reset reminder flags for new cycle
+          // Only include fields that exist in the base schema
+          renewalUpdates.push(
+            api.updateSubscription(sub.id, {
+              renewal_date: nextDate.toISOString().split("T")[0],
+              reminder_7_day_sent: false,
+              reminder_3_day_sent: false,
+              reminder_1_day_sent: false,
+              reminders_sent: 0,
+            }).catch((err) => console.error(`Failed to auto-renew ${sub.name}:`, err))
+          )
+        }
+      }
+
+      // Fire off updates in background (don't block UI)
+      if (renewalUpdates.length > 0) {
+        void Promise.all(renewalUpdates)
+      }
+
+      // Transform and set subscriptions (dbToSubscription handles date advancement for display)
       setSubscriptions(data.map(dbToSubscription))
       setError(null)
     } catch (err) {
@@ -107,6 +144,7 @@ export function useSubscriptions() {
       status: "good",
       cancelUrl: data.cancel_url ?? undefined,
       remindersSent: 0,
+      reminder14DaySent: false,
       reminder7DaySent: false,
       reminder3DaySent: false,
       reminder1DaySent: false,
