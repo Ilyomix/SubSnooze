@@ -20,6 +20,7 @@ import { useNotifications } from "@/hooks/useNotifications"
 import { usePushNotifications } from "@/hooks/usePushNotifications"
 import type { Subscription } from "@/types/subscription"
 import type { BillingCycle } from "@/types/database"
+import { getServiceBySlug, getServiceLogoUrl, getFallbackLogoUrl, getInitials, stringToColor, nameToDomain } from "@/lib/services"
 
 type Screen =
   | "dashboard"
@@ -53,7 +54,6 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"home" | "subs" | "settings">("home")
   const [selectedSub, setSelectedSub] = useState<Subscription | null>(null)
   const [selectedService, setSelectedService] = useState<string | null>(null)
-  const [customServiceName, setCustomServiceName] = useState<string | null>(null)
   const [totalSaved, setTotalSaved] = useState(0)
 
   // Request push notification permission on first load (if not already granted)
@@ -113,18 +113,20 @@ export default function Home() {
     setModal("cancelRedirect")
   }
 
-  const handleExternalCancel = async () => {
+  const handleExternalCancel = async (remindMe: boolean) => {
     if (selectedSub) {
       // Open external URL
       if (selectedSub.cancelUrl) {
         window.open(selectedSub.cancelUrl, "_blank")
       }
 
-      // Record the cancel attempt in the database
-      try {
-        await recordCancelAttempt(selectedSub.id)
-      } catch (error) {
-        console.error("Failed to record cancel attempt:", error)
+      // Only record cancel attempt if user wants a follow-up reminder
+      if (remindMe) {
+        try {
+          await recordCancelAttempt(selectedSub.id)
+        } catch (error) {
+          console.error("Failed to record cancel attempt:", error)
+        }
       }
     }
     setModal("confirmCancel")
@@ -213,9 +215,8 @@ export default function Home() {
     return (
       <AddSubscriptionStep1
         onBack={() => setScreen("dashboard")}
-        onSelectService={(id, customName) => {
+        onSelectService={(id) => {
           setSelectedService(id)
-          setCustomServiceName(customName ?? null)
           setScreen("addStep2")
         }}
         onSearch={() => {}}
@@ -224,35 +225,118 @@ export default function Home() {
   }
 
   if (screen === "addStep2" && selectedService) {
-    const serviceName = customServiceName ?? selectedService.charAt(0).toUpperCase() + selectedService.slice(1)
-    const service = {
-      id: selectedService,
-      name: serviceName,
-      logo: serviceName.charAt(0).toUpperCase(),
-      logoColor: "#237A5A",
-    }
-    return (
-      <AddSubscriptionStep2
-        service={service}
-        onBack={() => setScreen("addStep1")}
-        onSave={(data) => {
-          const priceNum = parseFloat(data.price.replace(/[^0-9.]/g, "")) || 0
-          const cycleMap: Record<string, BillingCycle> = {
-            "Monthly": "monthly",
-            "Yearly": "yearly",
-            "Weekly": "weekly",
+    // Store selectedService in a const that TypeScript knows is non-null
+    const currentSelectedService = selectedService
+
+    // Check if this is a service from database (service:slug) or custom (custom:name)
+    const isDbService = currentSelectedService.startsWith("service:")
+    const serviceSlug = isDbService ? currentSelectedService.replace("service:", "") : null
+    const customName = currentSelectedService.startsWith("custom:")
+      ? currentSelectedService.replace("custom:", "")
+      : null
+
+    // For database services, we'll fetch the full details
+    // For custom services, we generate info from the name
+    const ServiceStep2Wrapper = () => {
+      const [serviceInfo, setServiceInfo] = useState<{
+        id: string
+        name: string
+        logo: string
+        logoColor: string
+        domain: string | null
+        priceMonthly?: number | null
+        priceYearly?: number | null
+        cancelUrl?: string | null
+      } | null>(null)
+      const [loading, setLoading] = useState(true)
+
+      useEffect(() => {
+        async function loadService() {
+          if (serviceSlug) {
+            // Fetch from database
+            const dbService = await getServiceBySlug(serviceSlug)
+            if (dbService) {
+              setServiceInfo({
+                id: dbService.id,
+                name: dbService.name,
+                logo: getServiceLogoUrl(dbService, dbService.domain),
+                logoColor: dbService.logo_color,
+                domain: dbService.domain,
+                priceMonthly: dbService.price_monthly,
+                priceYearly: dbService.price_yearly,
+                cancelUrl: dbService.cancel_url,
+              })
+            } else {
+              // Fallback if service not found
+              const fallbackName = serviceSlug
+              setServiceInfo({
+                id: currentSelectedService,
+                name: fallbackName,
+                logo: getFallbackLogoUrl(nameToDomain(fallbackName)),
+                logoColor: stringToColor(fallbackName),
+                domain: nameToDomain(fallbackName),
+              })
+            }
+          } else if (customName) {
+            // Custom service - generate info
+            const domain = nameToDomain(customName)
+            setServiceInfo({
+              id: currentSelectedService,
+              name: customName,
+              logo: getFallbackLogoUrl(domain),
+              logoColor: stringToColor(customName),
+              domain: domain,
+            })
+          } else {
+            // Shouldn't happen, but handle gracefully
+            setServiceInfo({
+              id: currentSelectedService,
+              name: "Unknown Service",
+              logo: "",
+              logoColor: "#6366f1",
+              domain: null,
+            })
           }
-          handleAddSubscription({
-            name: service.name,
-            logo: service.logo,
-            logoColor: service.logoColor,
-            price: priceNum,
-            billingCycle: cycleMap[data.cycle] || "monthly",
-            renewalDate: data.date,
-          })
-        }}
-      />
-    )
+          setLoading(false)
+        }
+        loadService()
+      }, [])
+
+      if (loading || !serviceInfo) {
+        return (
+          <div className="flex min-h-screen items-center justify-center bg-background">
+            <div className="h-8 w-8 motion-safe:animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
+        )
+      }
+
+      return (
+        <AddSubscriptionStep2
+          service={serviceInfo}
+          onBack={() => setScreen("addStep1")}
+          onSave={async (data) => {
+            const priceNum = parseFloat(data.price.replace(/[^0-9.]/g, "")) || 0
+            const cycleMap: Record<string, BillingCycle> = {
+              "Monthly": "monthly",
+              "Yearly": "yearly",
+              "Weekly": "weekly",
+            }
+
+            handleAddSubscription({
+              name: serviceInfo.name,
+              logo: getInitials(serviceInfo.name),
+              logoColor: serviceInfo.logoColor,
+              price: priceNum,
+              billingCycle: cycleMap[data.cycle] || "monthly",
+              renewalDate: data.date,
+              cancelUrl: serviceInfo.cancelUrl ?? undefined,
+            })
+          }}
+        />
+      )
+    }
+
+    return <ServiceStep2Wrapper />
   }
 
   if (screen === "manage" && selectedSub) {

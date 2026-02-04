@@ -1,14 +1,119 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Star, ChevronRight, LogOut } from "lucide-react"
+import { Star, ChevronRight, LogOut, Check } from "lucide-react"
 import { AppShell } from "@/components/layout"
 import { Card } from "@/components/ui"
 import { useUser } from "@/hooks/useUser"
 import { usePushNotifications } from "@/hooks/usePushNotifications"
 import { createClient } from "@/lib/supabase/client"
-import type { Database } from "@/types/database"
+import type { Database, ReminderPreset } from "@/types/database"
 import type { SupabaseClient } from "@supabase/supabase-js"
+
+// Preset configuration
+const PRESETS: {
+  id: ReminderPreset
+  name: string
+  subtitle: string
+  days: number[]
+}[] = [
+  {
+    id: "aggressive",
+    name: "Aggressive",
+    subtitle: "Multiple nudges to stay on top of things",
+    days: [7, 3, 1],
+  },
+  {
+    id: "relaxed",
+    name: "Relaxed",
+    subtitle: "Early heads up with a final reminder",
+    days: [14, 3],
+  },
+  {
+    id: "minimal",
+    name: "Minimal",
+    subtitle: "One reminder, no fuss",
+    days: [3],
+  },
+]
+
+// Visual dots showing reminder count - simple and clear
+function ReminderDots({ count, isSelected }: { count: number; isSelected: boolean }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className={`h-2 w-2 rounded-full ${
+            isSelected ? "bg-primary" : "bg-text-muted"
+          }`}
+        />
+      ))}
+    </div>
+  )
+}
+
+// Format days into readable text
+function formatDays(days: number[]): string {
+  if (days.length === 1) return `${days[0]} days before`
+  const sorted = [...days].sort((a, b) => b - a)
+  const last = sorted.pop()
+  return `${sorted.join(", ")} & ${last} days before`
+}
+
+// Preset option component
+function PresetOption({
+  preset,
+  isSelected,
+  onSelect,
+  disabled,
+}: {
+  preset: typeof PRESETS[0]
+  isSelected: boolean
+  onSelect: () => void
+  disabled?: boolean
+}) {
+  return (
+    <button
+      onClick={onSelect}
+      disabled={disabled}
+      className={`w-full rounded-xl p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+        isSelected
+          ? "bg-primary/5 ring-2 ring-primary"
+          : "bg-surface hover:bg-surface/80"
+      } ${disabled ? "opacity-50" : ""}`}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className={`text-[15px] font-medium ${isSelected ? "text-primary" : "text-text-primary"}`}>
+              {preset.name}
+            </span>
+            {preset.id === "aggressive" && (
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                Default
+              </span>
+            )}
+          </div>
+          <p className="mt-0.5 text-xs text-text-tertiary">{preset.subtitle}</p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className={`text-sm ${isSelected ? "text-primary font-medium" : "text-text-secondary"}`}>
+              {formatDays(preset.days)}
+            </span>
+            <ReminderDots count={preset.days.length} isSelected={isSelected} />
+          </div>
+        </div>
+        <div
+          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+            isSelected ? "border-primary bg-primary" : "border-divider"
+          }`}
+        >
+          {isSelected && <Check className="h-3 w-3 text-white" />}
+        </div>
+      </div>
+    </button>
+  )
+}
 
 interface SettingsProps {
   activeTab: "home" | "subs" | "settings"
@@ -52,20 +157,51 @@ function ToggleRow({ label, helper, enabled, onToggle, loading }: ToggleRowProps
 }
 
 export function Settings({ activeTab, onTabChange, onUpgrade }: SettingsProps) {
-  const { email, phoneNumber, emailRemindersEnabled, smsRemindersEnabled, signOut, refreshProfile } = useUser()
+  const {
+    email,
+    phoneNumber,
+    emailRemindersEnabled,
+    smsRemindersEnabled,
+    reminderPreset,
+    signOut,
+    refreshProfile,
+    updateReminderPreset,
+  } = useUser()
   const { isEnabled: pushEnabled, toggleNotifications, loading: pushLoading, isSupported } = usePushNotifications()
 
   const [emailEnabled, setEmailEnabled] = useState(emailRemindersEnabled)
   const [smsEnabled, setSmsEnabled] = useState(smsRemindersEnabled)
+  const [selectedPreset, setSelectedPreset] = useState<ReminderPreset>(reminderPreset)
   const [saving, setSaving] = useState(false)
+  const [savingPreset, setSavingPreset] = useState(false)
 
   const supabase: SupabaseClient<Database> = createClient()
 
-  // Sync with profile data
+  // Sync each setting independently to avoid cross-contamination
   useEffect(() => {
     setEmailEnabled(emailRemindersEnabled)
+  }, [emailRemindersEnabled])
+
+  useEffect(() => {
     setSmsEnabled(smsRemindersEnabled)
-  }, [emailRemindersEnabled, smsRemindersEnabled])
+  }, [smsRemindersEnabled])
+
+  useEffect(() => {
+    setSelectedPreset(reminderPreset)
+  }, [reminderPreset])
+
+  const handlePresetChange = async (preset: ReminderPreset) => {
+    if (preset === selectedPreset) return
+    setSavingPreset(true)
+    setSelectedPreset(preset) // Optimistic update
+    try {
+      await updateReminderPreset(preset)
+    } catch (error) {
+      setSelectedPreset(reminderPreset) // Rollback on error
+    } finally {
+      setSavingPreset(false)
+    }
+  }
 
   const handleEmailToggle = async () => {
     setSaving(true)
@@ -121,17 +257,33 @@ export function Settings({ activeTab, onTabChange, onUpgrade }: SettingsProps) {
       <div className="flex flex-col gap-6 px-6 pt-4">
         <h1 className="text-2xl font-semibold text-text-primary">Settings</h1>
 
-        {/* Reminder Settings */}
+        {/* Reminder Schedule */}
         <div className="flex flex-col gap-3">
           <span className="text-[13px] font-medium text-text-secondary">
-            Reminder Settings
+            Reminder Schedule
+          </span>
+          <p className="text-xs text-text-tertiary -mt-1">
+            Choose when to get reminded before renewals
+          </p>
+          <div className="flex flex-col gap-2">
+            {PRESETS.map((preset) => (
+              <PresetOption
+                key={preset.id}
+                preset={preset}
+                isSelected={selectedPreset === preset.id}
+                onSelect={() => handlePresetChange(preset.id)}
+                disabled={savingPreset}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Notification Channels */}
+        <div className="flex flex-col gap-3">
+          <span className="text-[13px] font-medium text-text-secondary">
+            How to Notify You
           </span>
           <Card padding="none" className="overflow-hidden">
-            <div className="flex items-center gap-2 px-[18px] py-4">
-              <span className="text-[15px] text-text-primary">3-touch reminder system</span>
-              <span className="ml-auto text-xs text-text-tertiary">7, 3, 1 days before</span>
-            </div>
-            <div className="h-px bg-divider" />
             <ToggleRow
               label="Email reminders"
               helper={email ? `Sent to ${email}` : "Not configured"}
