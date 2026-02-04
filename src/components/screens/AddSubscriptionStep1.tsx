@@ -113,6 +113,41 @@ function capitalizeWords(str: string): string {
     .join(" ")
 }
 
+function CustomServiceCard({
+  name,
+  onSelect,
+}: {
+  name: string
+  onSelect: () => void
+}) {
+  const capitalizedName = capitalizeWords(name)
+  const color = stringToColor(capitalizedName)
+
+  return (
+    <button
+      onClick={onSelect}
+      aria-label={`Add ${capitalizedName} as custom subscription`}
+      className="flex flex-col items-center gap-2 rounded-xl bg-surface p-4 motion-safe:transition-colors hover:bg-surface/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 border-2 border-dashed border-primary/30"
+    >
+      <div
+        className="flex items-center justify-center text-white font-bold border border-divider"
+        style={{
+          backgroundColor: color,
+          width: 48,
+          height: 48,
+          fontSize: 48 * 0.35,
+          borderRadius: Math.round(48 * 0.22),
+        }}
+      >
+        {getInitials(capitalizedName)}
+      </div>
+      <span className="text-sm font-medium text-primary text-center line-clamp-1">
+        Add "{capitalizedName}"
+      </span>
+    </button>
+  )
+}
+
 export function AddSubscriptionStep1({
   onBack,
   onSelectService,
@@ -164,6 +199,11 @@ export function AddSubscriptionStep1({
     onSelectService(`service:${service.slug}`)
   }
 
+  const handleSelectCustom = () => {
+    const capitalizedName = capitalizeWords(trimmedSearch)
+    onSelectService(`custom:${capitalizedName}`)
+  }
+
   return (
     <DetailShell title="Add Subscription" onBack={onBack}>
       <div className="flex flex-col gap-6 px-6 pt-4">
@@ -211,17 +251,24 @@ export function AddSubscriptionStep1({
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 text-text-tertiary animate-spin" />
             </div>
-          ) : services.length === 0 ? (
+          ) : services.length === 0 && !trimmedSearch ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-divider bg-surface mb-3">
                 <Search className="h-5 w-5 text-text-tertiary" />
               </div>
               <p className="text-sm text-text-tertiary">
-                {trimmedSearch ? "No services found" : "Start typing to search"}
+                Start typing to search
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-3">
+              {/* Custom subscription option when searching */}
+              {trimmedSearch && (
+                <CustomServiceCard
+                  name={trimmedSearch}
+                  onSelect={handleSelectCustom}
+                />
+              )}
               {/* Services from database */}
               {services.map((service) => (
                 <button
