@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Search, ChevronRight, XCircle } from "lucide-react"
 import { AppShell } from "@/components/layout"
 import { Card, Badge } from "@/components/ui"
@@ -42,10 +43,13 @@ function SubscriptionItem({
     >
       {/* Left side */}
       <div className="flex items-center gap-3">
-        {/* Logo */}
+        {/* Logo - squircle style */}
         <div
-          className="flex h-10 w-10 items-center justify-center rounded-[10px] text-sm font-bold text-white"
-          style={{ backgroundColor: sub.logoColor }}
+          className="flex h-10 w-10 items-center justify-center text-sm font-bold text-white"
+          style={{
+            backgroundColor: sub.logoColor,
+            borderRadius: 9, // ~22% of 40px for squircle
+          }}
         >
           {sub.logo}
         </div>
@@ -95,11 +99,22 @@ export function AllSubscriptions({
   activeTab,
   onTabChange,
 }: AllSubscriptionsProps) {
-  const active = subscriptions.filter((s) => s.status !== "cancelled")
-  const cancelled = subscriptions.filter((s) => s.status === "cancelled")
+  const [searchTerm, setSearchTerm] = useState("")
 
-  // Only count active subscriptions in monthly total
-  const totalMonthly = active.reduce((sum, s) => {
+  // Filter subscriptions by search term
+  const filterBySearch = (subs: Subscription[]) =>
+    subs.filter((s) =>
+      s.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
+  const allActive = subscriptions.filter((s) => s.status !== "cancelled")
+  const allCancelled = subscriptions.filter((s) => s.status === "cancelled")
+
+  const active = filterBySearch(allActive)
+  const cancelled = filterBySearch(allCancelled)
+
+  // Only count active subscriptions in monthly total (unfiltered)
+  const totalMonthly = allActive.reduce((sum, s) => {
     if (s.billingCycle === "yearly") return sum + s.price / 12
     if (s.billingCycle === "weekly") return sum + s.price * 4.33
     return sum + s.price
@@ -120,8 +135,12 @@ export function AllSubscriptions({
           <input
             type="text"
             name="subscription-search"
-            placeholder="Search subscriptions\u2026"
-            onChange={(e) => onSearch(e.target.value)}
+            placeholder="Search subscriptions…"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              onSearch(e.target.value)
+            }}
             className="flex-1 bg-transparent text-[15px] text-text-primary placeholder:text-text-tertiary focus-visible:outline-none"
           />
         </div>
@@ -173,6 +192,13 @@ export function AllSubscriptions({
         {subscriptions.length === 0 && (
           <div className="flex flex-col items-center gap-2 py-16">
             <span className="text-text-secondary">No subscriptions yet</span>
+          </div>
+        )}
+
+        {/* No Search Results */}
+        {subscriptions.length > 0 && active.length === 0 && cancelled.length === 0 && (
+          <div className="flex flex-col items-center gap-2 py-16">
+            <span className="text-text-secondary">No subscriptions matching "{searchTerm}"</span>
           </div>
         )}
       </div>

@@ -6,9 +6,71 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+export type ServiceStatus = 'active' | 'discontinued' | 'needs_review'
+
 export interface Database {
   public: {
     Tables: {
+      subscription_services: {
+        Row: {
+          id: string
+          slug: string
+          name: string
+          domain: string
+          category: string
+          logo_url: string | null
+          logo_color: string
+          price_monthly: number | null
+          price_yearly: number | null
+          currency: string
+          website_url: string | null
+          cancel_url: string | null
+          manage_url: string | null
+          status: ServiceStatus
+          last_verified_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          name: string
+          domain: string
+          category: string
+          logo_url?: string | null
+          logo_color?: string
+          price_monthly?: number | null
+          price_yearly?: number | null
+          currency?: string
+          website_url?: string | null
+          cancel_url?: string | null
+          manage_url?: string | null
+          status?: ServiceStatus
+          last_verified_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          slug?: string
+          name?: string
+          domain?: string
+          category?: string
+          logo_url?: string | null
+          logo_color?: string
+          price_monthly?: number | null
+          price_yearly?: number | null
+          currency?: string
+          website_url?: string | null
+          cancel_url?: string | null
+          manage_url?: string | null
+          status?: ServiceStatus
+          last_verified_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           id: string
@@ -20,6 +82,7 @@ export interface Database {
           email_reminders_enabled: boolean
           sms_reminders_enabled: boolean
           phone_number: string | null
+          reminder_preset: "aggressive" | "relaxed" | "minimal"
           is_premium: boolean
           premium_expires_at: string | null
           created_at: string
@@ -35,6 +98,7 @@ export interface Database {
           email_reminders_enabled?: boolean
           sms_reminders_enabled?: boolean
           phone_number?: string | null
+          reminder_preset?: "aggressive" | "relaxed" | "minimal"
           is_premium?: boolean
           premium_expires_at?: string | null
           created_at?: string
@@ -50,6 +114,7 @@ export interface Database {
           email_reminders_enabled?: boolean
           sms_reminders_enabled?: boolean
           phone_number?: string | null
+          reminder_preset?: "aggressive" | "relaxed" | "minimal"
           is_premium?: boolean
           premium_expires_at?: string | null
           created_at?: string
@@ -71,6 +136,7 @@ export interface Database {
           cancel_url: string | null
           reminders_sent: number
           last_reminder_date: string | null
+          reminder_14_day_sent: boolean
           reminder_7_day_sent: boolean
           reminder_3_day_sent: boolean
           reminder_1_day_sent: boolean
@@ -92,6 +158,7 @@ export interface Database {
           cancel_url?: string | null
           reminders_sent?: number
           last_reminder_date?: string | null
+          reminder_14_day_sent?: boolean
           reminder_7_day_sent?: boolean
           reminder_3_day_sent?: boolean
           reminder_1_day_sent?: boolean
@@ -113,6 +180,7 @@ export interface Database {
           cancel_url?: string | null
           reminders_sent?: number
           last_reminder_date?: string | null
+          reminder_14_day_sent?: boolean
           reminder_7_day_sent?: boolean
           reminder_3_day_sent?: boolean
           reminder_1_day_sent?: boolean
@@ -196,6 +264,7 @@ export interface Database {
       billing_cycle: "weekly" | "monthly" | "yearly"
       subscription_status: "active" | "renewing_soon" | "cancelled" | "expired"
       notification_type: "warning" | "info" | "success" | "cancel_followup"
+      reminder_preset: "aggressive" | "relaxed" | "minimal"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -217,6 +286,8 @@ export type Enums<T extends keyof Database["public"]["Enums"]> =
 export type User = Tables<"users">
 export type DbSubscription = Tables<"subscriptions">
 export type DbNotification = Tables<"notifications">
+export type DbSubscriptionService = Tables<"subscription_services">
 export type BillingCycle = Enums<"billing_cycle">
 export type SubscriptionStatus = Enums<"subscription_status">
 export type NotificationType = Enums<"notification_type">
+export type ReminderPreset = Enums<"reminder_preset">

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Flame, ChevronDown, XCircle, Trash2, RotateCcw } from "lucide-react"
+import { Flame, ChevronDown, XCircle, Trash2, RotateCcw, ExternalLink } from "lucide-react"
 import { DetailShell } from "@/components/layout"
 import { Card, Button } from "@/components/ui"
 import { daysUntilRenewal } from "@/types/subscription"
@@ -44,6 +44,9 @@ export function SubscriptionManagement({
   const [billingCycle, setBillingCycle] = useState<BillingCycle>(originalCycle)
   const [renewalDate, setRenewalDate] = useState(originalDate)
 
+  // Minimum date is today (no past dates allowed)
+  const today = new Date().toISOString().split("T")[0]
+
   const daysUntil = daysUntilRenewal(subscription.renewalDate)
   const isRenewingSoon = subscription.status === "renewing_soon"
   const isCancelled = subscription.status === "cancelled"
@@ -56,8 +59,11 @@ export function SubscriptionManagement({
       onBack={onBack}
       headerRight={
         <div
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-sm font-bold text-white"
-          style={{ backgroundColor: subscription.logoColor }}
+          className="flex h-9 w-9 items-center justify-center text-sm font-bold text-white"
+          style={{
+            backgroundColor: subscription.logoColor,
+            borderRadius: 8, // Squircle style
+          }}
         >
           {subscription.logo}
         </div>
@@ -80,67 +86,89 @@ export function SubscriptionManagement({
             <div className="flex items-center gap-2 rounded-xl bg-accent-light px-4 py-3">
               <Flame className="h-[18px] w-[18px] text-accent" />
               <span className="text-sm font-semibold text-accent">
-                Renews in {daysUntil} days
+                {daysUntil <= 0 ? "Renews today!" : daysUntil === 1 ? "Renews tomorrow!" : `Renews in ${daysUntil} days`}
               </span>
             </div>
           )}
 
-          {/* Editable Details Card */}
+          {/* Details Card - read-only when cancelled */}
           <Card padding="none" className="overflow-hidden">
             <div className="flex items-center justify-between px-[18px] py-4">
               <span className="text-[15px] font-medium text-text-primary">Monthly price</span>
               <div className="flex items-center gap-1">
                 <span className="text-[15px] font-semibold text-text-primary">$</span>
-                <input
-                  type="text"
-                  name="price"
-                  inputMode="decimal"
-                  aria-label="Monthly price"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  className="min-w-1 tabular-nums bg-transparent text-right text-[15px] font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-                  style={{ width: `${Math.max(price.length, 0) / 1.66}em` }}
-                />
+                {isCancelled ? (
+                  <span className="text-[15px] font-semibold text-text-muted">{price}</span>
+                ) : (
+                  <input
+                    type="text"
+                    name="price"
+                    inputMode="decimal"
+                    aria-label="Monthly price"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="min-w-1 tabular-nums bg-transparent text-right text-[15px] font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                    style={{ width: `${Math.max(price.length, 0) / 1.66}em` }}
+                  />
+                )}
               </div>
             </div>
             <div className="h-px bg-divider" />
             <div className="flex items-center justify-between px-[18px] py-4">
               <span className="text-[15px] font-medium text-text-primary">Billing cycle</span>
-              <div className="relative flex items-center">
-                <select
-                  name="billingCycle"
-                  aria-label="Billing cycle"
-                  value={billingCycle}
-                  onChange={(e) => {
-                    const newCycle = e.target.value as BillingCycle
-                    setBillingCycle(newCycle)
-                    setRenewalDate(calculateNextRenewalDate(newCycle))
-                  }}
-                  className="min-w-20 appearance-none bg-transparent pr-5 text-right text-[15px] font-semibold capitalize text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-                >
-                  <option value="monthly">Monthly</option>
-                  <option value="yearly">Yearly</option>
-                  <option value="weekly">Weekly</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-0 h-4 w-4 text-text-muted" />
-              </div>
+              {isCancelled ? (
+                <span className="text-[15px] font-semibold capitalize text-text-muted">{billingCycle}</span>
+              ) : (
+                <div className="relative flex items-center">
+                  <select
+                    name="billingCycle"
+                    aria-label="Billing cycle"
+                    value={billingCycle}
+                    onChange={(e) => {
+                      const newCycle = e.target.value as BillingCycle
+                      setBillingCycle(newCycle)
+                      setRenewalDate(calculateNextRenewalDate(newCycle))
+                    }}
+                    className="min-w-20 appearance-none bg-transparent pr-5 text-right text-[15px] font-semibold capitalize text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                    <option value="weekly">Weekly</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-0 h-4 w-4 text-text-muted" />
+                </div>
+              )}
             </div>
             <div className="h-px bg-divider" />
             <div className="flex items-center justify-between px-[18px] py-4">
-              <span className="text-[15px] font-medium text-text-primary">Next renewal</span>
-              <input
-                type="date"
-                name="renewalDate"
-                aria-label="Next renewal date"
-                value={renewalDate}
-                onChange={(e) => setRenewalDate(e.target.value)}
-                className="min-w-28 appearance-none bg-transparent text-[15px] font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-              />
+              <span className="text-[15px] font-medium text-text-primary">
+                {isCancelled ? "Last renewal" : "Next renewal"}
+              </span>
+              {isCancelled ? (
+                <span className="text-[15px] font-semibold text-text-muted">
+                  {subscription.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
+              ) : (
+                <input
+                  type="date"
+                  name="renewalDate"
+                  aria-label="Next renewal date"
+                  value={renewalDate}
+                  min={today}
+                  onChange={(e) => {
+                    // Only allow future dates
+                    if (e.target.value && e.target.value >= today) {
+                      setRenewalDate(e.target.value)
+                    }
+                  }}
+                  className="min-w-28 appearance-none bg-transparent text-[15px] font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                />
+              )}
             </div>
           </Card>
 
-          {/* Save Button - only show when form is modified */}
-          {hasChanges && (
+          {/* Save Button - only show when form is modified and not cancelled */}
+          {hasChanges && !isCancelled && (
             <Button
               variant="primary"
               onClick={() => onSave?.({
@@ -167,6 +195,17 @@ export function SubscriptionManagement({
               >
                 Restore subscription
               </Button>
+            )}
+            {!isCancelled && subscription.cancelUrl && (
+              <a
+                href={subscription.cancelUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Go to cancellation page
+              </a>
             )}
             <button
               onClick={onDelete}
