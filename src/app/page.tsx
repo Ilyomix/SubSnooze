@@ -53,6 +53,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"home" | "subs" | "settings">("home")
   const [selectedSub, setSelectedSub] = useState<Subscription | null>(null)
   const [selectedService, setSelectedService] = useState<string | null>(null)
+  const [customServiceName, setCustomServiceName] = useState<string | null>(null)
   const [totalSaved, setTotalSaved] = useState(0)
 
   // Request push notification permission on first load (if not already granted)
@@ -212,8 +213,9 @@ export default function Home() {
     return (
       <AddSubscriptionStep1
         onBack={() => setScreen("dashboard")}
-        onSelectService={(id) => {
+        onSelectService={(id, customName) => {
           setSelectedService(id)
+          setCustomServiceName(customName ?? null)
           setScreen("addStep2")
         }}
         onSearch={() => {}}
@@ -222,10 +224,11 @@ export default function Home() {
   }
 
   if (screen === "addStep2" && selectedService) {
+    const serviceName = customServiceName ?? selectedService.charAt(0).toUpperCase() + selectedService.slice(1)
     const service = {
       id: selectedService,
-      name: selectedService.charAt(0).toUpperCase() + selectedService.slice(1),
-      logo: selectedService.charAt(0).toUpperCase(),
+      name: serviceName,
+      logo: serviceName.charAt(0).toUpperCase(),
       logoColor: "#237A5A",
     }
     return (
