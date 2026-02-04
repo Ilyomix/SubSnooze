@@ -273,18 +273,13 @@ export default function Home() {
           onBack={() => setScreen("addStep1")}
           onSave={async (data) => {
             const priceNum = parseFloat(data.price.replace(/[^0-9.]/g, "")) || 0
-            const cycleMap: Record<string, BillingCycle> = {
-              "Monthly": "monthly",
-              "Yearly": "yearly",
-              "Weekly": "weekly",
-            }
 
             handleAddSubscription({
               name: serviceInfo.name,
               logo: getInitials(serviceInfo.name),
               logoColor: serviceInfo.logoColor,
               price: priceNum,
-              billingCycle: cycleMap[data.cycle] || "monthly",
+              billingCycle: data.cycle as BillingCycle,
               renewalDate: data.date,
               cancelUrl: serviceInfo.cancelUrl ?? undefined,
             })
