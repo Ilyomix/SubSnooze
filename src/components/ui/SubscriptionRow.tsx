@@ -102,8 +102,8 @@ export function SubscriptionRow({ subscription, onClick, showReminderStage = tru
             </span>
             <span className="text-sm text-text-tertiary truncate">
               {isCancelled
-                ? `Cancelled \u00B7 Was due ${subscription.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
-                : `Next renewal \u00B7 ${subscription.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+                ? `Cancelled \u00B7 Was ${subscription.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+                : `Renews ${subscription.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
               }
             </span>
           </div>

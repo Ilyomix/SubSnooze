@@ -18,6 +18,7 @@ interface SubscriptionManagementProps {
   onCancelProceed?: () => void
   onCancelConfirm?: () => void
   onCancelNotYet?: () => void
+  onCancelComplete?: () => void
 }
 
 export function SubscriptionManagement({
@@ -29,6 +30,7 @@ export function SubscriptionManagement({
   onCancelProceed,
   onCancelConfirm,
   onCancelNotYet,
+  onCancelComplete,
 }: SubscriptionManagementProps) {
   const originalPrice = subscription.price.toFixed(2)
   const originalCycle = subscription.billingCycle
@@ -220,7 +222,10 @@ export function SubscriptionManagement({
       <CancellationSuccessModal
         subscription={subscription}
         monthlySavings={monthlySavings}
-        onClose={() => setShowCancelSuccess(false)}
+        onClose={() => {
+          setShowCancelSuccess(false)
+          onCancelComplete?.()
+        }}
       />
     )}
     </>

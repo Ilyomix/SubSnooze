@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Plus, XCircle, PiggyBank, CreditCard, ChevronDown, ChevronUp } from "lucide-react"
 import NumberFlow from "@number-flow/react"
 import { AppShell } from "@/components/layout"
@@ -36,12 +36,46 @@ export function Dashboard({
 }: DashboardProps) {
   const [showAllGood, setShowAllGood] = useState(false)
 
+  // Cached display values for smooth NumberFlow animations
+  const [displaySaved, setDisplaySaved] = useState(() => {
+    if (typeof window === "undefined") return totalSaved
+    return parseFloat(localStorage.getItem("subsnooze_totalSaved") || "0")
+  })
+  const [displayMonthly, setDisplayMonthly] = useState(() => {
+    if (typeof window === "undefined") return totalMonthly
+    return parseFloat(localStorage.getItem("subsnooze_totalMonthly") || "0")
+  })
+  const [displayActive, setDisplayActive] = useState(() => {
+    if (typeof window === "undefined") return 0
+    return parseInt(localStorage.getItem("subsnooze_activeCount") || "0")
+  })
+
+  const mounted = useRef(false)
+
   const renewingSoon = subscriptions
     .filter((s) => s.status === "renewing_soon")
     .sort((a, b) => a.renewalDate.getTime() - b.renewalDate.getTime())
   const allGood = subscriptions.filter((s) => s.status === "good")
   const cancelled = subscriptions.filter((s) => s.status === "cancelled")
   const activeCount = subscriptions.filter((s) => s.status !== "cancelled").length
+
+  useEffect(() => {
+    // Small delay on mount so user sees the animation; instant on subsequent updates
+    const delay = mounted.current ? 0 : 300
+    mounted.current = true
+
+    const timer = setTimeout(() => {
+      setDisplaySaved(totalSaved)
+      setDisplayMonthly(totalMonthly)
+      setDisplayActive(activeCount)
+    }, delay)
+
+    localStorage.setItem("subsnooze_totalSaved", String(totalSaved))
+    localStorage.setItem("subsnooze_totalMonthly", String(totalMonthly))
+    localStorage.setItem("subsnooze_activeCount", String(activeCount))
+
+    return () => clearTimeout(timer)
+  }, [totalSaved, totalMonthly, activeCount])
 
   const visibleAllGood = showAllGood ? allGood : allGood.slice(0, ALL_GOOD_PREVIEW_LIMIT)
   const hasMoreAllGood = allGood.length > ALL_GOOD_PREVIEW_LIMIT
@@ -67,8 +101,10 @@ export function Dashboard({
               <PiggyBank className="h-5 w-5 text-white" aria-hidden="true" />
             </div>
             <NumberFlow
-              value={totalSaved}
+              value={displaySaved}
               format={{ style: "currency", currency: "USD", maximumFractionDigits: 0 }}
+              transformTiming={{ duration: 750, easing: "ease-out" }}
+              spinTiming={{ duration: 750, easing: "ease-out" }}
               className="text-3xl font-bold tabular-nums text-white"
             />
             <span className="text-xs font-medium text-white/70">
@@ -84,12 +120,19 @@ export function Dashboard({
               <CreditCard className="h-5 w-5 text-white" aria-hidden="true" />
             </div>
             <NumberFlow
-              value={totalMonthly}
+              value={displayMonthly}
               format={{ style: "currency", currency: "USD", maximumFractionDigits: 0 }}
+              transformTiming={{ duration: 750, easing: "ease-out" }}
+              spinTiming={{ duration: 750, easing: "ease-out" }}
               className="text-3xl font-bold tabular-nums text-white"
             />
             <span className="text-xs font-medium text-white/60">
-              {activeCount} active {activeCount === 1 ? "sub" : "subs"}/mo
+              <NumberFlow
+                value={displayActive}
+                transformTiming={{ duration: 750, easing: "ease-out" }}
+                spinTiming={{ duration: 750, easing: "ease-out" }}
+                className="tabular-nums"
+              />{" "}active {activeCount === 1 ? "sub" : "subs"}/mo
             </span>
           </div>
         </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Star, ChevronRight, LogOut, Check } from "lucide-react"
+import { Star, ChevronRight, LogOut, Check, BellRing } from "lucide-react"
 import { AppShell } from "@/components/layout"
 import { Card } from "@/components/ui"
 import { useUser } from "@/hooks/useUser"
@@ -119,6 +119,8 @@ interface SettingsProps {
   activeTab: "home" | "subs" | "settings"
   onTabChange: (tab: "home" | "subs" | "settings") => void
   onUpgrade: () => void
+  onNotificationClick?: () => void
+  notificationCount?: number
 }
 
 interface ToggleRowProps {
@@ -156,8 +158,9 @@ function ToggleRow({ label, helper, enabled, onToggle, loading }: ToggleRowProps
   )
 }
 
-export function Settings({ activeTab, onTabChange, onUpgrade }: SettingsProps) {
+export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClick, notificationCount }: SettingsProps) {
   const {
+    id: userId,
     email,
     phoneNumber,
     emailRemindersEnabled,
@@ -168,6 +171,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade }: SettingsProps) {
     updateReminderPreset,
   } = useUser()
   const { isEnabled: pushEnabled, toggleNotifications, loading: pushLoading, isSupported } = usePushNotifications()
+  const [testingSent, setTestingSent] = useState(false)
 
   const [emailEnabled, setEmailEnabled] = useState(emailRemindersEnabled)
   const [smsEnabled, setSmsEnabled] = useState(smsRemindersEnabled)
@@ -253,7 +257,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade }: SettingsProps) {
   }
 
   return (
-    <AppShell activeTab={activeTab} onTabChange={onTabChange}>
+    <AppShell activeTab={activeTab} onTabChange={onTabChange} onNotificationClick={onNotificationClick} notificationCount={notificationCount}>
       <div className="flex flex-col gap-6 px-6 pt-4">
         <h1 className="text-2xl font-semibold text-text-primary">Settings</h1>
 
@@ -354,6 +358,38 @@ export function Settings({ activeTab, onTabChange, onUpgrade }: SettingsProps) {
             <ChevronRight className="h-5 w-5 text-text-muted" />
           </button>
         </Card>
+
+        {/* Dev: Test Notification */}
+        {process.env.NODE_ENV === "development" && (
+          <Card padding="none" className="overflow-hidden">
+            <button
+              onClick={async () => {
+                if (!userId) return
+                try {
+                  const { createTestNotification } = await import("@/lib/api/notifications")
+                  await createTestNotification(userId)
+                  setTestingSent(true)
+                  setTimeout(() => setTestingSent(false), 2000)
+                } catch (err) {
+                  console.error("Failed to create test notification:", err)
+                }
+              }}
+              className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/10">
+                  <BellRing className="h-4 w-4 text-amber-600" />
+                </div>
+                <div className="flex flex-col items-start">
+                  <span className="text-[15px] font-medium text-text-primary">
+                    {testingSent ? "Sent!" : "Send test notification"}
+                  </span>
+                  <span className="text-xs text-text-tertiary">Dev only — creates a random notification</span>
+                </div>
+              </div>
+            </button>
+          </Card>
+        )}
 
         {/* Sign Out */}
         <Card padding="none" className="overflow-hidden">

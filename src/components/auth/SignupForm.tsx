@@ -209,7 +209,7 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
         </div>
 
         <Button type="submit" size="md" className="w-full" disabled={loading}>
-          {loading ? "Creating account\u2026" : "Create account"}
+          {loading ? "Creating account…" : "Create account"}
         </Button>
       </form>
 

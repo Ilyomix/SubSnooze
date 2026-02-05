@@ -32,6 +32,8 @@ interface AllSubscriptionsProps {
   onSearch: (query: string) => void
   activeTab: "home" | "subs" | "settings"
   onTabChange: (tab: "home" | "subs" | "settings") => void
+  onNotificationClick?: () => void
+  notificationCount?: number
 }
 
 function SubscriptionItem({
@@ -110,6 +112,8 @@ export function AllSubscriptions({
   onSearch,
   activeTab,
   onTabChange,
+  onNotificationClick,
+  notificationCount,
 }: AllSubscriptionsProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [priceView, setPriceView] = useState<PriceView>(getInitialPriceView)
@@ -141,7 +145,7 @@ export function AllSubscriptions({
   const totalDisplay = priceView === "yearly" ? totalNormalized * 12 : totalNormalized
 
   return (
-    <AppShell activeTab={activeTab} onTabChange={onTabChange}>
+    <AppShell activeTab={activeTab} onTabChange={onTabChange} onNotificationClick={onNotificationClick} notificationCount={notificationCount}>
       <div className="flex flex-col gap-5 px-6 pt-4">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -188,7 +192,7 @@ export function AllSubscriptions({
             type="text"
             name="subscription-search"
             aria-label="Search subscriptions"
-            placeholder="Search subscriptions\u2026"
+            placeholder="Search subscriptions…"
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value)

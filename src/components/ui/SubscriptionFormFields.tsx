@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, Calendar } from "lucide-react"
 import { Card } from "./Card"
 import { calculateNextRenewalDate, formatLocalDate } from "@/lib/date-utils"
 import type { BillingCycle } from "@/types/database"
@@ -76,14 +76,15 @@ export function SubscriptionFormFields({
   return (
     <Card padding="none" className="overflow-hidden">
       {/* Price Row */}
-      <div className="flex items-center justify-between px-[18px] py-4">
+      <label htmlFor="price" className="flex cursor-pointer items-center justify-between px-[18px] py-4">
         <span className="text-[15px] font-medium text-text-primary">{resolvedPriceLabel}</span>
         <div className="flex items-center gap-1">
-          <span className="text-[15px] font-semibold text-text-primary">$</span>
+          <span className={`text-[15px] font-semibold ${readOnly ? "text-text-muted" : "text-text-primary"}`}>$</span>
           {readOnly ? (
             <span className="text-[15px] font-semibold text-text-muted">{value.price}</span>
           ) : (
             <input
+              id="price"
               type="text"
               name="price"
               inputMode="decimal"
@@ -96,11 +97,11 @@ export function SubscriptionFormFields({
             />
           )}
         </div>
-      </div>
+      </label>
       <div className="h-px bg-divider" />
 
       {/* Billing Cycle Row */}
-      <div className="flex items-center justify-between px-[18px] py-4">
+      <label htmlFor="billingCycle" className="flex cursor-pointer items-center justify-between px-[18px] py-4">
         <span className="text-[15px] font-medium text-text-primary">Billing cycle</span>
         {readOnly ? (
           <span className="text-[15px] font-semibold capitalize text-text-muted">
@@ -109,11 +110,12 @@ export function SubscriptionFormFields({
         ) : (
           <div className="relative flex items-center">
             <select
+              id="billingCycle"
               name="billingCycle"
               aria-label="Billing cycle"
               value={value.billingCycle}
               onChange={(e) => handleCycleChange(e.target.value as BillingCycle)}
-              className="min-w-20 appearance-none bg-transparent pr-5 text-right text-[15px] font-semibold capitalize text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+              className="min-w-24 appearance-none bg-transparent pr-7 text-right text-[15px] font-semibold capitalize text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
             >
               <option value="monthly">Monthly</option>
               <option value="yearly">Yearly</option>
@@ -122,26 +124,30 @@ export function SubscriptionFormFields({
             <ChevronDown className="pointer-events-none absolute right-0 h-4 w-4 text-text-muted" />
           </div>
         )}
-      </div>
-      <div className="h-px bg-divider" />
+      </label>
+        <div className="h-px bg-divider" />
 
       {/* Renewal Date Row */}
-      <div className="flex items-center justify-between px-[18px] py-4">
+      <label htmlFor="renewalDate" className="flex cursor-pointer items-center justify-between px-[18px] py-4">
         <span className="text-[15px] font-medium text-text-primary">{renewalLabel}</span>
         {readOnly ? (
           <span className="text-[15px] font-semibold text-text-muted">{formattedDate}</span>
         ) : (
-          <input
-            type="date"
-            name="renewalDate"
-            aria-label="Renewal date"
-            value={value.renewalDate}
-            min={today}
-            onChange={(e) => handleRenewalDateChange(e.target.value)}
-            className="min-w-28 appearance-none bg-transparent text-[15px] font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-          />
+          <div className="relative flex items-center">
+            <input
+              id="renewalDate"
+              type="date"
+              name="renewalDate"
+              aria-label="Renewal date"
+              value={value.renewalDate}
+              min={today}
+              onChange={(e) => handleRenewalDateChange(e.target.value)}
+              className="w-[12ch] appearance-none bg-transparent pr-5 text-right text-[15px] font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-datetime-edit-fields-wrapper]:p-0"
+            />
+            <Calendar className="pointer-events-none absolute right-0 h-4 w-4 text-text-muted" />
+          </div>
         )}
-      </div>
+      </label>
     </Card>
   )
 }

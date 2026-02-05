@@ -78,14 +78,6 @@ export function AddSubscriptionStep2({
             pricingHints={{ monthly: service.priceMonthly, yearly: service.priceYearly }}
           />
 
-          {/* Pricing hint if available */}
-          {(service.priceMonthly || service.priceYearly) && (
-            <p className="text-xs text-text-tertiary text-center">
-              {service.priceMonthly && `$${service.priceMonthly.toFixed(2)}/mo`}
-              {service.priceMonthly && service.priceYearly && " · "}
-              {service.priceYearly && `$${service.priceYearly.toFixed(2)}/yr`}
-            </p>
-          )}
         </div>
 
         {/* Sticky Save Button */}

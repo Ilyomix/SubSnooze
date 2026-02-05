@@ -156,7 +156,7 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
         </button>
 
         <Button type="submit" size="md" className="w-full" disabled={loading}>
-          {loading ? "Signing in\u2026" : "Sign in"}
+          {loading ? "Signing in…" : "Sign in"}
         </Button>
       </form>
 
