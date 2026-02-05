@@ -1,4 +1,9 @@
 import type { DbSubscription, DbNotification, BillingCycle } from "./database"
+import {
+  parseLocalDate,
+  formatLocalDate,
+  daysUntilRenewal as daysUntilRenewalUtil,
+} from "@/lib/date-utils"
 
 // Legacy status type for UI (maps from database status)
 export type SubscriptionStatus = "renewing_soon" | "good" | "cancelled"
@@ -42,16 +47,11 @@ export interface Notification {
 }
 
 // Transform database subscription to client model
-// Auto-advances renewal date if it's in the past (for active subscriptions)
+// Renewal date advancement happens server-side via cron job
 export function dbToSubscription(db: DbSubscription): Subscription {
-  const originalRenewalDate = new Date(db.renewal_date)
-
-  // Auto-advance renewal date if in the past (only for non-cancelled subscriptions)
-  const renewalDate = db.status !== "cancelled"
-    ? getNextRenewalDate(originalRenewalDate, db.billing_cycle)
-    : originalRenewalDate
-
-  const days = daysUntilRenewal(renewalDate)
+  // Parse as local date to avoid timezone issues
+  const renewalDate = parseLocalDate(db.renewal_date)
+  const days = daysUntilRenewalUtil(renewalDate)
 
   // Calculate status based on database status and days until renewal
   let status: SubscriptionStatus = "good"
@@ -95,7 +95,7 @@ export function subscriptionToDb(
     logo_color: sub.logoColor,
     price: sub.price,
     billing_cycle: sub.billingCycle,
-    renewal_date: sub.renewalDate.toISOString().split("T")[0],
+    renewal_date: formatLocalDate(sub.renewalDate),
     status: sub.status === "cancelled" ? "cancelled" : "active",
     cancel_url: sub.cancelUrl ?? null,
   }
@@ -116,43 +116,8 @@ export function dbToNotification(db: DbNotification): Notification {
   }
 }
 
-// Helper to calculate days until renewal
-export function daysUntilRenewal(renewalDate: Date): number {
-  // Compare dates only, ignoring time, to avoid timezone issues
-  // When a date string like "2026-02-04" is parsed, it becomes midnight UTC,
-  // but new Date() returns current local time. We need to compare just the dates.
-  const now = new Date()
-  const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
-  const renewalUTC = Date.UTC(renewalDate.getFullYear(), renewalDate.getMonth(), renewalDate.getDate())
-  const diffDays = Math.round((renewalUTC - todayUTC) / (1000 * 60 * 60 * 24))
-  return diffDays
-}
-
-// Helper to advance renewal date to next cycle if in the past
-export function getNextRenewalDate(renewalDate: Date, billingCycle: BillingCycle): Date {
-  const now = new Date()
-  now.setHours(0, 0, 0, 0) // Compare dates only, not time
-
-  const nextDate = new Date(renewalDate)
-  nextDate.setHours(0, 0, 0, 0)
-
-  // Keep advancing until the date is in the future
-  while (nextDate <= now) {
-    switch (billingCycle) {
-      case "weekly":
-        nextDate.setDate(nextDate.getDate() + 7)
-        break
-      case "monthly":
-        nextDate.setMonth(nextDate.getMonth() + 1)
-        break
-      case "yearly":
-        nextDate.setFullYear(nextDate.getFullYear() + 1)
-        break
-    }
-  }
-
-  return nextDate
-}
+// Re-export date utilities for backwards compatibility
+export const daysUntilRenewal = daysUntilRenewalUtil
 
 // Helper to get reminder stage (for UI display)
 export function getReminderStage(sub: Subscription): 0 | 1 | 2 | 3 {

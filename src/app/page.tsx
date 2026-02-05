@@ -18,6 +18,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications"
 import type { Subscription } from "@/types/subscription"
 import type { BillingCycle } from "@/types/database"
 import { getServiceBySlug, getServiceLogoUrl, getFallbackLogoUrl, getInitials, stringToColor, nameToDomain } from "@/lib/services"
+import { formatLocalDate } from "@/lib/date-utils"
 
 type Screen =
   | "dashboard"
@@ -39,7 +40,9 @@ export default function Home() {
     addSubscription,
     updateSubscription,
     deleteSubscription,
+    recordCancelAttempt,
     verifyCancellation,
+    resetCancelAttempt,
     restoreSubscription,
   } = useSubscriptions()
   const { notifications, unreadCount, markAsRead } = useNotifications()
@@ -49,6 +52,7 @@ export default function Home() {
   const [modal, setModal] = useState<Modal>(null)
   const [activeTab, setActiveTab] = useState<"home" | "subs" | "settings">("home")
   const [selectedSub, setSelectedSub] = useState<Subscription | null>(null)
+  const [previousScreen, setPreviousScreen] = useState<Screen>("dashboard")
   const [selectedService, setSelectedService] = useState<string | null>(null)
   const [customServiceName, setCustomServiceName] = useState<string | null>(null)
   const [totalSaved, setTotalSaved] = useState(0)
@@ -101,9 +105,19 @@ export default function Home() {
   const handleSubscriptionClick = (id: string) => {
     const sub = subscriptions.find((s) => s.id === id)
     if (sub) {
+      setPreviousScreen(screen)
       setSelectedSub(sub)
       setScreen("manage")
     }
+  }
+
+  const returnToPrevious = () => {
+    setSelectedSub(null)
+    setScreen(previousScreen)
+    // Sync activeTab to match the screen
+    if (previousScreen === "dashboard") setActiveTab("home")
+    else if (previousScreen === "allSubs") setActiveTab("subs")
+    else if (previousScreen === "settings") setActiveTab("settings")
   }
 
   const handleAddSubscription = async (data: {
@@ -122,7 +136,7 @@ export default function Home() {
         logo_color: data.logoColor,
         price: data.price,
         billing_cycle: data.billingCycle,
-        renewal_date: data.renewalDate.toISOString().split("T")[0],
+        renewal_date: formatLocalDate(data.renewalDate),
         cancel_url: data.cancelUrl,
       })
       setScreen("dashboard")
@@ -276,7 +290,9 @@ export default function Home() {
 
             handleAddSubscription({
               name: serviceInfo.name,
-              logo: getInitials(serviceInfo.name),
+              logo: serviceInfo.domain
+                ? getFallbackLogoUrl(serviceInfo.domain)
+                : getInitials(serviceInfo.name),
               logoColor: serviceInfo.logoColor,
               price: priceNum,
               billingCycle: data.cycle as BillingCycle,
@@ -296,18 +312,14 @@ export default function Home() {
       <>
         <SubscriptionManagement
           subscription={selectedSub}
-          onBack={() => {
-            setSelectedSub(null)
-            setScreen("dashboard")
-          }}
+          onBack={returnToPrevious}
           onRestore={async () => {
             try {
               await restoreSubscription(selectedSub.id)
             } catch (error) {
               console.error("Failed to restore subscription:", error)
             }
-            setSelectedSub(null)
-            setScreen("dashboard")
+            returnToPrevious()
           }}
           onDelete={async () => {
             try {
@@ -315,8 +327,7 @@ export default function Home() {
             } catch (error) {
               console.error("Failed to delete subscription:", error)
             }
-            setSelectedSub(null)
-            setScreen("dashboard")
+            returnToPrevious()
           }}
           onSave={async (data) => {
             try {
@@ -328,8 +339,28 @@ export default function Home() {
             } catch (error) {
               console.error("Failed to update subscription:", error)
             }
-            setSelectedSub(null)
-            setScreen("dashboard")
+            returnToPrevious()
+          }}
+          onCancelProceed={async () => {
+            try {
+              await recordCancelAttempt(selectedSub.id)
+            } catch (error) {
+              console.error("Failed to record cancel attempt:", error)
+            }
+          }}
+          onCancelConfirm={async () => {
+            try {
+              await verifyCancellation(selectedSub.id)
+            } catch (error) {
+              console.error("Failed to verify cancellation:", error)
+            }
+          }}
+          onCancelNotYet={async () => {
+            try {
+              await resetCancelAttempt(selectedSub.id)
+            } catch (error) {
+              console.error("Failed to reset cancel attempt:", error)
+            }
           }}
         />
       </>

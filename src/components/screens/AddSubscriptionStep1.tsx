@@ -2,13 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { Search, Loader2 } from "lucide-react"
-import Image from "next/image"
-import { colord } from "colord"
 import { DetailShell } from "@/components/layout"
-import { Card } from "@/components/ui"
+import { Card, ServiceIcon } from "@/components/ui"
 import {
-  getFallbackLogoUrl,
-  getInitials,
   stringToColor,
   getPopularServices,
   searchServices,
@@ -19,90 +15,6 @@ interface AddSubscriptionStep1Props {
   onBack: () => void
   onSelectService: (serviceId: string, customName?: string) => void
   onSearch: (query: string) => void
-}
-
-function ServiceLogo({
-  service,
-  name,
-  domain,
-  size = 48,
-}: {
-  service?: SubscriptionService | null
-  name: string
-  domain: string
-  size?: number
-}) {
-  // 0 = primary (from DB), 1 = fallback (Google favicon), 2 = initials
-  const [logoStage, setLogoStage] = useState(() => {
-    // Start at stage 1 (Google favicon) if no DB logo
-    return service?.logo_url ? 0 : 1
-  })
-
-  const logoUrl = logoStage === 0
-    ? service?.logo_url
-    : logoStage === 1
-      ? getFallbackLogoUrl(domain)
-      : null
-
-  const handleError = () => {
-    setLogoStage((prev) => prev + 1)
-  }
-
-  // Reset when service/domain changes
-  useEffect(() => {
-    setLogoStage(service?.logo_url ? 0 : 1)
-  }, [service?.id, service?.logo_url, domain])
-
-  // Squircle border radius (~22% of size)
-  const borderRadius = Math.round(size * 0.22)
-  const color = service?.logo_color || stringToColor(name)
-
-  // Show initials as final fallback
-  if (logoStage >= 2) {
-    return (
-      <div
-        className="flex items-center justify-center text-white font-bold border border-divider"
-        style={{
-          backgroundColor: color,
-          width: size,
-          height: size,
-          fontSize: size * 0.35,
-          borderRadius,
-        }}
-      >
-        {getInitials(name)}
-      </div>
-    )
-  }
-
-  const padding = Math.round(size * 0.12) // Small padding
-
-  // Create a light tinted background from the brand color
-  const bgColor = colord(color).lighten(0.35).desaturate(0.1).toHex()
-
-  // Image with padding and tinted background
-  return (
-    <div
-      className="relative overflow-hidden flex items-center justify-center border border-divider"
-      style={{
-        backgroundColor: bgColor,
-        width: size,
-        height: size,
-        borderRadius,
-        padding,
-      }}
-    >
-      <Image
-        src={logoUrl!}
-        alt={name}
-        width={size - padding * 2}
-        height={size - padding * 2}
-        className="object-contain"
-        onError={handleError}
-        unoptimized
-      />
-    </div>
-  )
 }
 
 function capitalizeWords(str: string): string {
@@ -129,18 +41,11 @@ function CustomServiceCard({
       aria-label={`Add ${capitalizedName} as custom subscription`}
       className="flex flex-col items-center gap-2 rounded-xl bg-surface p-4 motion-safe:transition-colors hover:bg-surface/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 border-2 border-dashed border-primary/30"
     >
-      <div
-        className="flex items-center justify-center text-white font-bold border border-divider"
-        style={{
-          backgroundColor: color,
-          width: 48,
-          height: 48,
-          fontSize: 48 * 0.35,
-          borderRadius: Math.round(48 * 0.22),
-        }}
-      >
-        {getInitials(capitalizedName)}
-      </div>
+      <ServiceIcon
+        name={capitalizedName}
+        logoColor={color}
+        size={48}
+      />
       <span className="text-sm font-medium text-primary text-center line-clamp-1">
         Add "{capitalizedName}"
       </span>
@@ -277,10 +182,11 @@ export function AddSubscriptionStep1({
                   aria-label={`Select ${service.name}`}
                   className="flex flex-col items-center gap-2 rounded-xl bg-surface p-4 motion-safe:transition-colors hover:bg-surface/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
-                  <ServiceLogo
-                    service={service}
+                  <ServiceIcon
                     name={service.name}
+                    logoColor={service.logo_color}
                     domain={service.domain}
+                    size={48}
                   />
                   <span className="text-sm font-medium text-text-primary text-center line-clamp-1">
                     {service.name}

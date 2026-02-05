@@ -1,6 +1,7 @@
-import { cn } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 import { ChevronRight, Bell } from "lucide-react"
 import { Badge } from "./Badge"
+import { ServiceIcon } from "./ServiceIcon"
 import type { Subscription } from "@/types/subscription"
 import { daysUntilRenewal } from "@/types/subscription"
 
@@ -15,8 +16,8 @@ function getReminderBadge(daysUntil: number) {
   if (daysUntil <= 0) {
     return (
       <Badge variant="urgent">
-        <Bell className="h-3 w-3" />
-        Today!
+        <Bell className="h-3 w-3" aria-hidden="true" />
+        Renews today
       </Badge>
     )
   }
@@ -24,8 +25,8 @@ function getReminderBadge(daysUntil: number) {
   if (daysUntil === 1) {
     return (
       <Badge variant="urgent">
-        <Bell className="h-3 w-3" />
-        Tomorrow!
+        <Bell className="h-3 w-3" aria-hidden="true" />
+        Renews tomorrow
       </Badge>
     )
   }
@@ -33,8 +34,8 @@ function getReminderBadge(daysUntil: number) {
   if (daysUntil <= 3) {
     return (
       <Badge variant="warning">
-        <Bell className="h-3 w-3" />
-        {daysUntil} days
+        <Bell className="h-3 w-3" aria-hidden="true" />
+        Renews in {daysUntil} days
       </Badge>
     )
   }
@@ -42,8 +43,8 @@ function getReminderBadge(daysUntil: number) {
   if (daysUntil <= 7) {
     return (
       <Badge variant="reminder">
-        <Bell className="h-3 w-3" />
-        {daysUntil} days
+        <Bell className="h-3 w-3" aria-hidden="true" />
+        Renews in {daysUntil} days
       </Badge>
     )
   }
@@ -81,51 +82,48 @@ export function SubscriptionRow({ subscription, onClick, showReminderStage = tru
       <div className={cn("h-full w-1 self-stretch", accentColor)} />
 
       {/* Content */}
-      <div className="flex flex-1 items-center justify-between p-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-1 items-center justify-between p-4 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           {/* Logo - squircle style */}
-          <div
-            className="flex h-11 w-11 items-center justify-center text-lg font-bold text-white"
-            style={{
-              backgroundColor: subscription.logoColor,
-              borderRadius: 10, // ~22% of 44px for squircle
-            }}
-          >
-            {subscription.logo}
-          </div>
+          <ServiceIcon
+            name={subscription.name}
+            logoColor={subscription.logoColor}
+            logoUrl={subscription.logo?.startsWith("http") ? subscription.logo : undefined}
+            size={44}
+          />
 
           {/* Info */}
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-0.5 min-w-0">
             <span className={cn(
-              "font-semibold text-text-primary",
+              "font-semibold text-text-primary truncate",
               isCancelled && "line-through"
             )}>
               {subscription.name}
             </span>
-            <span className="text-sm text-text-tertiary">
+            <span className="text-sm text-text-tertiary truncate">
               {isCancelled
-                ? `Cancelled · Was ${subscription.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
-                : `Renews ${subscription.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+                ? `Cancelled \u00B7 Was due ${subscription.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+                : `Next renewal \u00B7 ${subscription.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
               }
             </span>
           </div>
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {showReminderStage && !isCancelled && getReminderBadge(daysUntil)}
           {!showReminderStage && isRenewingSoon && (
             <Badge variant="warning">
-              {daysUntil <= 0 ? "Today" : daysUntil === 1 ? "Tomorrow" : `in ${daysUntil} days`}
+              {daysUntil <= 0 ? "Renews today" : daysUntil === 1 ? "Renews tomorrow" : `Renews in ${daysUntil} days`}
             </Badge>
           )}
           <span className={cn(
-            "font-semibold text-text-primary",
+            "font-semibold tabular-nums text-text-primary",
             isCancelled && "line-through"
           )}>
-            ${subscription.price.toFixed(2)}
+            {formatCurrency(subscription.price)}
           </span>
-          <ChevronRight className="h-5 w-5 text-text-muted" />
+          <ChevronRight className="h-5 w-5 text-text-muted" aria-hidden="true" />
         </div>
       </div>
     </button>

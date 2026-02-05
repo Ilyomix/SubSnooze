@@ -3,6 +3,7 @@
 import { PiggyBank, Plus, XCircle } from "lucide-react"
 import { AppShell } from "@/components/layout"
 import { Card, Button, SectionHeader, SubscriptionRow } from "@/components/ui"
+import { formatCurrency } from "@/lib/utils"
 import type { Subscription } from "@/types/subscription"
 
 interface DashboardProps {
@@ -49,11 +50,11 @@ export function Dashboard({
         {/* Money Saved Card */}
         <Card className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <PiggyBank className="h-5 w-5 text-primary" />
+            <PiggyBank className="h-5 w-5 text-primary" aria-hidden="true" />
             <span className="text-[15px] font-medium text-text-secondary">You've saved</span>
           </div>
-          <span className="text-5xl font-bold tracking-tight text-primary">
-            ${totalSaved}
+          <span className="text-5xl font-bold tabular-nums tracking-tight text-primary">
+            {formatCurrency(totalSaved, true)}
           </span>
           <span className="text-sm text-text-secondary">
             this year by canceling unused subscriptions
@@ -100,7 +101,7 @@ export function Dashboard({
         {cancelled.length > 0 && (
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
-              <XCircle className="h-4 w-4 text-text-muted" />
+              <XCircle className="h-4 w-4 text-text-muted" aria-hidden="true" />
               <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
                 Cancelled ({cancelled.length})
               </span>

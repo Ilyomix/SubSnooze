@@ -1,11 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown } from "lucide-react"
-import Image from "next/image"
 import { DetailShell } from "@/components/layout"
-import { Card, Button } from "@/components/ui"
-import { getInitials, getFallbackLogoUrl } from "@/lib/services"
+import { Button, SubscriptionFormFields, ServiceIcon } from "@/components/ui"
+import type { SubscriptionFormData } from "@/components/ui"
+import { calculateNextRenewalDate, parseLocalDate } from "@/lib/date-utils"
+import type { BillingCycle } from "@/types/database"
 
 interface ServiceInfo {
   id: string
@@ -25,79 +25,6 @@ interface AddSubscriptionStep2Props {
   onSave: (data: { price: string; cycle: string; date: Date }) => void
 }
 
-function ServiceLogoHeader({ service }: { service: ServiceInfo }) {
-  // 0 = primary, 1 = fallback (Google), 2 = initials
-  const [logoStage, setLogoStage] = useState(0)
-  const isUrl = service.logo.startsWith("http")
-
-  const logoUrl = logoStage === 0
-    ? service.logo
-    : logoStage === 1 && service.domain
-      ? getFallbackLogoUrl(service.domain)
-      : null
-
-  const handleError = () => {
-    setLogoStage((prev) => prev + 1)
-  }
-
-  // Squircle border radius (~22% of 36px = 8px)
-  const size = 36
-  const borderRadius = 8
-  const padding = 4
-
-  if (!isUrl || logoStage >= 2 || !logoUrl) {
-    return (
-      <div
-        className="flex items-center justify-center text-sm font-bold text-white"
-        style={{
-          backgroundColor: service.logoColor,
-          width: size,
-          height: size,
-          borderRadius,
-        }}
-      >
-        {getInitials(service.name)}
-      </div>
-    )
-  }
-
-  return (
-    <div
-      className="overflow-hidden flex items-center justify-center"
-      style={{
-        backgroundColor: service.logoColor,
-        width: size,
-        height: size,
-        borderRadius,
-        padding,
-      }}
-    >
-      <Image
-        src={logoUrl}
-        alt={service.name}
-        width={size - padding * 2}
-        height={size - padding * 2}
-        className="object-contain"
-        onError={handleError}
-        unoptimized
-      />
-    </div>
-  )
-}
-
-function calculateNextRenewalDate(cycle: string): string {
-  const today = new Date()
-  const nextDate = new Date(today)
-  if (cycle === "weekly") {
-    nextDate.setDate(today.getDate() + 7)
-  } else if (cycle === "yearly") {
-    nextDate.setFullYear(today.getFullYear() + 1)
-  } else {
-    nextDate.setMonth(today.getMonth() + 1)
-  }
-  return nextDate.toISOString().split("T")[0]
-}
-
 export function AddSubscriptionStep2({
   service,
   onBack,
@@ -108,124 +35,68 @@ export function AddSubscriptionStep2({
     ? service.priceMonthly.toFixed(2)
     : ""
 
-  const [price, setPrice] = useState(defaultPrice)
-  const [cycle, setCycle] = useState("monthly")
-  const [renewalDate, setRenewalDate] = useState(calculateNextRenewalDate("monthly"))
-
-  // Minimum date is today
-  const today = new Date().toISOString().split("T")[0]
-
-  // Update price and renewal date when cycle changes
-  const handleCycleChange = (newCycle: string) => {
-    setCycle(newCycle)
-    setRenewalDate(calculateNextRenewalDate(newCycle))
-
-    // Auto-fill price based on cycle if we have database pricing
-    if (newCycle === "yearly" && service.priceYearly) {
-      setPrice(service.priceYearly.toFixed(2))
-    } else if (newCycle === "monthly" && service.priceMonthly) {
-      setPrice(service.priceMonthly.toFixed(2))
-    }
-  }
+  const [formData, setFormData] = useState<SubscriptionFormData>({
+    price: defaultPrice,
+    billingCycle: "monthly",
+    renewalDate: calculateNextRenewalDate("monthly"),
+  })
 
   return (
     <DetailShell
       title={service.name}
       onBack={onBack}
-      headerRight={<ServiceLogoHeader service={service} />}
+      headerRight={
+        <ServiceIcon
+          name={service.name}
+          logoColor={service.logoColor}
+          logoUrl={service.logo.startsWith("http") ? service.logo : undefined}
+          domain={service.domain ?? undefined}
+          size={36}
+        />
+      }
     >
-      <div className="flex flex-1 flex-col gap-8 px-6 pt-4">
+      <div className="flex min-h-full flex-col">
+        <div className="flex flex-1 flex-col gap-8 px-6 pt-4 pb-32">
 
-        {/* Progress Indicator */}
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-[13px] font-medium text-text-secondary">Step 2 of 2</span>
-          <div className="flex items-center gap-2">
-            <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-            <div className="h-0.5 w-10 rounded-sm bg-primary" />
-            <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+          {/* Progress Indicator */}
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[13px] font-medium text-text-secondary">Step 2 of 2</span>
+            <div className="flex items-center gap-2">
+              <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+              <div className="h-0.5 w-10 rounded-sm bg-primary" />
+              <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+            </div>
+            <span className="text-xs text-text-tertiary">Almost there… Add the details</span>
           </div>
-          <span className="text-xs text-text-tertiary">Almost there… Add the details</span>
+
+          {/* Form */}
+          <SubscriptionFormFields
+            value={formData}
+            onChange={setFormData}
+            priceLabel={(cycle: BillingCycle) => cycle === "yearly" ? "Yearly price" : "Monthly price"}
+            autoCalculateRenewalOnCycleChange
+            pricingHints={{ monthly: service.priceMonthly, yearly: service.priceYearly }}
+          />
+
+          {/* Pricing hint if available */}
+          {(service.priceMonthly || service.priceYearly) && (
+            <p className="text-xs text-text-tertiary text-center">
+              {service.priceMonthly && `$${service.priceMonthly.toFixed(2)}/mo`}
+              {service.priceMonthly && service.priceYearly && " · "}
+              {service.priceYearly && `$${service.priceYearly.toFixed(2)}/yr`}
+            </p>
+          )}
         </div>
 
-        {/* Form - Card row layout matching subscription detail */}
-        <Card padding="none" className="overflow-hidden">
-          {/* Price Row */}
-          <div className="flex items-center justify-between px-[18px] py-4">
-            <span className="text-[15px] font-medium text-text-primary">
-              {cycle === "yearly" ? "Yearly price" : "Monthly price"}
-            </span>
-            <div className="flex items-center gap-1">
-              <span className="text-[15px] font-semibold text-text-primary">$</span>
-              <input
-                type="text"
-                name="price"
-                inputMode="decimal"
-                placeholder="0.00"
-                aria-label="Price"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="min-w-1 tabular-nums bg-transparent text-right text-[15px] font-semibold text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-                style={{ width: `${Math.max(price.length || 4, 4) / 1.66}em` }}
-              />
-            </div>
-          </div>
-          <div className="h-px bg-divider" />
-
-          {/* Billing Cycle Row */}
-          <div className="flex items-center justify-between px-[18px] py-4">
-            <span className="text-[15px] font-medium text-text-primary">Billing cycle</span>
-            <div className="relative flex items-center">
-              <select
-                name="billingCycle"
-                aria-label="Billing cycle"
-                value={cycle}
-                onChange={(e) => handleCycleChange(e.target.value)}
-                className="min-w-20 appearance-none bg-transparent pr-5 text-right text-[15px] font-semibold capitalize text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-              >
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-                <option value="weekly">Weekly</option>
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-0 h-4 w-4 text-text-muted" />
-            </div>
-          </div>
-          <div className="h-px bg-divider" />
-
-          {/* Renewal Date Row */}
-          <div className="flex items-center justify-between px-[18px] py-4">
-            <span className="text-[15px] font-medium text-text-primary">Next renewal</span>
-            <input
-              type="date"
-              name="renewalDate"
-              aria-label="Next renewal date"
-              value={renewalDate}
-              min={today}
-              onChange={(e) => {
-                if (e.target.value && e.target.value >= today) {
-                  setRenewalDate(e.target.value)
-                }
-              }}
-              className="min-w-28 appearance-none bg-transparent text-[15px] font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-            />
-          </div>
-        </Card>
-
-        {/* Pricing hint if available */}
-        {(service.priceMonthly || service.priceYearly) && (
-          <p className="text-xs text-text-tertiary text-center">
-            {service.priceMonthly && `$${service.priceMonthly.toFixed(2)}/mo`}
-            {service.priceMonthly && service.priceYearly && " · "}
-            {service.priceYearly && `$${service.priceYearly.toFixed(2)}/yr`}
-          </p>
-        )}
-
-        <div className="flex-1" />
-
-        {/* Save Button */}
-        <div className="pb-8">
+        {/* Sticky Save Button */}
+        <div className="fixed bottom-0 left-0 right-0 border-t border-divider bg-surface px-6 pt-4 pb-[max(2rem,env(safe-area-inset-bottom))]">
           <Button
             variant="primary"
-            onClick={() => onSave({ price, cycle, date: new Date(renewalDate) })}
+            onClick={() => onSave({
+              price: formData.price,
+              cycle: formData.billingCycle,
+              date: parseLocalDate(formData.renewalDate),
+            })}
             className="w-full"
           >
             Save subscription
