@@ -45,7 +45,7 @@ export default function Home() {
     resetCancelAttempt,
     restoreSubscription,
   } = useSubscriptions()
-  const { notifications, unreadCount, markAsRead } = useNotifications()
+  const { notifications, unreadCount, markAsRead, markAsUnread, deleteNotification: deleteNotif, deleteAllNotifications, hasMore, loadingMore, loadMore } = useNotifications()
   const { requestPermission, permission } = usePushNotifications()
 
   const [screen, setScreen] = useState<Screen>("dashboard")
@@ -77,7 +77,7 @@ export default function Home() {
         if (s.billingCycle === "weekly") return sum + s.price * 4.33
         return sum + s.price
       }, 0)
-    setTotalSaved(Math.round(cancelledTotal))
+    setTotalSaved(cancelledTotal)
   }, [subscriptions])
 
   // Show loading state while auth is being checked
@@ -168,15 +168,26 @@ export default function Home() {
     }
   }
 
+  const handleNotificationNav = () => {
+    setPreviousScreen(screen)
+    setScreen("notifications")
+  }
+
   // Render screens
   if (screen === "notifications") {
     return (
       <Notifications
         notifications={notifications}
-        onBack={() => setScreen("dashboard")}
+        onBack={returnToPrevious}
         onNotificationClick={handleNotificationClick}
         onVerifyCancellation={handleVerifyCancellationFromNotification}
         onRemindAgain={handleRemindAgain}
+        onDelete={deleteNotif}
+        onDeleteAll={deleteAllNotifications}
+        onMarkAsUnread={markAsUnread}
+        hasMore={hasMore}
+        loadingMore={loadingMore}
+        onLoadMore={loadMore}
       />
     )
   }
@@ -362,6 +373,11 @@ export default function Home() {
               console.error("Failed to reset cancel attempt:", error)
             }
           }}
+          onCancelComplete={() => {
+            setSelectedSub(null)
+            setScreen("dashboard")
+            setActiveTab("home")
+          }}
         />
       </>
     )
@@ -375,6 +391,8 @@ export default function Home() {
         onSearch={() => {}}
         activeTab={activeTab}
         onTabChange={handleTabChange}
+        onNotificationClick={handleNotificationNav}
+        notificationCount={unreadCount}
       />
     )
   }
@@ -386,6 +404,8 @@ export default function Home() {
           activeTab={activeTab}
           onTabChange={handleTabChange}
           onUpgrade={() => setModal("upgrade")}
+          onNotificationClick={handleNotificationNav}
+          notificationCount={unreadCount}
         />
         {modal === "upgrade" && (
           <UpgradeModal
@@ -402,10 +422,11 @@ export default function Home() {
     <Dashboard
       userName={firstName}
       totalSaved={totalSaved}
+      totalMonthly={totalMonthly}
       subscriptions={subscriptions}
       onAddSubscription={() => setScreen("addStep1")}
       onSubscriptionClick={handleSubscriptionClick}
-      onNotificationClick={() => setScreen("notifications")}
+      onNotificationClick={handleNotificationNav}
       notificationCount={unreadCount}
       activeTab={activeTab}
       onTabChange={handleTabChange}

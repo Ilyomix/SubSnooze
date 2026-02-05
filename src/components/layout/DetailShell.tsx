@@ -8,6 +8,7 @@ interface DetailShellProps {
   title?: string
   onBack: () => void
   headerRight?: ReactNode
+  headerActions?: ReactNode
 }
 
 export function DetailShell({
@@ -15,6 +16,7 @@ export function DetailShell({
   title,
   onBack,
   headerRight,
+  headerActions,
 }: DetailShellProps) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -35,7 +37,11 @@ export function DetailShell({
             <h1 className="text-lg font-semibold text-text-primary">{title}</h1>
           )}
         </div>
-
+        {headerActions && (
+          <div className="flex items-center gap-2">
+            {headerActions}
+          </div>
+        )}
       </header>
 
       {/* Main Content */}

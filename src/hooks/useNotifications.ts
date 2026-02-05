@@ -11,11 +11,14 @@ export function useNotifications() {
   const { id: userId } = useUser()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const [page, setPage] = useState(0)
+  const [hasMore, setHasMore] = useState(false)
 
   const supabase = createClient()
 
-  // Fetch notifications
+  // Fetch first page of notifications
   const fetchNotifications = useCallback(async () => {
     if (!userId) {
       setNotifications([])
@@ -25,8 +28,11 @@ export function useNotifications() {
 
     try {
       setLoading(true)
-      const data = await api.getNotifications(userId)
-      setNotifications(data.map(dbToNotification))
+      setPage(0)
+      const { data, total } = await api.getNotifications(userId, 0)
+      const mapped = data.map(dbToNotification)
+      setNotifications(mapped)
+      setHasMore(mapped.length < total)
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Failed to fetch notifications"))
@@ -34,6 +40,25 @@ export function useNotifications() {
       setLoading(false)
     }
   }, [userId])
+
+  // Load next page
+  const loadMore = useCallback(async () => {
+    if (!userId || loadingMore || !hasMore) return
+
+    try {
+      setLoadingMore(true)
+      const nextPage = page + 1
+      const { data, total } = await api.getNotifications(userId, nextPage)
+      const mapped = data.map(dbToNotification)
+      setNotifications((prev) => [...prev, ...mapped])
+      setPage(nextPage)
+      setHasMore(notifications.length + mapped.length < total)
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error("Failed to load more notifications"))
+    } finally {
+      setLoadingMore(false)
+    }
+  }, [userId, loadingMore, hasMore, page, notifications.length])
 
   // Initial fetch
   useEffect(() => {
@@ -80,7 +105,8 @@ export function useNotifications() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [userId, supabase])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
 
   // Mark single notification as read
   const markAsRead = async (id: string) => {
@@ -91,6 +117,21 @@ export function useNotifications() {
 
     try {
       await api.markAsRead(id)
+    } catch (err) {
+      setNotifications(prevNotifs)
+      throw err
+    }
+  }
+
+  // Mark single notification as unread
+  const markAsUnread = async (id: string) => {
+    const prevNotifs = notifications
+    setNotifications((prev) =>
+      prev.map((notif) => (notif.id === id ? { ...notif, read: false } : notif))
+    )
+
+    try {
+      await api.markAsUnread(id)
     } catch (err) {
       setNotifications(prevNotifs)
       throw err
@@ -151,9 +192,13 @@ export function useNotifications() {
     read,
     unreadCount,
     loading,
+    loadingMore,
+    hasMore,
     error,
     refetch: fetchNotifications,
+    loadMore,
     markAsRead,
+    markAsUnread,
     markAllAsRead,
     deleteNotification,
     deleteAllNotifications,

@@ -82,7 +82,8 @@ export function useSubscriptions() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [userId, supabase])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
 
   // Add subscription (with optimistic update)
   const addSubscription = async (

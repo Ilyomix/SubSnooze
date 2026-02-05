@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils"
 import { ArrowLeft, Bell } from "lucide-react"
 import { type ReactNode } from "react"
+import NumberFlow from "@number-flow/react"
 
 interface HeaderProps {
   title?: string
@@ -59,8 +60,8 @@ export function Header({
         >
           <Bell className="h-[22px] w-[22px] text-text-primary" />
           {notificationCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white">
-              {notificationCount}
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1">
+              <NumberFlow value={notificationCount} className="text-[11px] font-bold tabular-nums text-white" />
             </span>
           )}
         </button>

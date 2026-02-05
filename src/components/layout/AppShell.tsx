@@ -3,12 +3,12 @@
 import { type ReactNode } from "react"
 import { TabBar } from "./TabBar"
 import { Bell } from "lucide-react"
+import NumberFlow from "@number-flow/react"
 
 interface AppShellProps {
   children: ReactNode
   activeTab: "home" | "subs" | "settings"
   onTabChange: (tab: "home" | "subs" | "settings") => void
-  showNotification?: boolean
   onNotificationClick?: () => void
   notificationCount?: number
 }
@@ -17,7 +17,6 @@ export function AppShell({
   children,
   activeTab,
   onTabChange,
-  showNotification,
   onNotificationClick,
   notificationCount = 0,
 }: AppShellProps) {
@@ -32,16 +31,16 @@ export function AppShell({
           <span className="text-lg font-semibold text-text-primary">SubSnooze</span>
         </div>
 
-        {showNotification && (
+        {onNotificationClick && (
           <button
             onClick={onNotificationClick}
             aria-label={`Notifications${notificationCount > 0 ? `, ${notificationCount} unread` : ""}`}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
-            <Bell className="h-5 w-5 text-text-primary" />
+            <Bell className="h-5 w-5 text-primary" />
             {notificationCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white">
-                {notificationCount}
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1">
+                <NumberFlow value={notificationCount} className="text-[11px] font-bold tabular-nums text-white" />
               </span>
             )}
           </button>
