@@ -22,6 +22,115 @@ import type { BillingCycle } from "@/types/database"
 import { getServiceBySlug, getServiceLogoUrl, getFallbackLogoUrl, getInitials, stringToColor, nameToDomain } from "@/lib/services"
 import { formatLocalDate } from "@/lib/date-utils"
 
+// Extracted outside Home render to prevent remount on every re-render (IC-5/ADD2-5/NAV-7)
+function ServiceStep2Loader({
+  selectedService,
+  customServiceName,
+  onBack,
+  onAdd,
+}: {
+  selectedService: string
+  customServiceName: string | null
+  onBack: () => void
+  onAdd: (data: { name: string; logo: string; logoColor: string; price: number; billingCycle: BillingCycle; renewalDate: Date; cancelUrl?: string }) => void
+}) {
+  const [serviceInfo, setServiceInfo] = useState<{
+    id: string
+    name: string
+    logo: string
+    logoColor: string
+    domain: string | null
+    priceMonthly?: number | null
+    priceYearly?: number | null
+    cancelUrl?: string | null
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const isDbService = selectedService.startsWith("service:")
+  const serviceSlug = isDbService ? selectedService.replace("service:", "") : null
+  const customName = selectedService.startsWith("custom:")
+    ? selectedService.replace("custom:", "")
+    : customServiceName
+
+  useEffect(() => {
+    async function loadService() {
+      if (serviceSlug) {
+        const dbService = await getServiceBySlug(serviceSlug)
+        if (dbService) {
+          setServiceInfo({
+            id: dbService.id,
+            name: dbService.name,
+            logo: getServiceLogoUrl(dbService, dbService.domain),
+            logoColor: dbService.logo_color,
+            domain: dbService.domain,
+            priceMonthly: dbService.price_monthly,
+            priceYearly: dbService.price_yearly,
+            cancelUrl: dbService.cancel_url,
+          })
+        } else {
+          const fallbackName = serviceSlug
+          setServiceInfo({
+            id: selectedService,
+            name: fallbackName,
+            logo: getFallbackLogoUrl(nameToDomain(fallbackName)),
+            logoColor: stringToColor(fallbackName),
+            domain: nameToDomain(fallbackName),
+          })
+        }
+      } else if (customName) {
+        const domain = nameToDomain(customName)
+        setServiceInfo({
+          id: selectedService,
+          name: customName,
+          logo: getFallbackLogoUrl(domain),
+          logoColor: stringToColor(customName),
+          domain: domain,
+        })
+      } else {
+        setServiceInfo({
+          id: selectedService,
+          name: "Unknown Service",
+          logo: "",
+          logoColor: "#6366f1",
+          domain: null,
+        })
+      }
+      setLoading(false)
+    }
+    loadService()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedService])
+
+  if (loading || !serviceInfo) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 motion-safe:animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    )
+  }
+
+  return (
+    <AddSubscriptionStep2
+      service={serviceInfo}
+      onBack={onBack}
+      onSave={async (data) => {
+        const priceNum = parseFloat(data.price.replace(/[^0-9.]/g, "")) || 0
+        onAdd({
+          name: serviceInfo.name,
+          logo: serviceInfo.domain
+            ? getFallbackLogoUrl(serviceInfo.domain)
+            : getInitials(serviceInfo.name),
+          logoColor: serviceInfo.logoColor,
+          price: priceNum,
+          billingCycle: data.cycle as BillingCycle,
+          renewalDate: data.date,
+          cancelUrl: serviceInfo.cancelUrl ?? undefined,
+        })
+      }}
+    />
+  )
+}
+
 type Screen =
   | "dashboard"
   | "allSubs"
@@ -196,9 +305,16 @@ export default function Home() {
     }
   }
 
-  const handleNotificationClick = (id: string) => {
+  const handleNotificationClick = (id: string, subscriptionId?: string) => {
     markAsRead(id)
-    // Could navigate to related subscription here if needed
+    // Navigate to the related subscription if available
+    if (subscriptionId) {
+      const sub = subscriptions.find((s) => s.id === subscriptionId)
+      if (sub) {
+        navigateTo("manage", { sub, savePrevious: "notifications" })
+        return
+      }
+    }
   }
 
   const handleVerifyCancellationFromNotification = async (subscriptionId: string) => {
@@ -228,7 +344,7 @@ export default function Home() {
       <Notifications
         notifications={notifications}
         onBack={returnToPrevious}
-        onNotificationClick={handleNotificationClick}
+        onNotificationClick={(id: string, subscriptionId?: string) => handleNotificationClick(id, subscriptionId)}
         onVerifyCancellation={handleVerifyCancellationFromNotification}
         onRemindAgain={handleRemindAgain}
         onDelete={deleteNotif}
@@ -255,115 +371,14 @@ export default function Home() {
   }
 
   if (screen === "addStep2" && selectedService) {
-    // Store selectedService in a const that TypeScript knows is non-null
-    const currentSelectedService = selectedService
-
-    // Check if this is a service from database (service:slug) or custom (custom:name)
-    const isDbService = currentSelectedService.startsWith("service:")
-    const serviceSlug = isDbService ? currentSelectedService.replace("service:", "") : null
-    const customName = currentSelectedService.startsWith("custom:")
-      ? currentSelectedService.replace("custom:", "")
-      : null
-
-    // For database services, we'll fetch the full details
-    // For custom services, we generate info from the name
-    const ServiceStep2Wrapper = () => {
-      const [serviceInfo, setServiceInfo] = useState<{
-        id: string
-        name: string
-        logo: string
-        logoColor: string
-        domain: string | null
-        priceMonthly?: number | null
-        priceYearly?: number | null
-        cancelUrl?: string | null
-      } | null>(null)
-      const [loading, setLoading] = useState(true)
-
-      useEffect(() => {
-        async function loadService() {
-          if (serviceSlug) {
-            // Fetch from database
-            const dbService = await getServiceBySlug(serviceSlug)
-            if (dbService) {
-              setServiceInfo({
-                id: dbService.id,
-                name: dbService.name,
-                logo: getServiceLogoUrl(dbService, dbService.domain),
-                logoColor: dbService.logo_color,
-                domain: dbService.domain,
-                priceMonthly: dbService.price_monthly,
-                priceYearly: dbService.price_yearly,
-                cancelUrl: dbService.cancel_url,
-              })
-            } else {
-              // Fallback if service not found
-              const fallbackName = serviceSlug
-              setServiceInfo({
-                id: currentSelectedService,
-                name: fallbackName,
-                logo: getFallbackLogoUrl(nameToDomain(fallbackName)),
-                logoColor: stringToColor(fallbackName),
-                domain: nameToDomain(fallbackName),
-              })
-            }
-          } else if (customName) {
-            // Custom service - generate info
-            const domain = nameToDomain(customName)
-            setServiceInfo({
-              id: currentSelectedService,
-              name: customName,
-              logo: getFallbackLogoUrl(domain),
-              logoColor: stringToColor(customName),
-              domain: domain,
-            })
-          } else {
-            // Shouldn't happen, but handle gracefully
-            setServiceInfo({
-              id: currentSelectedService,
-              name: "Unknown Service",
-              logo: "",
-              logoColor: "#6366f1",
-              domain: null,
-            })
-          }
-          setLoading(false)
-        }
-        loadService()
-      }, [])
-
-      if (loading || !serviceInfo) {
-        return (
-          <div className="flex min-h-screen items-center justify-center bg-background">
-            <div className="h-8 w-8 motion-safe:animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          </div>
-        )
-      }
-
-      return (
-        <AddSubscriptionStep2
-          service={serviceInfo}
-          onBack={() => window.history.back()}
-          onSave={async (data) => {
-            const priceNum = parseFloat(data.price.replace(/[^0-9.]/g, "")) || 0
-
-            handleAddSubscription({
-              name: serviceInfo.name,
-              logo: serviceInfo.domain
-                ? getFallbackLogoUrl(serviceInfo.domain)
-                : getInitials(serviceInfo.name),
-              logoColor: serviceInfo.logoColor,
-              price: priceNum,
-              billingCycle: data.cycle as BillingCycle,
-              renewalDate: data.date,
-              cancelUrl: serviceInfo.cancelUrl ?? undefined,
-            })
-          }}
-        />
-      )
-    }
-
-    return <ServiceStep2Wrapper />
+    return (
+      <ServiceStep2Loader
+        selectedService={selectedService}
+        customServiceName={customServiceName}
+        onBack={() => window.history.back()}
+        onAdd={handleAddSubscription}
+      />
+    )
   }
 
   if (screen === "manage" && selectedSub) {
@@ -376,21 +391,21 @@ export default function Home() {
             try {
               await restoreSubscription(selectedSub.id)
               toast("Subscription restored")
+              returnToPrevious()
             } catch (error) {
               console.error("Failed to restore subscription:", error)
               toast("Couldn\u2019t restore. Try again.", "error")
             }
-            returnToPrevious()
           }}
           onDelete={async () => {
             try {
               await deleteSubscription(selectedSub.id)
               toast("Removed from list")
+              returnToPrevious()
             } catch (error) {
               console.error("Failed to delete subscription:", error)
               toast("Couldn\u2019t remove. Try again.", "error")
             }
-            returnToPrevious()
           }}
           onSave={async (data) => {
             try {
@@ -400,11 +415,11 @@ export default function Home() {
                 renewalDate: data.renewalDate,
               })
               toast("Changes saved")
+              returnToPrevious()
             } catch (error) {
               console.error("Failed to update subscription:", error)
               toast("Couldn\u2019t save changes. Try again.", "error")
             }
-            returnToPrevious()
           }}
           onCancelProceed={async () => {
             try {
@@ -445,6 +460,7 @@ export default function Home() {
         subscriptions={subscriptions}
         onSubscriptionClick={handleSubscriptionClick}
         onSearch={() => {}}
+        onAddSubscription={() => navigateTo("addStep1")}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onNotificationClick={handleNotificationNav}

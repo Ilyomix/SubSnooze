@@ -4,6 +4,7 @@ import { useState } from "react"
 import { ChevronDown, Calendar } from "lucide-react"
 import { Card } from "./Card"
 import { calculateNextRenewalDate, formatLocalDate } from "@/lib/date-utils"
+import { CURRENCY_SYMBOL } from "@/lib/utils"
 import type { BillingCycle } from "@/types/database"
 
 export interface SubscriptionFormData {
@@ -100,7 +101,7 @@ export function SubscriptionFormFields({
         <label htmlFor="price" className="flex cursor-pointer items-center justify-between px-[18px] py-4">
           <span className="text-[15px] font-medium text-text-primary">{resolvedPriceLabel}</span>
           <div className="flex items-center gap-1">
-            <span className={`text-[15px] font-semibold ${readOnly ? "text-text-muted" : "text-text-primary"}`}>$</span>
+            <span className={`text-[15px] font-semibold ${readOnly ? "text-text-muted" : "text-text-primary"}`}>{CURRENCY_SYMBOL}</span>
             {readOnly ? (
               <span className="text-[15px] font-semibold text-text-muted">{value.price}</span>
             ) : (

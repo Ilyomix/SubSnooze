@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, ChevronRight, XCircle } from "lucide-react"
+import { Search, ChevronRight, XCircle, ArrowUpDown } from "lucide-react"
 import { AppShell } from "@/components/layout"
 import { Card, Badge, ServiceIcon, ErrorState } from "@/components/ui"
 import type { Subscription } from "@/types/subscription"
@@ -10,6 +10,7 @@ import { daysUntilRenewal } from "@/lib/date-utils"
 import { cn, formatCurrency } from "@/lib/utils"
 
 type PriceView = "monthly" | "yearly"
+type SortBy = "name" | "price" | "date"
 
 function getInitialPriceView(): PriceView {
   if (typeof window === "undefined") return "monthly"
@@ -30,6 +31,7 @@ interface AllSubscriptionsProps {
   subscriptions: Subscription[]
   onSubscriptionClick: (id: string) => void
   onSearch: (query: string) => void
+  onAddSubscription?: () => void
   activeTab: "home" | "subs" | "settings"
   onTabChange: (tab: "home" | "subs" | "settings") => void
   onNotificationClick?: () => void
@@ -112,6 +114,7 @@ export function AllSubscriptions({
   subscriptions,
   onSubscriptionClick,
   onSearch,
+  onAddSubscription,
   activeTab,
   onTabChange,
   onNotificationClick,
@@ -121,10 +124,29 @@ export function AllSubscriptions({
 }: AllSubscriptionsProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [priceView, setPriceView] = useState<PriceView>(getInitialPriceView)
+  const [sortBy, setSortBy] = useState<SortBy>("date")
 
   const togglePriceView = (view: PriceView) => {
     setPriceView(view)
     localStorage.setItem("subsnooze:priceView", view)
+  }
+
+  const cycleSortBy = () => {
+    setSortBy((prev) => prev === "date" ? "price" : prev === "price" ? "name" : "date")
+  }
+
+  // Sort subscriptions
+  const sortSubs = (subs: Subscription[]) => {
+    return [...subs].sort((a, b) => {
+      if (sortBy === "name") return a.name.localeCompare(b.name)
+      if (sortBy === "price") {
+        const aMonthly = displayPrice(a.price, a.billingCycle, "monthly")
+        const bMonthly = displayPrice(b.price, b.billingCycle, "monthly")
+        return bMonthly - aMonthly
+      }
+      // Default: sort by renewal date (soonest first)
+      return a.renewalDate.getTime() - b.renewalDate.getTime()
+    })
   }
 
   // Filter subscriptions by search term
@@ -136,8 +158,8 @@ export function AllSubscriptions({
   const allActive = subscriptions.filter((s) => s.status !== "cancelled")
   const allCancelled = subscriptions.filter((s) => s.status === "cancelled")
 
-  const active = filterBySearch(allActive)
-  const cancelled = filterBySearch(allCancelled)
+  const active = sortSubs(filterBySearch(allActive))
+  const cancelled = sortSubs(filterBySearch(allCancelled))
 
   // Calculate total in the selected view
   const totalNormalized = allActive.reduce((sum, s) => {
@@ -189,21 +211,31 @@ export function AllSubscriptions({
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="flex h-12 items-center gap-3 rounded-xl bg-surface px-4">
-          <Search className="h-[18px] w-[18px] text-text-tertiary" aria-hidden="true" />
-          <input
-            type="text"
-            name="subscription-search"
-            aria-label="Search subscriptions"
-            placeholder="Search subscriptions…"
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value)
-              onSearch(e.target.value)
-            }}
-            className="flex-1 bg-transparent text-[15px] text-text-primary placeholder:text-text-tertiary focus-visible:outline-none"
-          />
+        {/* Search Bar + Sort */}
+        <div className="flex gap-2">
+          <div className="flex h-12 flex-1 items-center gap-3 rounded-xl bg-surface px-4">
+            <Search className="h-[18px] w-[18px] text-text-tertiary" aria-hidden="true" />
+            <input
+              type="text"
+              name="subscription-search"
+              aria-label="Search subscriptions"
+              placeholder="Search subscriptions…"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value)
+                onSearch(e.target.value)
+              }}
+              className="flex-1 bg-transparent text-[15px] text-text-primary placeholder:text-text-tertiary focus-visible:outline-none"
+            />
+          </div>
+          <button
+            onClick={cycleSortBy}
+            aria-label={`Sort by ${sortBy === "date" ? "price" : sortBy === "price" ? "name" : "date"}`}
+            className="flex h-12 items-center gap-1.5 rounded-xl bg-surface px-3 text-text-secondary hover:bg-surface/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <ArrowUpDown className="h-4 w-4" aria-hidden="true" />
+            <span className="text-xs font-semibold capitalize">{sortBy}</span>
+          </button>
         </div>
 
         {/* Error State */}
@@ -258,8 +290,24 @@ export function AllSubscriptions({
 
         {/* Empty State */}
         {subscriptions.length === 0 && (
-          <div className="flex flex-col items-center gap-2 py-16">
-            <span className="text-text-secondary">No subscriptions yet</span>
+          <div className="flex flex-col items-center gap-4 py-16">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <Search className="h-7 w-7 text-primary" aria-hidden="true" />
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-lg font-semibold text-text-primary">No subscriptions yet</span>
+              <span className="text-sm text-text-tertiary text-center max-w-[240px]">
+                Track your first subscription to see it here.
+              </span>
+            </div>
+            {onAddSubscription && (
+              <button
+                onClick={onAddSubscription}
+                className="text-sm font-semibold text-primary hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
+              >
+                Add subscription
+              </button>
+            )}
           </div>
         )}
 

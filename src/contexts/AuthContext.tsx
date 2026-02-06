@@ -71,28 +71,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+    // Get initial user (getUser() validates the JWT server-side, unlike deprecated getSession())
+    const getInitialUser = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser()
 
-      if (session?.user) {
-        setAuthUser(session.user)
-        // Set loading false immediately - don't wait for profile
+      if (error || !user) {
+        // Token expired or invalid — redirect to login if we had a stale session
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session && error) {
+          // Had a session but token is invalid — force re-login
+          await supabase.auth.signOut()
+          window.location.href = "/login"
+          return
+        }
         setLoading(false)
-        // Fetch profile in background
-        fetchProfile(session.user.id, session.user.email).then(profileData => {
-          setProfile(profileData)
-        })
-      } else {
-        setLoading(false)
+        return
       }
+
+      setAuthUser(user)
+      // Set loading false immediately - don't wait for profile
+      setLoading(false)
+      // Fetch profile in background
+      fetchProfile(user.id, user.email).then(profileData => {
+        setProfile(profileData)
+      })
     }
 
-    getInitialSession()
+    getInitialUser()
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
+        if (event === "TOKEN_REFRESHED" && !session) {
+          // Refresh failed — redirect to login
+          window.location.href = "/login"
+          return
+        }
+
         if (session?.user) {
           setAuthUser(session.user)
           // Set loading false immediately - don't wait for profile

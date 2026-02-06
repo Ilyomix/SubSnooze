@@ -5,6 +5,7 @@ import { Plus, XCircle, PiggyBank, CreditCard, ChevronDown, ChevronUp } from "lu
 import NumberFlow from "@number-flow/react"
 import { AppShell } from "@/components/layout"
 import { Card, Button, SectionHeader, SubscriptionRow, ErrorState } from "@/components/ui"
+import { CURRENCY_CODE } from "@/lib/utils"
 import type { Subscription } from "@/types/subscription"
 
 const ALL_GOOD_PREVIEW_LIMIT = 3
@@ -106,7 +107,7 @@ export function Dashboard({
             </div>
             <NumberFlow
               value={displaySaved}
-              format={{ style: "currency", currency: "USD", maximumFractionDigits: 0 }}
+              format={{ style: "currency", currency: CURRENCY_CODE, maximumFractionDigits: 0 }}
               transformTiming={{ duration: 750, easing: "ease-out" }}
               spinTiming={{ duration: 750, easing: "ease-out" }}
               className="text-3xl font-bold tabular-nums text-white"
@@ -125,7 +126,7 @@ export function Dashboard({
             </div>
             <NumberFlow
               value={displayMonthly}
-              format={{ style: "currency", currency: "USD", maximumFractionDigits: 0 }}
+              format={{ style: "currency", currency: CURRENCY_CODE, maximumFractionDigits: 0 }}
               transformTiming={{ duration: 750, easing: "ease-out" }}
               spinTiming={{ duration: 750, easing: "ease-out" }}
               className="text-3xl font-bold tabular-nums text-white"
@@ -144,6 +145,28 @@ export function Dashboard({
         {/* Error State */}
         {error && subscriptions.length === 0 && (
           <ErrorState onRetry={onRetry} />
+        )}
+
+        {/* Empty State — no subscriptions yet */}
+        {!error && subscriptions.length === 0 && (
+          <div className="flex flex-col items-center gap-4 py-12">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <CreditCard className="h-8 w-8 text-primary" aria-hidden="true" />
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-lg font-semibold text-text-primary">No subscriptions yet</span>
+              <span className="text-sm text-text-tertiary text-center max-w-[260px]">
+                Add your first subscription and we&apos;ll help you stay on top of renewals.
+              </span>
+            </div>
+            <Button
+              variant="primary"
+              icon={<Plus className="h-[18px] w-[18px]" />}
+              onClick={onAddSubscription}
+            >
+              Add subscription
+            </Button>
+          </div>
         )}
 
         {/* Renewing Soon Section — always fully expanded, sorted by urgency */}

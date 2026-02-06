@@ -4,6 +4,7 @@ import { useRef } from "react"
 import { PartyPopper } from "lucide-react"
 import { useFocusTrap } from "@/hooks/useFocusTrap"
 import { Button } from "@/components/ui"
+import { formatCurrency } from "@/lib/utils"
 import type { Subscription } from "@/types/subscription"
 
 interface CancellationSuccessModalProps {
@@ -40,7 +41,7 @@ export function CancellationSuccessModal({
 
         {/* Subtitle */}
         <p className="text-[15px] font-medium text-text-primary">
-          ${monthlySavings.toFixed(2)}/month saved
+          {formatCurrency(monthlySavings)}/month saved
         </p>
 
         {/* Description */}
@@ -52,7 +53,7 @@ export function CancellationSuccessModal({
         <div className="flex w-full flex-col items-center gap-1 rounded-xl bg-background p-4">
           <span className="text-sm text-text-tertiary">You&apos;ll save this year</span>
           <span className="text-3xl font-bold text-primary">
-            ${yearlySavings.toFixed(2)}
+            {formatCurrency(yearlySavings)}
           </span>
         </div>
 

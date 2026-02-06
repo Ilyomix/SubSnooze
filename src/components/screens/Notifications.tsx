@@ -10,7 +10,7 @@ import type { Notification } from "@/types/subscription"
 interface NotificationsProps {
   notifications: Notification[]
   onBack: () => void
-  onNotificationClick: (id: string) => void
+  onNotificationClick: (id: string, subscriptionId?: string) => void
   onVerifyCancellation?: (subscriptionId: string) => void
   onRemindAgain?: (subscriptionId: string) => void
   onDelete?: (id: string) => void
@@ -248,8 +248,16 @@ export function Notifications({
   loadingMore,
   onLoadMore,
 }: NotificationsProps) {
+  const [confirmingClearAll, setConfirmingClearAll] = useState(false)
   const unread = notifications.filter((n) => !n.read)
   const read = notifications.filter((n) => n.read)
+
+  // Auto-reset "Clear all" confirmation after 3 seconds
+  useEffect(() => {
+    if (!confirmingClearAll) return
+    const timer = setTimeout(() => setConfirmingClearAll(false), 3000)
+    return () => clearTimeout(timer)
+  }, [confirmingClearAll])
 
   // Infinite scroll sentinel
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -278,11 +286,22 @@ export function Notifications({
       headerActions={
         notifications.length > 0 && onDeleteAll ? (
           <button
-            onClick={onDeleteAll}
-            className="flex items-center gap-1.5 rounded-xl bg-accent/10 px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            onClick={() => {
+              if (confirmingClearAll) {
+                onDeleteAll()
+                setConfirmingClearAll(false)
+              } else {
+                setConfirmingClearAll(true)
+              }
+            }}
+            className={`flex items-center gap-1.5 rounded-xl px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+              confirmingClearAll ? "bg-accent text-white" : "bg-accent/10"
+            }`}
           >
-            <Trash2 className="h-4 w-4 text-accent" />
-            <span className="text-sm font-semibold text-accent">Clear all</span>
+            <Trash2 className={`h-4 w-4 ${confirmingClearAll ? "text-white" : "text-accent"}`} />
+            <span className={`text-sm font-semibold ${confirmingClearAll ? "text-white" : "text-accent"}`}>
+              {confirmingClearAll ? "Tap to confirm" : "Clear all"}
+            </span>
           </button>
         ) : undefined
       }
@@ -301,7 +320,7 @@ export function Notifications({
                   {index > 0 && <div className="h-px bg-divider" />}
                   <NotificationItem
                     notification={notification}
-                    onClick={() => onNotificationClick(notification.id)}
+                    onClick={() => onNotificationClick(notification.id, notification.subscriptionId)}
                     onVerifyCancellation={onVerifyCancellation}
                     onRemindAgain={onRemindAgain}
                     onDelete={onDelete}
@@ -326,7 +345,7 @@ export function Notifications({
                   {index > 0 && <div className="h-px bg-divider" />}
                   <NotificationItem
                     notification={notification}
-                    onClick={() => onNotificationClick(notification.id)}
+                    onClick={() => onNotificationClick(notification.id, notification.subscriptionId)}
                     onVerifyCancellation={onVerifyCancellation}
                     onRemindAgain={onRemindAgain}
                     onDelete={onDelete}
