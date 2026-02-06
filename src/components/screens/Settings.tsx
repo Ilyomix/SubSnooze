@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Star, ChevronRight, LogOut, Check, BellRing, Trash2, AlertTriangle, Key, Download, Eye, EyeOff, CreditCard, Info, Phone, Sun, Moon, Monitor, HelpCircle, Sparkles } from "lucide-react"
+import { useState, useEffect, type ReactNode } from "react"
+import { Star, ChevronRight, LogOut, Check, BellRing, Trash2, AlertTriangle, Key, Download, Eye, EyeOff, Info, Phone, Sun, Moon, Monitor, HelpCircle, Sparkles, Mail, Bell, MessageSquare } from "lucide-react"
 import { AppShell } from "@/components/layout"
 import { Card } from "@/components/ui"
 import { useUser } from "@/hooks/useUser"
@@ -124,13 +124,15 @@ interface SettingsProps {
   onUpgrade: () => void
   onNotificationClick?: () => void
   notificationCount?: number
-  onPricingClick?: () => void
   onAboutClick?: () => void
   onFAQClick?: () => void
   onChangelogClick?: () => void
 }
 
 interface ToggleRowProps {
+  icon?: ReactNode
+  iconBgClassName?: string
+  iconClassName?: string
   label: string
   helper: string
   enabled: boolean
@@ -138,12 +140,28 @@ interface ToggleRowProps {
   loading?: boolean
 }
 
-function ToggleRow({ label, helper, enabled, onToggle, loading }: ToggleRowProps) {
+function ToggleRow({
+  icon,
+  iconBgClassName = "bg-primary/10",
+  iconClassName = "text-primary",
+  label,
+  helper,
+  enabled,
+  onToggle,
+  loading,
+}: ToggleRowProps) {
   return (
     <div className="flex items-center justify-between px-[18px] py-4">
-      <div className="flex flex-col gap-0.5">
-        <span className="text-[15px] font-medium text-text-primary">{label}</span>
-        <span className="text-xs text-text-tertiary">{helper}</span>
+      <div className="flex items-center gap-3">
+        {icon && (
+          <div className={`flex h-8 w-8 items-center justify-center rounded-full ${iconBgClassName}`}>
+            <span className={iconClassName}>{icon}</span>
+          </div>
+        )}
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[15px] font-medium text-text-primary">{label}</span>
+          <span className="text-xs text-text-tertiary">{helper}</span>
+        </div>
       </div>
       <button
         onClick={onToggle}
@@ -165,7 +183,7 @@ function ToggleRow({ label, helper, enabled, onToggle, loading }: ToggleRowProps
   )
 }
 
-export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClick, notificationCount, onPricingClick, onAboutClick, onFAQClick, onChangelogClick }: SettingsProps) {
+export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClick, notificationCount, onAboutClick, onFAQClick, onChangelogClick }: SettingsProps) {
   const {
     id: userId,
     email,
@@ -355,6 +373,9 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
           </h2>
           <Card padding="none" className="overflow-hidden">
             <ToggleRow
+              icon={<Mail className="h-4 w-4" />}
+              iconBgClassName="bg-sky-500/10"
+              iconClassName="text-sky-600"
               label="Email reminders"
               helper={email ? `Sent to ${email}` : "Not configured"}
               enabled={emailEnabled}
@@ -364,6 +385,9 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
             <div className="h-px bg-divider" />
             {isSupported ? (
               <ToggleRow
+                icon={<Bell className="h-4 w-4" />}
+                iconBgClassName="bg-violet-500/10"
+                iconClassName="text-violet-600"
                 label="Push notifications"
                 helper="Appear on your device"
                 enabled={pushEnabled}
@@ -372,17 +396,27 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
               />
             ) : (
               <div className="flex items-center justify-between px-[18px] py-4">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[15px] font-medium text-text-primary">Push notifications</span>
-                  <span className="text-xs text-text-tertiary">Not supported in this browser</span>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-text-muted/10">
+                    <Bell className="h-4 w-4 text-text-muted" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-[15px] font-medium text-text-primary">Push notifications</span>
+                    <span className="text-xs text-text-tertiary">Not supported in this browser</span>
+                  </div>
                 </div>
               </div>
             )}
             <div className="h-px bg-divider" />
             <div className="flex items-center justify-between px-[18px] py-4 opacity-50">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-[15px] font-medium text-text-primary">SMS reminders</span>
-                <span className="text-xs text-text-tertiary">Coming soon</span>
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-text-muted/10">
+                  <MessageSquare className="h-4 w-4 text-text-muted" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[15px] font-medium text-text-primary">SMS reminders</span>
+                  <span className="text-xs text-text-tertiary">Coming soon</span>
+                </div>
               </div>
               <div className="h-7 w-12 rounded-full bg-divider p-1 cursor-not-allowed">
                 <div className="h-5 w-5 rounded-full bg-white shadow" />
@@ -514,8 +548,8 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                 className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                    <Key className="h-4 w-4 text-primary" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-500/10">
+                    <Key className="h-4 w-4 text-violet-600" />
                   </div>
                   <span className="text-[15px] font-medium text-text-primary">
                     Change password
@@ -619,8 +653,8 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
               className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl disabled:opacity-50"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                  <Download className="h-4 w-4 text-primary" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/10">
+                  <Download className="h-4 w-4 text-sky-600" />
                 </div>
                 <div className="flex flex-col items-start">
                   <span className="text-[15px] font-medium text-text-primary">
@@ -654,32 +688,15 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
 
         {/* Pricing, About, FAQ, Changelog */}
         <Card padding="none" className="overflow-hidden">
-          {onPricingClick && (
-            <>
-              <button
-                onClick={onPricingClick}
-                className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-t-2xl"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                    <CreditCard className="h-4 w-4 text-primary" />
-                  </div>
-                  <span className="text-[15px] font-medium text-text-primary">Pricing</span>
-                </div>
-                <ChevronRight className="h-5 w-5 text-text-muted" />
-              </button>
-              <div className="h-px bg-divider" />
-            </>
-          )}
           {onFAQClick && (
             <>
               <button
                 onClick={onFAQClick}
-                className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-t-2xl"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                    <HelpCircle className="h-4 w-4 text-primary" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-500/10">
+                    <HelpCircle className="h-4 w-4 text-violet-600" />
                   </div>
                   <span className="text-[15px] font-medium text-text-primary">FAQ</span>
                 </div>
@@ -695,8 +712,8 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                 className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                    <Sparkles className="h-4 w-4 text-primary" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/10">
+                    <Sparkles className="h-4 w-4 text-amber-600" />
                   </div>
                   <span className="text-[15px] font-medium text-text-primary">What&apos;s New</span>
                 </div>
@@ -711,8 +728,8 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
               className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-b-2xl"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                  <Info className="h-4 w-4 text-primary" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/10">
+                  <Info className="h-4 w-4 text-sky-600" />
                 </div>
                 <span className="text-[15px] font-medium text-text-primary">About & Support</span>
               </div>

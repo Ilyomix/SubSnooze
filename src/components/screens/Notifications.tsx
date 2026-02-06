@@ -10,7 +10,7 @@ import type { Notification } from "@/types/subscription"
 interface NotificationsProps {
   notifications: Notification[]
   onBack: () => void
-  onNotificationClick: (id: string, subscriptionId?: string) => void
+  onNotificationClick: (id: string) => void
   onVerifyCancellation?: (subscriptionId: string) => void
   onRemindAgain?: (subscriptionId: string) => void
   onDelete?: (id: string) => void
@@ -94,7 +94,8 @@ function NotificationItem({
     if (!isHorizontal.current) return
 
     const newOffset = swiped ? dx - threshold : dx
-    setOffsetX(Math.max(Math.min(newOffset, 0), -threshold - 20))
+    const clamped = Math.max(Math.min(newOffset, 0), -threshold - 20)
+    setOffsetX(Math.round(clamped))
   }, [swiped, threshold])
 
   const handleTouchEnd = useCallback(() => {
@@ -120,17 +121,6 @@ function NotificationItem({
     onClick()
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Delete" || e.key === "Backspace") {
-      e.preventDefault()
-      onDelete?.(notification.id)
-    }
-    if (e.key === "u" && isRead && onMarkAsUnread) {
-      e.preventDefault()
-      onMarkAsUnread(notification.id)
-    }
-  }
-
   const handleVerify = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (subscriptionId && onVerifyCancellation) {
@@ -149,7 +139,7 @@ function NotificationItem({
     <div className="relative overflow-hidden">
       {/* Swipe actions revealed behind */}
       <div
-        className="absolute inset-y-0 right-0 flex items-center justify-evenly bg-[#FAFAFA]"
+        className="absolute inset-y-0 right-0 flex items-center justify-evenly bg-surface"
         style={{ width: hasDoubleActions ? SWIPE_THRESHOLD_DOUBLE : SWIPE_THRESHOLD_SINGLE }}
       >
         {hasDoubleActions ? (
@@ -184,18 +174,18 @@ function NotificationItem({
       <div
         className="relative"
         style={{
-          transform: `translateX(${offsetX}px)`,
+          transform: `translate3d(${offsetX}px, 0, 0)`,
           transition: animating ? "transform 0.25s ease-out" : "none",
+          willChange: "transform",
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div className="bg-[var(--color-surface,#FFFFFF)]">
+        <div className="w-full bg-surface">
           <button
             onClick={handleClick}
-            onKeyDown={handleKeyDown}
-            className={`flex w-full items-start gap-3 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${isRead ? "opacity-60" : ""}`}
+            className={`flex w-full items-start gap-3 p-4 text-left ${isRead ? "opacity-60" : ""}`}
           >
             {/* Unread dot — left edge */}
             {
@@ -260,16 +250,8 @@ export function Notifications({
   loadingMore,
   onLoadMore,
 }: NotificationsProps) {
-  const [confirmingClearAll, setConfirmingClearAll] = useState(false)
   const unread = notifications.filter((n) => !n.read)
   const read = notifications.filter((n) => n.read)
-
-  // Auto-reset "Clear all" confirmation after 3 seconds
-  useEffect(() => {
-    if (!confirmingClearAll) return
-    const timer = setTimeout(() => setConfirmingClearAll(false), 3000)
-    return () => clearTimeout(timer)
-  }, [confirmingClearAll])
 
   // Infinite scroll sentinel
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -294,45 +276,38 @@ export function Notifications({
     <DetailShell
       title="Notifications"
       onBack={onBack}
-      headerRight={<Bell className="h-5 w-5 text-primary" />}
+      headerRight={(
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+          <Bell className="h-4 w-4 text-primary" />
+        </div>
+      )}
       headerActions={
         notifications.length > 0 && onDeleteAll ? (
           <button
-            onClick={() => {
-              if (confirmingClearAll) {
-                onDeleteAll()
-                setConfirmingClearAll(false)
-              } else {
-                setConfirmingClearAll(true)
-              }
-            }}
-            className={`flex items-center gap-1.5 rounded-xl px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-              confirmingClearAll ? "bg-accent text-white" : "bg-accent/10"
-            }`}
+            onClick={onDeleteAll}
+            className="flex items-center gap-1.5 rounded-xl bg-accent/10 px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
-            <Trash2 className={`h-4 w-4 ${confirmingClearAll ? "text-white" : "text-accent"}`} />
-            <span className={`text-sm font-semibold ${confirmingClearAll ? "text-white" : "text-accent"}`}>
-              {confirmingClearAll ? "Tap to confirm" : "Clear all"}
-            </span>
+            <Trash2 className="h-4 w-4 text-accent" />
+            <span className="text-sm font-semibold text-accent">Clear all</span>
           </button>
         ) : undefined
       }
     >
-      <div className="flex flex-col gap-6 px-6 pt-4" aria-live="polite">
+      <div className="flex flex-col gap-6 px-6 pt-4">
 
         {/* Unread */}
         {unread.length > 0 && (
           <div className="flex flex-col gap-3">
-            <h2 className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary">
+            <span className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary">
               New ({unread.length})
-            </h2>
+            </span>
             <Card padding="none" className="overflow-hidden">
               {unread.map((notification, index) => (
                 <div key={notification.id}>
                   {index > 0 && <div className="h-px bg-divider" />}
                   <NotificationItem
                     notification={notification}
-                    onClick={() => onNotificationClick(notification.id, notification.subscriptionId)}
+                    onClick={() => onNotificationClick(notification.id)}
                     onVerifyCancellation={onVerifyCancellation}
                     onRemindAgain={onRemindAgain}
                     onDelete={onDelete}
@@ -348,16 +323,16 @@ export function Notifications({
         {/* Read */}
         {read.length > 0 && (
           <div className="flex flex-col gap-3">
-            <h2 className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary">
+            <span className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary">
               Earlier
-            </h2>
+            </span>
             <Card padding="none" className="overflow-hidden">
               {read.map((notification, index) => (
                 <div key={notification.id}>
                   {index > 0 && <div className="h-px bg-divider" />}
                   <NotificationItem
                     notification={notification}
-                    onClick={() => onNotificationClick(notification.id, notification.subscriptionId)}
+                    onClick={() => onNotificationClick(notification.id)}
                     onVerifyCancellation={onVerifyCancellation}
                     onRemindAgain={onRemindAgain}
                     onDelete={onDelete}

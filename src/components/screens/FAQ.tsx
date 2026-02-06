@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import { ArrowLeft, ChevronDown } from "lucide-react"
+import { useEffect, useState } from "react"
+import { ArrowLeft, ChevronDown, HelpCircle } from "lucide-react"
 import { Card } from "@/components/ui"
+import { Skeleton } from "@/components/ui/Skeleton"
 
 interface FAQProps {
   onBack: () => void
@@ -68,27 +69,52 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 }
 
 export function FAQ({ onBack }: FAQProps) {
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => setReady(true))
+    return () => window.cancelAnimationFrame(id)
+  }, [])
+
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background">
       {/* Header */}
-      <header className="fixed left-0 right-0 top-0 z-40 flex h-14 items-center gap-3 bg-surface/80 px-6 backdrop-blur-sm">
-        <button
-          onClick={onBack}
-          aria-label="Go back"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-        >
-          <ArrowLeft className="h-5 w-5 text-text-primary" />
-        </button>
-        <h1 className="text-lg font-semibold text-text-primary">FAQ</h1>
+      <header className="fixed left-0 right-0 top-0 z-40 flex items-center justify-between bg-surface/80 px-6 backdrop-blur-sm pt-[env(safe-area-inset-top)] h-[calc(3.5rem+env(safe-area-inset-top))]">
+        <div className="mx-auto flex w-full max-w-3xl items-center gap-3">
+          <button
+            onClick={onBack}
+            aria-label="Go back"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          >
+            <ArrowLeft className="h-5 w-5 text-text-primary" />
+          </button>
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-500/10">
+            <HelpCircle className="h-4 w-4 text-violet-600" />
+          </div>
+          <h1 className="text-lg font-semibold text-text-primary">FAQ</h1>
+        </div>
       </header>
 
       <div className="mx-auto w-full max-w-3xl flex flex-col gap-3 px-6 pt-20 pb-[max(2rem,env(safe-area-inset-bottom))]">
-        <p className="text-sm text-text-secondary mb-2">
-          Got questions? We have answers.
-        </p>
-        {FAQ_ITEMS.map((item, i) => (
-          <FAQItem key={i} question={item.question} answer={item.answer} />
-        ))}
+        {!ready ? (
+          <>
+            <Skeleton className="h-4 w-56" />
+            <div className="mt-2 flex flex-col gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-[58px] w-full rounded-2xl" />
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-text-secondary mb-2">
+              Got questions? We have answers.
+            </p>
+            {FAQ_ITEMS.map((item, i) => (
+              <FAQItem key={i} question={item.question} answer={item.answer} />
+            ))}
+          </>
+        )}
       </div>
     </div>
   )

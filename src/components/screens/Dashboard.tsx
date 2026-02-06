@@ -120,7 +120,7 @@ export function Dashboard({
           </div>
 
           {/* Monthly Spend */}
-          <div className="flex flex-1 flex-col gap-2 rounded-2xl bg-text-primary p-5">
+          <div className="flex flex-1 flex-col gap-2 rounded-2xl bg-black/80 p-5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
               <CreditCard className="h-5 w-5 text-white" aria-hidden="true" />
             </div>

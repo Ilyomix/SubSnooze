@@ -12,7 +12,6 @@ import {
   UpgradeModal,
   DashboardSkeleton,
   Onboarding,
-  Pricing,
   About,
   FAQ,
   Changelog,
@@ -147,7 +146,6 @@ type Screen =
   | "addStep1"
   | "addStep2"
   | "manage"
-  | "pricing"
   | "about"
   | "faq"
   | "changelog"
@@ -424,17 +422,6 @@ export default function Home() {
   )
 
   // Render screens
-  if (screen === "pricing") {
-    return (
-      <div className="motion-safe:animate-[screen-slide-in_0.25s_ease-out]">
-        <Pricing
-          onBack={returnToPrevious}
-          onUpgrade={() => setModal("upgrade")}
-        />
-      </div>
-    )
-  }
-
   if (screen === "about") {
     return (
       <div className="motion-safe:animate-[screen-slide-in_0.25s_ease-out]">
@@ -649,7 +636,6 @@ export default function Home() {
           onUpgrade={() => setModal("upgrade")}
           onNotificationClick={handleNotificationNav}
           notificationCount={unreadCount}
-          onPricingClick={() => navigateTo("pricing", { savePrevious: "settings" })}
           onAboutClick={() => navigateTo("about", { savePrevious: "settings" })}
           onFAQClick={() => navigateTo("faq", { savePrevious: "settings" })}
           onChangelogClick={() => navigateTo("changelog", { savePrevious: "settings" })}
