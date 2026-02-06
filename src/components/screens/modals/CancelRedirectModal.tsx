@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
+import { useFocusTrap } from "@/hooks/useFocusTrap"
 import { ExternalLink, PiggyBank, Calendar, Check } from "lucide-react"
 import { Button, ServiceIcon } from "@/components/ui"
 import { formatCurrency } from "@/lib/utils"
@@ -18,6 +19,8 @@ export function CancelRedirectModal({
   onClose,
 }: CancelRedirectModalProps) {
   const [remindMe, setRemindMe] = useState(false)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef, onClose)
 
   return (
     <div
@@ -27,7 +30,7 @@ export function CancelRedirectModal({
       aria-modal="true"
       aria-labelledby="cancel-redirect-title"
     >
-      <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-3xl bg-surface p-6" onClick={(e) => e.stopPropagation()}>
+      <div ref={dialogRef} tabIndex={-1} className="flex w-full max-w-sm flex-col items-center gap-5 rounded-3xl bg-surface p-6 outline-none" onClick={(e) => e.stopPropagation()}>
         {/* Logo - squircle style */}
         <ServiceIcon
           name={subscription.name}

@@ -1,6 +1,6 @@
 # SubSnooze — Checklist de Commercialisation
 
-> Score global : **64/150 (43%)**
+> Score global : **69/150 (46%)**
 > Base fonctionnelle solide, mais il manque la couche production-ready.
 
 Priorite : Bloquant | Important | Souhaitable
@@ -48,10 +48,10 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] Error tracking (Sentry) — necessite config externe
 
 ### UI/UX
-- [ ] Skeleton loaders (spinner generique actuellement)
-- [ ] Toast notifications (aucun feedback de succes)
+- [x] Skeleton loaders ✅ S5 (DashboardSkeleton avec Skeleton primitif)
+- [x] Toast notifications ✅ S5 (useToast — success/error/info, auto-dismiss, max 3)
 - [x] Error boundaries React ✅ S4 (ErrorBoundary + error.tsx + global-error.tsx)
-- [ ] Focus trap dans toutes les modales
+- [x] Focus trap dans toutes les modales ✅ S5 (useFocusTrap — 4 modales)
 - [ ] Onboarding pour les nouveaux utilisateurs
 - [ ] Landing page marketing
 
@@ -88,8 +88,8 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] Safe-area gestion (notch iPhone)
 
 ### UI/UX
-- [ ] Error states visuels pour echecs reseau
-- [ ] Loading state sur les boutons (empecher double-clic)
+- [x] Error states visuels pour echecs reseau ✅ S5 (ErrorState + integration Dashboard/AllSubs)
+- [x] Loading state sur les boutons (empecher double-clic) ✅ S5 (Button loading prop — spinner + disabled)
 - [ ] Transitions animees entre ecrans
 - [ ] Scroll position restoration
 - [ ] Pull-to-refresh
@@ -166,11 +166,11 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 | Monitoring & Analytics | 0/10 |
 | SEO & ASO | 2/10 |
 | PWA & Mobile | 5/10 |
-| UI/UX Etats & Feedback | 5/10 |
+| UI/UX Etats & Feedback | 8/10 |
 | UI/UX Navigation | 5/10 |
 | UI/UX Design Systeme | 4/10 |
 | Fonctionnalites | 5/10 |
-| UX TDAH | 4/10 |
-| Accessibilite | 5/10 |
+| UX TDAH | 5/10 |
+| Accessibilite | 6/10 |
 | Performance | 5/10 |
-| **TOTAL** | **64/150 (43%)** |
+| **TOTAL** | **69/150 (46%)** |

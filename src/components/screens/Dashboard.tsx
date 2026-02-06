@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { Plus, XCircle, PiggyBank, CreditCard, ChevronDown, ChevronUp } from "lucide-react"
 import NumberFlow from "@number-flow/react"
 import { AppShell } from "@/components/layout"
-import { Card, Button, SectionHeader, SubscriptionRow } from "@/components/ui"
+import { Card, Button, SectionHeader, SubscriptionRow, ErrorState } from "@/components/ui"
 import type { Subscription } from "@/types/subscription"
 
 const ALL_GOOD_PREVIEW_LIMIT = 3
@@ -20,6 +20,8 @@ interface DashboardProps {
   notificationCount: number
   activeTab: "home" | "subs" | "settings"
   onTabChange: (tab: "home" | "subs" | "settings") => void
+  error?: Error | null
+  onRetry?: () => void
 }
 
 export function Dashboard({
@@ -33,6 +35,8 @@ export function Dashboard({
   notificationCount,
   activeTab,
   onTabChange,
+  error,
+  onRetry,
 }: DashboardProps) {
   const [showAllGood, setShowAllGood] = useState(false)
 
@@ -136,6 +140,11 @@ export function Dashboard({
             </span>
           </div>
         </div>
+
+        {/* Error State */}
+        {error && subscriptions.length === 0 && (
+          <ErrorState onRetry={onRetry} />
+        )}
 
         {/* Renewing Soon Section — always fully expanded, sorted by urgency */}
         {renewingSoon.length > 0 && (

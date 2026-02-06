@@ -10,11 +10,13 @@ import {
   AddSubscriptionStep2,
   SubscriptionManagement,
   UpgradeModal,
+  DashboardSkeleton,
 } from "@/components"
 import { useUser } from "@/hooks/useUser"
 import { useSubscriptions } from "@/hooks/useSubscriptions"
 import { useNotifications } from "@/hooks/useNotifications"
 import { usePushNotifications } from "@/hooks/usePushNotifications"
+import { useToast } from "@/hooks/useToast"
 import type { Subscription } from "@/types/subscription"
 import type { BillingCycle } from "@/types/database"
 import { getServiceBySlug, getServiceLogoUrl, getFallbackLogoUrl, getInitials, stringToColor, nameToDomain } from "@/lib/services"
@@ -37,6 +39,8 @@ export default function Home() {
     subscriptions,
     totalMonthly,
     loading: subsLoading,
+    error: subsError,
+    refetch: subsRefetch,
     addSubscription,
     updateSubscription,
     deleteSubscription,
@@ -45,6 +49,7 @@ export default function Home() {
     resetCancelAttempt,
     restoreSubscription,
   } = useSubscriptions()
+  const { toast } = useToast()
   const { notifications, unreadCount, markAsRead, markAsUnread, deleteNotification: deleteNotif, deleteAllNotifications, hasMore, loadingMore, loadMore } = useNotifications()
   const { requestPermission, permission } = usePushNotifications()
 
@@ -142,19 +147,9 @@ export default function Home() {
     setTotalSaved(cancelledTotal)
   }, [subscriptions])
 
-  // Show loading state while auth is being checked
+  // Show skeleton while loading
   if (userLoading || subsLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 motion-safe:animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-text-secondary">Loading...</p>
-          <p className="text-xs text-text-tertiary">
-            {userLoading ? "Auth loading..." : "Subscriptions loading..."}
-          </p>
-        </div>
-      </div>
-    )
+    return <DashboardSkeleton />
   }
 
   const handleTabChange = (tab: "home" | "subs" | "settings") => {
@@ -193,9 +188,11 @@ export default function Home() {
         renewal_date: formatLocalDate(data.renewalDate),
         cancel_url: data.cancelUrl,
       })
+      toast("Subscription added")
       navigateTo("dashboard", { tab: "home" })
     } catch (error) {
       console.error("Failed to add subscription:", error)
+      toast("Couldn\u2019t add subscription. Try again.", "error")
     }
   }
 
@@ -378,16 +375,20 @@ export default function Home() {
           onRestore={async () => {
             try {
               await restoreSubscription(selectedSub.id)
+              toast("Subscription restored")
             } catch (error) {
               console.error("Failed to restore subscription:", error)
+              toast("Couldn\u2019t restore. Try again.", "error")
             }
             returnToPrevious()
           }}
           onDelete={async () => {
             try {
               await deleteSubscription(selectedSub.id)
+              toast("Removed from list")
             } catch (error) {
               console.error("Failed to delete subscription:", error)
+              toast("Couldn\u2019t remove. Try again.", "error")
             }
             returnToPrevious()
           }}
@@ -398,8 +399,10 @@ export default function Home() {
                 billingCycle: data.billingCycle as BillingCycle,
                 renewalDate: data.renewalDate,
               })
+              toast("Changes saved")
             } catch (error) {
               console.error("Failed to update subscription:", error)
+              toast("Couldn\u2019t save changes. Try again.", "error")
             }
             returnToPrevious()
           }}
@@ -408,6 +411,7 @@ export default function Home() {
               await recordCancelAttempt(selectedSub.id)
             } catch (error) {
               console.error("Failed to record cancel attempt:", error)
+              toast("Something went wrong. Try again.", "error")
             }
           }}
           onCancelConfirm={async () => {
@@ -415,6 +419,7 @@ export default function Home() {
               await verifyCancellation(selectedSub.id)
             } catch (error) {
               console.error("Failed to verify cancellation:", error)
+              toast("Couldn\u2019t confirm cancellation. Try again.", "error")
             }
           }}
           onCancelNotYet={async () => {
@@ -422,6 +427,7 @@ export default function Home() {
               await resetCancelAttempt(selectedSub.id)
             } catch (error) {
               console.error("Failed to reset cancel attempt:", error)
+              toast("Something went wrong.", "error")
             }
           }}
           onCancelComplete={() => {
@@ -443,6 +449,8 @@ export default function Home() {
         onTabChange={handleTabChange}
         onNotificationClick={handleNotificationNav}
         notificationCount={unreadCount}
+        error={subsError}
+        onRetry={subsRefetch}
       />
     )
   }
@@ -480,6 +488,8 @@ export default function Home() {
       notificationCount={unreadCount}
       activeTab={activeTab}
       onTabChange={handleTabChange}
+      error={subsError}
+      onRetry={subsRefetch}
     />
   )
 }

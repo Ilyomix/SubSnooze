@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Search, ChevronRight, XCircle } from "lucide-react"
 import { AppShell } from "@/components/layout"
-import { Card, Badge, ServiceIcon } from "@/components/ui"
+import { Card, Badge, ServiceIcon, ErrorState } from "@/components/ui"
 import type { Subscription } from "@/types/subscription"
 import type { BillingCycle } from "@/types/database"
 import { daysUntilRenewal } from "@/lib/date-utils"
@@ -34,6 +34,8 @@ interface AllSubscriptionsProps {
   onTabChange: (tab: "home" | "subs" | "settings") => void
   onNotificationClick?: () => void
   notificationCount?: number
+  error?: Error | null
+  onRetry?: () => void
 }
 
 function SubscriptionItem({
@@ -114,6 +116,8 @@ export function AllSubscriptions({
   onTabChange,
   onNotificationClick,
   notificationCount,
+  error,
+  onRetry,
 }: AllSubscriptionsProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [priceView, setPriceView] = useState<PriceView>(getInitialPriceView)
@@ -201,6 +205,11 @@ export function AllSubscriptions({
             className="flex-1 bg-transparent text-[15px] text-text-primary placeholder:text-text-tertiary focus-visible:outline-none"
           />
         </div>
+
+        {/* Error State */}
+        {error && subscriptions.length === 0 && (
+          <ErrorState onRetry={onRetry} />
+        )}
 
         {/* Active Subscriptions */}
         {active.length > 0 && (
