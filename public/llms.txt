@@ -1,0 +1,34 @@
+# SubSnooze
+
+> ADHD-friendly subscription tracker. Stop paying the ADHD tax on subscriptions.
+
+## What is SubSnooze?
+
+SubSnooze is a Progressive Web App (PWA) that helps people with ADHD track and manage their subscriptions. It sends timely reminders before renewals so you never forget to cancel unwanted subscriptions again.
+
+## Key Features
+
+- Subscription tracking with automatic renewal reminders
+- 3-touch reminder system: 7, 3, and 1 days before renewal
+- Push notifications, email reminders, and SMS alerts
+- One-tap cancel redirect to service cancellation pages
+- Cancel verification flow to confirm cancellation went through
+- ADHD-friendly UX: max 3 options per screen, shame-free messaging, "Decide Later" always available
+
+## Tech Stack
+
+- Next.js 15 (App Router), React 19, TypeScript
+- Supabase (database + auth)
+- Firebase Cloud Messaging (push notifications)
+- Tailwind CSS v4
+
+## Pages
+
+- / — Dashboard (authenticated)
+- /login — Sign in / Sign up
+- /terms — Terms of Service
+- /privacy — Privacy Policy
+
+## Contact
+
+- Website: https://subsnooze.com

@@ -1,7 +1,7 @@
 # SubSnooze — Checklist de Commercialisation
 
-> Score global : **69/150 (46%)**
-> Base fonctionnelle solide, mais il manque la couche production-ready.
+> Score global : **79/150 (53%)**
+> Base fonctionnelle solide. CI/CD, SEO et fonctionnalites cles ajoutees en S6.
 
 Priorite : Bloquant | Important | Souhaitable
 
@@ -16,7 +16,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 ## Bloquants (avant lancement)
 
 ### Infrastructure
-- [ ] Pipeline CI/CD (GitHub Actions)
+- [x] Pipeline CI/CD (GitHub Actions) ✅ S6 (lint + tsc + test + audit)
 - [ ] Config deploiement (Vercel / Netlify)
 - [ ] Environnements staging + production
 - [ ] Nom de domaine + SSL
@@ -35,12 +35,12 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [x] Suppression de compte (RGPD droit a l'oubli) ✅ S2
 - [x] Checkbox consentement CGU a l'inscription (`SignupForm`) ✅ S2
 
-### Paiement
-- [ ] Integration Stripe
-- [ ] Webhook paiement
+### Paiement (Phase 1 — Web / Stripe)
+- [ ] Integration Stripe Checkout + Billing Portal
+- [ ] Webhook paiement (`checkout.session.completed`, `subscription.updated/deleted`)
 - [ ] Page checkout securise
 - [ ] Limitations tier gratuit appliquees (`is_premium` existe mais rien n'est limite)
-- [ ] `UpgradeModal` : le bouton "Get Pro - $39" ferme juste la modale — brancher le paiement
+- [ ] `UpgradeModal` : brancher vers Stripe Checkout (remplacer le "Coming soon")
 
 ### Tests
 - [x] Framework de tests (Vitest) ✅ S4
@@ -69,17 +69,17 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 ### Securite
 - [x] Headers securite (X-Content-Type-Options, X-Frame-Options) ✅ S3
 - [ ] CORS configure
-- [ ] Audit dependances (`pnpm audit` automatise)
+- [x] Audit dependances (`pnpm audit` automatise) ✅ S6 (CI job, continue-on-error)
 - [ ] Politique mots de passe (complexite > minLength=6)
 - [x] Wildcard `*.com` dans next.config images — supprime ✅ S3
 - [ ] `getSession()` deprecie — migrer vers `getUser()`
 - [ ] Gestion token expire cote client (redirect /login)
 
 ### SEO
-- [ ] `robots.txt` + `sitemap.xml`
-- [ ] Open Graph meta tags
-- [ ] Meta description par page
-- [ ] Favicon complet (16, 32, apple-touch-icon)
+- [x] `robots.txt` + `sitemap.xml` + `llms.txt` ✅ S6 (Next.js metadata API + static)
+- [x] Open Graph meta tags ✅ S6 (OG + Twitter cards dans layout.tsx)
+- [x] Meta description par page ✅ S6 (layout, terms, privacy)
+- [x] Favicon complet (SVG + apple-touch-icon) ✅ S6 (icon.svg + apple-icon.tsx ImageResponse)
 
 ### PWA
 - [ ] Icones completes (192, 256, 384, 512, maskable)
@@ -97,14 +97,14 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] Empty state Dashboard avec CTA
 - [ ] Empty state AllSubscriptions avec CTA
 - [ ] Navigation depuis notification vers l'abonnement
-- [ ] Validation inline formulaires (prix > 0, date valide)
+- [x] Validation inline formulaires (prix > 0, date valide) ✅ S6 (touched state + error hints)
 - [ ] `$` hardcode partout — utiliser `formatCurrency` systematiquement
 - [ ] "Clear all" notifications avec confirmation
 - [ ] Save/Delete/Restore : ne pas naviguer si erreur
 
 ### Fonctionnalites
-- [ ] Changement de mot de passe (depuis Settings)
-- [ ] Export donnees (CSV)
+- [x] Changement de mot de passe (depuis Settings) ✅ S6 (Security section, min 8 chars, eye toggle)
+- [x] Export donnees (CSV) ✅ S6 (Your Data section, downloadCSV utility)
 - [ ] SMS toggle : desactiver ou implementer le backend
 - [ ] Ajout telephone dans Settings
 - [ ] `remindMe` checkbox : brancher au parent
@@ -154,23 +154,51 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 
 ---
 
+## Roadmap Monetisation
+
+> Strategie en 3 phases pour maximiser la portee sans over-engineering initial.
+
+| Phase | Distribution | Paiement | Quand |
+|-------|-------------|----------|-------|
+| **1 — Web** | PWA web (lancement) | **Stripe** Checkout + Billing Portal | V1 |
+| **2 — Android** | Play Store via TWA (PWABuilder/Bubblewrap) | **RevenueCat** (unifie Stripe web + Google Play Billing) | Post-traction |
+| **3 — iOS** | App Store via Capacitor | **RevenueCat** (+ StoreKit IAP obligatoire Apple) | Si ca decolle |
+
+**Pourquoi cet ordre :**
+- Phase 1 : 0% commission store, iteration rapide, validation marche
+- Phase 2 : Play Store accepte bien les TWA/PWA, RevenueCat gratuit < $2.5k MRR
+- Phase 3 : Apple exige IAP (15-30% commission), review stricte — justifie seulement avec traction prouvee
+
+**Pre-requis Play Store (Phase 2) :**
+- [ ] Icones completes (192, 512, maskable)
+- [ ] Page offline dediee
+- [ ] Service worker avec cache strategy
+- [ ] Compte Google Play Developer ($25 one-time)
+
+**Pre-requis App Store (Phase 3) :**
+- [ ] Wrapper Capacitor ou equivalent
+- [ ] Apple Developer Program ($99/an)
+- [ ] Conformite App Store Review Guidelines
+
+---
+
 ## Scores par categorie
 
 | Categorie | Score |
 |---|---|
-| Infrastructure & DevOps | 1/10 |
-| Securite | 8/10 |
+| Infrastructure & DevOps | 3/10 |
+| Securite | 9/10 |
 | Legal & Conformite | 7/10 |
 | Paiement & Monetisation | 1/10 |
 | Tests & Qualite | 5/10 |
 | Monitoring & Analytics | 0/10 |
-| SEO & ASO | 2/10 |
+| SEO & ASO | 7/10 |
 | PWA & Mobile | 5/10 |
-| UI/UX Etats & Feedback | 8/10 |
+| UI/UX Etats & Feedback | 9/10 |
 | UI/UX Navigation | 5/10 |
 | UI/UX Design Systeme | 4/10 |
-| Fonctionnalites | 5/10 |
+| Fonctionnalites | 7/10 |
 | UX TDAH | 5/10 |
 | Accessibilite | 6/10 |
 | Performance | 5/10 |
-| **TOTAL** | **69/150 (46%)** |
+| **TOTAL** | **79/150 (53%)** |
