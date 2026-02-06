@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Search, Loader2 } from "lucide-react"
+import { Search, Loader2, Plus } from "lucide-react"
 import { DetailShell } from "@/components/layout"
-import { Card, ServiceIcon } from "@/components/ui"
+import { Card, ServiceIcon, StepProgress } from "@/components/ui"
 import {
   stringToColor,
   getPopularServices,
@@ -16,6 +16,8 @@ interface AddSubscriptionStep1Props {
   onBack: () => void
   onSelectService: (serviceId: string, customName?: string) => void
   onSearch: (query: string) => void
+  embedded?: boolean
+  showProgress?: boolean
 }
 
 function capitalizeWords(str: string): string {
@@ -58,6 +60,8 @@ export function AddSubscriptionStep1({
   onBack,
   onSelectService,
   onSearch,
+  embedded = false,
+  showProgress = true,
 }: AddSubscriptionStep1Props) {
   const [searchTerm, setSearchTerm] = useState("")
   const [services, setServices] = useState<SubscriptionService[]>([])
@@ -124,20 +128,13 @@ export function AddSubscriptionStep1({
     onSelectService(`custom:${capitalizedName}`)
   }
 
-  return (
-    <DetailShell title="Add Subscription" onBack={onBack}>
-      <div className="flex flex-col gap-6 px-6 pt-4">
+  const content = (
+    <div className="flex flex-col gap-6 px-6 pt-4">
 
         {/* Progress Indicator */}
-        <div className="flex flex-col items-center gap-2 py-2">
-          <span className="text-[13px] font-medium text-text-secondary">Step 1 of 2</span>
-          <div className="flex items-center gap-2">
-            <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-            <div className="h-0.5 w-10 rounded-sm bg-divider" />
-            <div className="h-2.5 w-2.5 rounded-full bg-divider" />
-          </div>
-          <span className="text-xs text-text-tertiary">Choose a service to track</span>
-        </div>
+        {showProgress && (
+          <StepProgress current={1} total={2} subtitle="Choose a service to track" className="py-2" />
+        )}
 
         {/* Search */}
         <div className="flex flex-col gap-3">
@@ -205,7 +202,7 @@ export function AddSubscriptionStep1({
                 }, {})
               ).map(([letter, letterServices]) => (
                 <div key={letter}>
-                  <div className="sticky top-14 z-10 bg-background/90 backdrop-blur-sm px-1 py-1.5">
+                  <div className="sticky top-32 z-10 bg-background/90 backdrop-blur-sm px-1 py-1.5">
                     <span className="text-sm font-bold text-primary">{letter}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
@@ -271,7 +268,22 @@ export function AddSubscriptionStep1({
             </div>
           )}
         </div>
-      </div>
+    </div>
+  )
+
+  if (embedded) return content
+
+  return (
+    <DetailShell
+      title="Add Subscription"
+      onBack={onBack}
+      headerRight={(
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
+          <Plus className="h-4 w-4 text-primary" aria-hidden="true" />
+        </div>
+      )}
+    >
+      {content}
     </DetailShell>
   )
 }

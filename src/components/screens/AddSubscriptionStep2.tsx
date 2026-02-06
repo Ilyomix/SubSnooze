@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { DetailShell } from "@/components/layout"
-import { Button, SubscriptionFormFields, ServiceIcon } from "@/components/ui"
+import { Button, SubscriptionFormFields, ServiceIcon, StepProgress } from "@/components/ui"
 import type { SubscriptionFormData } from "@/components/ui"
 import { calculateNextRenewalDate, parseLocalDate } from "@/lib/date-utils"
 import type { BillingCycle } from "@/types/database"
@@ -23,12 +23,16 @@ interface AddSubscriptionStep2Props {
   service: ServiceInfo
   onBack: () => void
   onSave: (data: { price: string; cycle: string; date: Date }) => void
+  embedded?: boolean
+  showProgress?: boolean
 }
 
 export function AddSubscriptionStep2({
   service,
   onBack,
   onSave,
+  embedded = false,
+  showProgress = true,
 }: AddSubscriptionStep2Props) {
   // Pre-fill price from database if available
   const defaultPrice = service.priceMonthly
@@ -45,6 +49,57 @@ export function AddSubscriptionStep2({
   const isValidPrice = !isNaN(priceNum) && priceNum > 0
   const isValidDate = formData.renewalDate !== ""
 
+  const content = (
+    <div className="flex min-h-full flex-col">
+      <div className="flex flex-1 flex-col gap-8 px-6 pt-4 pb-32">
+        {embedded && (
+          <div className="flex items-center gap-3">
+            <ServiceIcon
+              name={service.name}
+              logoColor={service.logoColor}
+              logoUrl={service.logo.startsWith("http") ? service.logo : undefined}
+              domain={service.domain ?? undefined}
+              size={36}
+            />
+            <span className="text-[15px] font-semibold text-text-primary truncate">{service.name}</span>
+          </div>
+        )}
+
+        {showProgress && (
+          <StepProgress current={2} total={2} subtitle="Almost there · Add the details" />
+        )}
+
+        <SubscriptionFormFields
+          value={formData}
+          onChange={setFormData}
+          priceLabel={(cycle: BillingCycle) => cycle === "yearly" ? "Yearly price" : "Monthly price"}
+          autoCalculateRenewalOnCycleChange
+          pricingHints={{ monthly: service.priceMonthly, yearly: service.priceYearly }}
+        />
+
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 bg-surface pt-4 pb-[max(2rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto w-full max-w-3xl px-6">
+          <Button
+            variant="primary"
+            onClick={() => onSave({
+              price: formData.price,
+              cycle: formData.billingCycle,
+              date: parseLocalDate(formData.renewalDate),
+            })}
+            disabled={!isValidPrice || !isValidDate}
+            className="w-full"
+          >
+            Save subscription
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+
+  if (embedded) return content
+
   return (
     <DetailShell
       title={service.name}
@@ -59,49 +114,7 @@ export function AddSubscriptionStep2({
         />
       }
     >
-      <div className="flex min-h-full flex-col">
-        <div className="flex flex-1 flex-col gap-8 px-6 pt-4 pb-32">
-
-          {/* Progress Indicator */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-[13px] font-medium text-text-secondary">Step 2 of 2</span>
-            <div className="flex items-center gap-2">
-              <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-              <div className="h-0.5 w-10 rounded-sm bg-primary" />
-              <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-            </div>
-            <span className="text-xs text-text-tertiary">Almost there… Add the details</span>
-          </div>
-
-          {/* Form */}
-          <SubscriptionFormFields
-            value={formData}
-            onChange={setFormData}
-            priceLabel={(cycle: BillingCycle) => cycle === "yearly" ? "Yearly price" : "Monthly price"}
-            autoCalculateRenewalOnCycleChange
-            pricingHints={{ monthly: service.priceMonthly, yearly: service.priceYearly }}
-          />
-
-        </div>
-
-        {/* Sticky Save Button */}
-        <div className="fixed bottom-0 left-0 right-0 border-t border-divider bg-surface pt-4 pb-[max(2rem,env(safe-area-inset-bottom))]">
-          <div className="mx-auto w-full max-w-3xl px-6">
-            <Button
-              variant="primary"
-              onClick={() => onSave({
-                price: formData.price,
-                cycle: formData.billingCycle,
-                date: parseLocalDate(formData.renewalDate),
-              })}
-              disabled={!isValidPrice || !isValidDate}
-              className="w-full"
-            >
-              Save subscription
-            </Button>
-          </div>
-        </div>
-      </div>
+      {content}
     </DetailShell>
   )
 }

@@ -46,7 +46,7 @@ export function AppShell({
             >
               <Bell className="h-5 w-5 text-primary" />
               {notificationCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1">
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 motion-safe:animate-[badge-pop_220ms_ease-out]">
                   <NumberFlow value={notificationCount} className="text-[11px] font-bold tabular-nums text-white" />
                 </span>
               )}

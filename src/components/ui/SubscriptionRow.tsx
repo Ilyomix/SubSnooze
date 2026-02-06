@@ -57,30 +57,15 @@ export function SubscriptionRow({ subscription, onClick, showReminderStage = tru
   const isCancelled = subscription.status === "cancelled"
   const daysUntil = daysUntilRenewal(subscription.renewalDate)
 
-  // Determine accent color based on urgency
-  let accentColor = "bg-primary"
-  if (isCancelled) {
-    accentColor = "bg-divider"
-  } else if (daysUntil <= 1) {
-    accentColor = "bg-accent"
-  } else if (daysUntil <= 3) {
-    accentColor = "bg-accent"
-  } else if (isRenewingSoon) {
-    accentColor = "bg-amber-500"
-  }
-
   return (
     <button
       onClick={onClick}
       aria-label={`Manage ${subscription.name} subscription`}
       className={cn(
-        "flex w-full items-center text-left motion-safe:transition-colors hover:bg-background/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg",
+        "flex w-full items-center text-left motion-safe:transition-colors hover:bg-background/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
         isCancelled && "opacity-60"
       )}
     >
-      {/* Accent bar */}
-      <div className={cn("h-full w-1 self-stretch", accentColor)} />
-
       {/* Content */}
       <div className="flex flex-1 items-center justify-between p-4 min-w-0">
         <div className="flex items-center gap-3 min-w-0">

@@ -6,8 +6,7 @@ import {
   AllSubscriptions,
   Settings,
   Notifications,
-  AddSubscriptionStep1,
-  AddSubscriptionStep2,
+  AddSubscriptionWizard,
   SubscriptionManagement,
   UpgradeModal,
   DashboardSkeleton,
@@ -26,125 +25,14 @@ import { useScrollRestore } from "@/hooks/useScrollRestore"
 import { usePullToRefresh } from "@/hooks/usePullToRefresh"
 import type { Subscription } from "@/types/subscription"
 import type { BillingCycle } from "@/types/database"
-import { getServiceBySlug, getServiceLogoUrl, getFallbackLogoUrl, getInitials, stringToColor, nameToDomain } from "@/lib/services"
 import { formatLocalDate } from "@/lib/date-utils"
-
-// Extracted outside Home render to prevent remount on every re-render (IC-5/ADD2-5/NAV-7)
-function ServiceStep2Loader({
-  selectedService,
-  customServiceName,
-  onBack,
-  onAdd,
-}: {
-  selectedService: string
-  customServiceName: string | null
-  onBack: () => void
-  onAdd: (data: { name: string; logo: string; logoColor: string; price: number; billingCycle: BillingCycle; renewalDate: Date; cancelUrl?: string }) => void
-}) {
-  const [serviceInfo, setServiceInfo] = useState<{
-    id: string
-    name: string
-    logo: string
-    logoColor: string
-    domain: string | null
-    priceMonthly?: number | null
-    priceYearly?: number | null
-    cancelUrl?: string | null
-  } | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  const isDbService = selectedService.startsWith("service:")
-  const serviceSlug = isDbService ? selectedService.replace("service:", "") : null
-  const customName = selectedService.startsWith("custom:")
-    ? selectedService.replace("custom:", "")
-    : customServiceName
-
-  useEffect(() => {
-    async function loadService() {
-      if (serviceSlug) {
-        const dbService = await getServiceBySlug(serviceSlug)
-        if (dbService) {
-          setServiceInfo({
-            id: dbService.id,
-            name: dbService.name,
-            logo: getServiceLogoUrl(dbService, dbService.domain),
-            logoColor: dbService.logo_color,
-            domain: dbService.domain,
-            priceMonthly: dbService.price_monthly,
-            priceYearly: dbService.price_yearly,
-            cancelUrl: dbService.cancel_url,
-          })
-        } else {
-          const fallbackName = serviceSlug
-          setServiceInfo({
-            id: selectedService,
-            name: fallbackName,
-            logo: getFallbackLogoUrl(nameToDomain(fallbackName)),
-            logoColor: stringToColor(fallbackName),
-            domain: nameToDomain(fallbackName),
-          })
-        }
-      } else if (customName) {
-        const domain = nameToDomain(customName)
-        setServiceInfo({
-          id: selectedService,
-          name: customName,
-          logo: getFallbackLogoUrl(domain),
-          logoColor: stringToColor(customName),
-          domain: domain,
-        })
-      } else {
-        setServiceInfo({
-          id: selectedService,
-          name: "Unknown Service",
-          logo: "",
-          logoColor: "#6366f1",
-          domain: null,
-        })
-      }
-      setLoading(false)
-    }
-    loadService()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedService])
-
-  if (loading || !serviceInfo) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 motion-safe:animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    )
-  }
-
-  return (
-    <AddSubscriptionStep2
-      service={serviceInfo}
-      onBack={onBack}
-      onSave={async (data) => {
-        const priceNum = parseFloat(data.price.replace(/[^0-9.]/g, "")) || 0
-        onAdd({
-          name: serviceInfo.name,
-          logo: serviceInfo.domain
-            ? getFallbackLogoUrl(serviceInfo.domain)
-            : getInitials(serviceInfo.name),
-          logoColor: serviceInfo.logoColor,
-          price: priceNum,
-          billingCycle: data.cycle as BillingCycle,
-          renewalDate: data.date,
-          cancelUrl: serviceInfo.cancelUrl ?? undefined,
-        })
-      }}
-    />
-  )
-}
 
 type Screen =
   | "dashboard"
   | "allSubs"
   | "settings"
   | "notifications"
-  | "addStep1"
-  | "addStep2"
+  | "addSub"
   | "manage"
   | "about"
   | "faq"
@@ -183,8 +71,6 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<"home" | "subs" | "settings">("home")
   const [selectedSub, setSelectedSub] = useState<Subscription | null>(null)
   const [previousScreen, setPreviousScreen] = useState<Screen>("dashboard")
-  const [selectedService, setSelectedService] = useState<string | null>(null)
-  const [customServiceName, setCustomServiceName] = useState<string | null>(null)
   const [totalSaved, setTotalSaved] = useState(0)
 
   // Onboarding state — check localStorage to see if user has completed it
@@ -248,7 +134,6 @@ export default function Home() {
     options?: {
       tab?: "home" | "subs" | "settings"
       sub?: Subscription | null
-      service?: string | null
       savePrevious?: Screen
     }
   ) => {
@@ -257,7 +142,6 @@ export default function Home() {
 
     if (options?.savePrevious !== undefined) setPreviousScreen(options.savePrevious)
     if (options?.sub !== undefined) setSelectedSub(options.sub)
-    if (options?.service !== undefined) setSelectedService(options.service)
     if (options?.tab !== undefined) setActiveTab(options.tab)
 
     setScreen(newScreen)
@@ -300,7 +184,6 @@ export default function Home() {
       const tabScreens: Screen[] = ["dashboard", "allSubs", "settings"]
       if (state?.screen && tabScreens.includes(state.screen)) {
         setSelectedSub(null)
-        setSelectedService(null)
       }
 
       isPopstateRef.current = false
@@ -331,9 +214,6 @@ export default function Home() {
       }, 0)
     setTotalSaved(cancelledTotal)
   }, [subscriptions])
-
-  // Chain-add state: show "Add another?" prompt after adding a subscription
-  const [showAddAnother, setShowAddAnother] = useState(false)
 
   // Show skeleton while loading
   if (isInitialLoading || showLoadingUI) {
@@ -395,10 +275,11 @@ export default function Home() {
         cancel_url: data.cancelUrl,
       })
       toast("Subscription added")
-      setShowAddAnother(true)
+      return true
     } catch (error) {
       console.error("Failed to add subscription:", error)
-      toast("Couldn\u2019t add subscription. Try again.", "error")
+      toast("Couldn’t add subscription. Try again.", "error")
+      return false
     }
   }
 
@@ -501,68 +382,13 @@ export default function Home() {
     )
   }
 
-  if (screen === "addStep1") {
+  if (screen === "addSub") {
     return (
       <div className="motion-safe:animate-[screen-slide-in_0.25s_ease-out]">
-      <AddSubscriptionStep1
-        onBack={() => window.history.back()}
-        onSelectService={(id, customName) => {
-          setCustomServiceName(customName ?? null)
-          navigateTo("addStep2", { service: id })
-        }}
-        onSearch={() => {}}
-      />
-      </div>
-    )
-  }
-
-  if (screen === "addStep2" && selectedService) {
-    // Show "Add another?" prompt after successful save
-    if (showAddAnother) {
-      return (
-        <div className="motion-safe:animate-[fade-in_0.2s_ease-out] flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-6">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-            <svg className="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 6L9 17l-5-5" />
-            </svg>
-          </div>
-          <div className="text-center">
-            <h2 className="text-xl font-bold text-text-primary">Added!</h2>
-            <p className="mt-1 text-sm text-text-secondary">Want to add another subscription?</p>
-          </div>
-          <div className="flex w-full max-w-xs flex-col gap-3">
-            <button
-              onClick={() => {
-                setShowAddAnother(false)
-                setSelectedService(null)
-                setCustomServiceName(null)
-                navigateTo("addStep1")
-              }}
-              className="w-full rounded-xl bg-primary py-4 text-base font-semibold text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            >
-              Add another
-            </button>
-            <button
-              onClick={() => {
-                setShowAddAnother(false)
-                navigateTo("dashboard", { tab: "home" })
-              }}
-              className="w-full rounded-xl border border-divider py-4 text-base font-semibold text-text-primary hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            >
-              Done for now
-            </button>
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <div className="motion-safe:animate-[screen-slide-in_0.25s_ease-out]">
-      <ServiceStep2Loader
-        selectedService={selectedService}
-        customServiceName={customServiceName}
+      <AddSubscriptionWizard
         onBack={() => window.history.back()}
         onAdd={handleAddSubscription}
+        onDoneForNow={() => navigateTo("dashboard", { tab: "home" })}
       />
       </div>
     )
@@ -649,7 +475,7 @@ export default function Home() {
         subscriptions={subscriptions}
         onSubscriptionClick={handleSubscriptionClick}
         onSearch={() => {}}
-        onAddSubscription={() => navigateTo("addStep1")}
+        onAddSubscription={() => navigateTo("addSub")}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onNotificationClick={handleNotificationNav}
@@ -694,7 +520,7 @@ export default function Home() {
         totalSaved={totalSaved}
         totalMonthly={totalMonthly}
         subscriptions={subscriptions}
-        onAddSubscription={() => navigateTo("addStep1")}
+        onAddSubscription={() => navigateTo("addSub")}
         onSubscriptionClick={handleSubscriptionClick}
         onNotificationClick={handleNotificationNav}
         notificationCount={unreadCount}

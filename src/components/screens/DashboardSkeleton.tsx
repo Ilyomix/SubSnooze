@@ -2,22 +2,19 @@ import { Skeleton } from "@/components/ui/Skeleton"
 
 function SubscriptionRowSkeleton() {
   return (
-    <div className="flex w-full items-stretch">
-      <Skeleton className="w-1 shrink-0" />
-      <div className="flex flex-1 items-center justify-between p-4 min-w-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <Skeleton className="h-11 w-11 shrink-0 rounded-[10px]" />
-          <div className="flex flex-col gap-1.5 min-w-0">
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-3 w-20" />
-          </div>
+    <div className="flex w-full items-center justify-between p-4 min-w-0">
+      <div className="flex items-center gap-3 min-w-0">
+        <Skeleton className="h-11 w-11 shrink-0 rounded-[10px]" />
+        <div className="flex flex-col gap-1.5 min-w-0">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-3 w-20" />
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
-          <Skeleton className="h-5 w-14 rounded-full" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-4 w-14" />
-            <Skeleton className="h-5 w-5 rounded" />
-          </div>
+      </div>
+      <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
+        <Skeleton className="h-5 w-14 rounded-full" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-14" />
+          <Skeleton className="h-5 w-5 rounded" />
         </div>
       </div>
     </div>
@@ -55,20 +52,26 @@ export function DashboardSkeleton() {
           <Skeleton className="h-4 w-28" />
 
           {/* Subscription rows */}
-          <div className="overflow-hidden rounded-2xl bg-surface border-l-4 border-accent">
-            <SubscriptionRowSkeleton />
-            <div className="h-px bg-divider" />
-            <SubscriptionRowSkeleton />
-            <div className="h-px bg-divider" />
-            <SubscriptionRowSkeleton />
+          <div className="flex">
+            <Skeleton className="w-1 shrink-0 rounded-none" />
+            <div className="flex-1 overflow-hidden rounded-2xl rounded-l-none bg-surface">
+              <SubscriptionRowSkeleton />
+              <div className="h-px bg-divider" />
+              <SubscriptionRowSkeleton />
+              <div className="h-px bg-divider" />
+              <SubscriptionRowSkeleton />
+            </div>
           </div>
 
           {/* Second section */}
           <Skeleton className="h-4 w-20" />
-          <div className="overflow-hidden rounded-2xl bg-surface border-l-4 border-primary">
-            <SubscriptionRowSkeleton />
-            <div className="h-px bg-divider" />
-            <SubscriptionRowSkeleton />
+          <div className="flex">
+            <Skeleton className="w-1 shrink-0 rounded-none" />
+            <div className="flex-1 overflow-hidden rounded-2xl rounded-l-none bg-surface">
+              <SubscriptionRowSkeleton />
+              <div className="h-px bg-divider" />
+              <SubscriptionRowSkeleton />
+            </div>
           </div>
         </div>
       </main>
