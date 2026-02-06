@@ -62,9 +62,18 @@ export default function TermsPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-medium text-text-primary">6. Free and Premium Plans</h2>
+            <h2 className="text-lg font-medium text-text-primary">6. Free and Pro Plans</h2>
             <p className="text-sm leading-relaxed text-text-secondary">
-              SubSnooze offers a free tier with core tracking and reminder features. Premium features may be offered in the future. We will clearly communicate pricing before any purchase. You can cancel premium at any time.
+              SubSnooze offers a <strong>Free tier</strong> (up to 5 subscriptions) and a <strong>Pro tier</strong> (unlimited subscriptions, priority support, and additional features) available as a one-time lifetime purchase. Payment is processed securely through Stripe. You will not be charged again after your initial purchase.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-medium text-text-primary">6b. Refund Policy</h2>
+            <p className="text-sm leading-relaxed text-text-secondary">
+              If you are unsatisfied with your Pro purchase, you may request a full refund within <strong>14 days</strong> of purchase by contacting{" "}
+              <a href="mailto:support@subsnooze.com" className="text-primary hover:underline">support@subsnooze.com</a>.
+              After 14 days, refunds are handled on a case-by-case basis. If a refund or chargeback is processed, your account will revert to the Free tier. No partial refunds are offered.
             </p>
           </section>
 

@@ -64,9 +64,15 @@ export default function PrivacyPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-medium text-text-primary">5. Cookies and Local Storage</h2>
+            <h2 className="text-lg font-medium text-text-primary">5. Cookies, Local Storage &amp; Analytics</h2>
             <p className="text-sm leading-relaxed text-text-secondary">
-              SubSnooze uses cookies and local storage strictly for authentication sessions and user preferences (such as price display mode). We do not use tracking cookies or third-party analytics.
+              SubSnooze uses cookies and local storage for authentication sessions and user preferences (such as theme and price display mode).
+            </p>
+            <p className="text-sm leading-relaxed text-text-secondary">
+              If you accept analytics cookies, we use <strong>PostHog</strong>, a privacy-friendly analytics platform, to understand how SubSnooze is used so we can improve it. PostHog does not track you across other websites, respects Do Not Track settings, and we do not send any personally identifiable information. You can decline analytics in the cookie banner, and no analytics data will be collected.
+            </p>
+            <p className="text-sm leading-relaxed text-text-secondary">
+              We use <strong>Sentry</strong> for error monitoring to detect and fix bugs. Error reports may include technical information about the error (stack trace, browser type) but do not include personal information.
             </p>
           </section>
 
@@ -78,6 +84,9 @@ export default function PrivacyPage() {
             <ul className="list-disc space-y-1 pl-5 text-sm text-text-secondary">
               <li><strong>Supabase:</strong> database hosting and authentication</li>
               <li><strong>Firebase (Google):</strong> push notification delivery only</li>
+              <li><strong>Stripe:</strong> payment processing for Pro upgrades (no card data stored by us)</li>
+              <li><strong>PostHog:</strong> privacy-friendly analytics (only if you accept cookies)</li>
+              <li><strong>Sentry:</strong> error monitoring (technical data only, no PII)</li>
             </ul>
           </section>
 

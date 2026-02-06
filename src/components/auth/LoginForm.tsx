@@ -4,6 +4,7 @@ import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui"
 import { Mail, Lock, Eye, EyeOff } from "lucide-react"
+import { trackLogin } from "@/lib/analytics/events"
 
 interface LoginFormProps {
   onSwitchToSignup: () => void
@@ -33,6 +34,7 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
       setError(error.message)
       setLoading(false)
     } else {
+      trackLogin("email")
       // Full page load so middleware validates the session cookie and lets us through
       window.location.href = "/"
     }
@@ -52,6 +54,8 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
     if (error) {
       setError(error.message)
       setLoading(false)
+    } else {
+      trackLogin("google")
     }
   }
 

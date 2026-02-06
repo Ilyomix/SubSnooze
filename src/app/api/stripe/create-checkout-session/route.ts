@@ -61,6 +61,9 @@ export async function POST() {
           quantity: 1,
         },
       ],
+      payment_intent_data: {
+        receipt_email: user.email ?? undefined,
+      },
       success_url: `${origin}/?upgrade=success`,
       cancel_url: `${origin}/?upgrade=cancelled`,
       metadata: {

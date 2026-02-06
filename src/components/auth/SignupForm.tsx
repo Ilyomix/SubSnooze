@@ -5,6 +5,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui"
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react"
+import { trackSignup } from "@/lib/analytics/events"
 
 interface SignupFormProps {
   onSwitchToLogin: () => void
@@ -59,6 +60,7 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
       setError(error.message)
       setLoading(false)
     } else {
+      trackSignup("email")
       onSuccess()
     }
   }
@@ -77,6 +79,8 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
     if (error) {
       setError(error.message)
       setLoading(false)
+    } else {
+      trackSignup("google")
     }
   }
 
