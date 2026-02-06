@@ -32,8 +32,13 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
       return
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters")
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters")
+      return
+    }
+
+    if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
+      setError("Password needs uppercase, lowercase, and a number")
       return
     }
 
@@ -174,9 +179,9 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 6 characters"
+              placeholder="Min. 8 chars, upper + lower + number"
               required
-              minLength={6}
+              minLength={8}
               className="w-full rounded-xl border border-divider bg-surface py-4 pl-12 pr-12 text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
             />
             <button

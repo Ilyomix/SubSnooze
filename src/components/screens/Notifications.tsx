@@ -120,6 +120,17 @@ function NotificationItem({
     onClick()
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Delete" || e.key === "Backspace") {
+      e.preventDefault()
+      onDelete?.(notification.id)
+    }
+    if (e.key === "u" && isRead && onMarkAsUnread) {
+      e.preventDefault()
+      onMarkAsUnread(notification.id)
+    }
+  }
+
   const handleVerify = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (subscriptionId && onVerifyCancellation) {
@@ -183,7 +194,8 @@ function NotificationItem({
         <div className="bg-[var(--color-surface,#FFFFFF)]">
           <button
             onClick={handleClick}
-            className={`flex w-full items-start gap-3 p-4 text-left ${isRead ? "opacity-60" : ""}`}
+            onKeyDown={handleKeyDown}
+            className={`flex w-full items-start gap-3 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary ${isRead ? "opacity-60" : ""}`}
           >
             {/* Unread dot — left edge */}
             {
@@ -306,14 +318,14 @@ export function Notifications({
         ) : undefined
       }
     >
-      <div className="flex flex-col gap-6 px-6 pt-4">
+      <div className="flex flex-col gap-6 px-6 pt-4" aria-live="polite">
 
         {/* Unread */}
         {unread.length > 0 && (
           <div className="flex flex-col gap-3">
-            <span className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary">
+            <h2 className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary">
               New ({unread.length})
-            </span>
+            </h2>
             <Card padding="none" className="overflow-hidden">
               {unread.map((notification, index) => (
                 <div key={notification.id}>
@@ -336,9 +348,9 @@ export function Notifications({
         {/* Read */}
         {read.length > 0 && (
           <div className="flex flex-col gap-3">
-            <span className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary">
+            <h2 className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary">
               Earlier
-            </span>
+            </h2>
             <Card padding="none" className="overflow-hidden">
               {read.map((notification, index) => (
                 <div key={notification.id}>

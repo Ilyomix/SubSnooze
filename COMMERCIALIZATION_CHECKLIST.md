@@ -1,6 +1,7 @@
 # SubSnooze — Checklist de Commercialisation
 
-> Score global : **89/150 (59%)**
+> Score global : **99/150 (66%)**
+> S8 : Accessibility sweep + legal + feature fixes (10 items).
 > S7 : 10 audit fixes — auth, navigation, UX, currency, sorting.
 
 Priorite : Bloquant | Important | Souhaitable
@@ -31,7 +32,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 ### Legal
 - [x] Politique de confidentialite (page + lien dans footer login) ✅ S2
 - [x] CGU (page + lien dans footer login) ✅ S2
-- [ ] Banniere cookies RGPD
+- [x] Banniere cookies RGPD ✅ S8 (CookieBanner component, accept/decline, localStorage)
 - [x] Suppression de compte (RGPD droit a l'oubli) ✅ S2
 - [x] Checkbox consentement CGU a l'inscription (`SignupForm`) ✅ S2
 
@@ -70,7 +71,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [x] Headers securite (X-Content-Type-Options, X-Frame-Options) ✅ S3
 - [ ] CORS configure
 - [x] Audit dependances (`pnpm audit` automatise) ✅ S6 (CI job, continue-on-error)
-- [ ] Politique mots de passe (complexite > minLength=6)
+- [x] Politique mots de passe (complexite > minLength=6) ✅ S8 (min 8 chars + uppercase + lowercase + number)
 - [x] Wildcard `*.com` dans next.config images — supprime ✅ S3
 - [x] `getSession()` deprecie — migrer vers `getUser()` ✅ S7 (getUser() + fallback redirect)
 - [x] Gestion token expire cote client (redirect /login) ✅ S7 (TOKEN_REFRESHED + stale session detect)
@@ -105,9 +106,9 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 ### Fonctionnalites
 - [x] Changement de mot de passe (depuis Settings) ✅ S6 (Security section, min 8 chars, eye toggle)
 - [x] Export donnees (CSV) ✅ S6 (Your Data section, downloadCSV utility)
-- [ ] SMS toggle : desactiver ou implementer le backend
+- [x] SMS toggle : desactiver ou implementer le backend ✅ S8 (disabled with "Coming soon" label)
 - [ ] Ajout telephone dans Settings
-- [ ] `remindMe` checkbox : brancher au parent
+- [x] `remindMe` checkbox : brancher au parent ✅ S8 (CancelRedirectModal → SubscriptionManagement → parent)
 - [x] Prix dans CancelRedirectModal : normaliser pour yearly ✅ S7 (monthly normalization)
 - [ ] Section A propos / support / contact
 - [ ] Page pricing publique
@@ -120,12 +121,12 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] Tracking evenements cles (signup, add_sub, cancel, upgrade)
 
 ### Accessibilite
-- [ ] Skip links
-- [ ] Hierarchie headings coherente
-- [ ] ARIA live regions
-- [ ] Swipe notifications accessible clavier
-- [ ] Alt text sur ServiceIcon
-- [ ] Contraste couleurs verifie WCAG AA
+- [x] Skip links ✅ S8 (AppShell + DetailShell, sr-only focus:visible)
+- [x] Hierarchie headings coherente ✅ S8 (h1→h2 across Dashboard, AllSubs, Notifications, Settings)
+- [x] ARIA live regions ✅ S8 (Dashboard summary cards, Notifications list, AllSubs search results)
+- [x] Swipe notifications accessible clavier ✅ S8 (Delete/Backspace to delete, U to mark unread)
+- [x] Alt text sur ServiceIcon ✅ S8 (role=img + aria-label on initials fallback)
+- [x] Contraste couleurs verifie WCAG AA ✅ S8 (text-tertiary #767370→#6B6966, 4.5:1+ on background)
 
 ---
 
@@ -188,7 +189,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 |---|---|
 | Infrastructure & DevOps | 3/10 |
 | Securite | 10/10 |
-| Legal & Conformite | 7/10 |
+| Legal & Conformite | 8/10 |
 | Paiement & Monetisation | 1/10 |
 | Tests & Qualite | 5/10 |
 | Monitoring & Analytics | 0/10 |
@@ -197,8 +198,8 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 | UI/UX Etats & Feedback | 9/10 |
 | UI/UX Navigation | 8/10 |
 | UI/UX Design Systeme | 6/10 |
-| Fonctionnalites | 8/10 |
+| Fonctionnalites | 9/10 |
 | UX TDAH | 5/10 |
-| Accessibilite | 6/10 |
+| Accessibilite | 9/10 |
 | Performance | 6/10 |
-| **TOTAL** | **89/150 (59%)** |
+| **TOTAL** | **99/150 (66%)** |
