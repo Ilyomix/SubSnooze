@@ -1,7 +1,7 @@
 # SubSnooze — Checklist de Commercialisation
 
-> Score global : **79/150 (53%)**
-> Base fonctionnelle solide. CI/CD, SEO et fonctionnalites cles ajoutees en S6.
+> Score global : **89/150 (59%)**
+> S7 : 10 audit fixes — auth, navigation, UX, currency, sorting.
 
 Priorite : Bloquant | Important | Souhaitable
 
@@ -72,8 +72,8 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [x] Audit dependances (`pnpm audit` automatise) ✅ S6 (CI job, continue-on-error)
 - [ ] Politique mots de passe (complexite > minLength=6)
 - [x] Wildcard `*.com` dans next.config images — supprime ✅ S3
-- [ ] `getSession()` deprecie — migrer vers `getUser()`
-- [ ] Gestion token expire cote client (redirect /login)
+- [x] `getSession()` deprecie — migrer vers `getUser()` ✅ S7 (getUser() + fallback redirect)
+- [x] Gestion token expire cote client (redirect /login) ✅ S7 (TOKEN_REFRESHED + stale session detect)
 
 ### SEO
 - [x] `robots.txt` + `sitemap.xml` + `llms.txt` ✅ S6 (Next.js metadata API + static)
@@ -93,14 +93,14 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] Transitions animees entre ecrans
 - [ ] Scroll position restoration
 - [ ] Pull-to-refresh
-- [ ] Tri des abonnements (prix, nom, date)
-- [ ] Empty state Dashboard avec CTA
-- [ ] Empty state AllSubscriptions avec CTA
-- [ ] Navigation depuis notification vers l'abonnement
+- [x] Tri des abonnements (prix, nom, date) ✅ S7 (cycle sort button, 3 modes)
+- [x] Empty state Dashboard avec CTA ✅ S7 (icon + message + Add button)
+- [x] Empty state AllSubscriptions avec CTA ✅ S7 (icon + message + Add link)
+- [x] Navigation depuis notification vers l'abonnement ✅ S7 (click → manage screen)
 - [x] Validation inline formulaires (prix > 0, date valide) ✅ S6 (touched state + error hints)
-- [ ] `$` hardcode partout — utiliser `formatCurrency` systematiquement
-- [ ] "Clear all" notifications avec confirmation
-- [ ] Save/Delete/Restore : ne pas naviguer si erreur
+- [x] `$` hardcode partout — utiliser `formatCurrency` systematiquement ✅ S7 (CURRENCY_SYMBOL + formatCurrency)
+- [x] "Clear all" notifications avec confirmation ✅ S7 (tap-to-confirm 3s auto-reset)
+- [x] Save/Delete/Restore : ne pas naviguer si erreur ✅ S7 (navigate only on success)
 
 ### Fonctionnalites
 - [x] Changement de mot de passe (depuis Settings) ✅ S6 (Security section, min 8 chars, eye toggle)
@@ -108,7 +108,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] SMS toggle : desactiver ou implementer le backend
 - [ ] Ajout telephone dans Settings
 - [ ] `remindMe` checkbox : brancher au parent
-- [ ] Prix dans CancelRedirectModal : normaliser pour yearly
+- [x] Prix dans CancelRedirectModal : normaliser pour yearly ✅ S7 (monthly normalization)
 - [ ] Section A propos / support / contact
 - [ ] Page pricing publique
 - [ ] Ajout rapide en chaine (sans revenir au Dashboard)
@@ -150,7 +150,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] Haptic feedback mobile
 - [ ] Ripple effect boutons
 - [ ] Bouton "Decide Later" (principe TDAH)
-- [ ] `ServiceStep2Wrapper` : extraire hors du render
+- [x] `ServiceStep2Wrapper` : extraire hors du render ✅ S7 (ServiceStep2Loader component)
 
 ---
 
@@ -187,7 +187,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 | Categorie | Score |
 |---|---|
 | Infrastructure & DevOps | 3/10 |
-| Securite | 9/10 |
+| Securite | 10/10 |
 | Legal & Conformite | 7/10 |
 | Paiement & Monetisation | 1/10 |
 | Tests & Qualite | 5/10 |
@@ -195,10 +195,10 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 | SEO & ASO | 7/10 |
 | PWA & Mobile | 5/10 |
 | UI/UX Etats & Feedback | 9/10 |
-| UI/UX Navigation | 5/10 |
-| UI/UX Design Systeme | 4/10 |
-| Fonctionnalites | 7/10 |
+| UI/UX Navigation | 8/10 |
+| UI/UX Design Systeme | 6/10 |
+| Fonctionnalites | 8/10 |
 | UX TDAH | 5/10 |
 | Accessibilite | 6/10 |
-| Performance | 5/10 |
-| **TOTAL** | **79/150 (53%)** |
+| Performance | 6/10 |
+| **TOTAL** | **89/150 (59%)** |

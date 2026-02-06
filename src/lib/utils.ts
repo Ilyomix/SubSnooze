@@ -19,3 +19,6 @@ const currencyFmtWhole = new Intl.NumberFormat("en-US", {
 export function formatCurrency(amount: number, whole = false): string {
   return whole ? currencyFmtWhole.format(amount) : currencyFmt.format(amount)
 }
+
+export const CURRENCY_CODE = "USD"
+export const CURRENCY_SYMBOL = "$"

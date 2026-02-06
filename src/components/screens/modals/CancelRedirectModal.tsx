@@ -54,7 +54,11 @@ export function CancelRedirectModal({
           <div className="flex items-center gap-3">
             <PiggyBank className="h-5 w-5 text-primary" aria-hidden="true" />
             <span className="text-sm text-text-primary">
-              You{"\u2019"}ll save <span className="font-semibold tabular-nums">{formatCurrency(subscription.price)}/month</span>
+              You{"\u2019"}ll save <span className="font-semibold tabular-nums">{formatCurrency(
+                subscription.billingCycle === "yearly" ? subscription.price / 12
+                : subscription.billingCycle === "weekly" ? subscription.price * 4.33
+                : subscription.price
+              )}/month</span>
             </span>
           </div>
           <div className="flex items-center gap-3">
