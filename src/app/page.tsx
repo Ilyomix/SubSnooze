@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import {
   Dashboard,
   AllSubscriptions,
@@ -57,6 +57,65 @@ export default function Home() {
   const [customServiceName, setCustomServiceName] = useState<string | null>(null)
   const [totalSaved, setTotalSaved] = useState(0)
 
+  // Track whether we're handling a popstate to avoid pushing duplicate history entries
+  const isPopstateRef = useRef(false)
+
+  // Navigate to a screen and push a history entry (unless triggered by popstate)
+  const navigateTo = useCallback((
+    newScreen: Screen,
+    options?: {
+      tab?: "home" | "subs" | "settings"
+      sub?: Subscription | null
+      service?: string | null
+      savePrevious?: Screen
+    }
+  ) => {
+    if (options?.savePrevious !== undefined) setPreviousScreen(options.savePrevious)
+    if (options?.sub !== undefined) setSelectedSub(options.sub)
+    if (options?.service !== undefined) setSelectedService(options.service)
+    if (options?.tab !== undefined) setActiveTab(options.tab)
+
+    setScreen(newScreen)
+
+    // Push history entry unless we're responding to browser back/forward
+    if (!isPopstateRef.current) {
+      const state = { screen: newScreen, tab: options?.tab ?? activeTab }
+      window.history.pushState(state, "", undefined)
+    }
+  }, [activeTab])
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    // Replace the initial history entry with current state
+    window.history.replaceState({ screen: "dashboard", tab: "home" }, "", undefined)
+
+    const handlePopstate = (event: PopStateEvent) => {
+      const state = event.state as { screen?: Screen; tab?: string } | null
+      isPopstateRef.current = true
+
+      if (state?.screen) {
+        setScreen(state.screen)
+        if (state.tab) setActiveTab(state.tab as "home" | "subs" | "settings")
+      } else {
+        // No state = initial entry, go to dashboard
+        setScreen("dashboard")
+        setActiveTab("home")
+      }
+
+      // Clear detail selections when going back to a tab screen
+      const tabScreens: Screen[] = ["dashboard", "allSubs", "settings"]
+      if (state?.screen && tabScreens.includes(state.screen)) {
+        setSelectedSub(null)
+        setSelectedService(null)
+      }
+
+      isPopstateRef.current = false
+    }
+
+    window.addEventListener("popstate", handlePopstate)
+    return () => window.removeEventListener("popstate", handlePopstate)
+  }, [])
+
   // Request push notification permission on first load (if not already granted)
   useEffect(() => {
     if (isAuthenticated && permission === "default") {
@@ -96,28 +155,20 @@ export default function Home() {
   }
 
   const handleTabChange = (tab: "home" | "subs" | "settings") => {
-    setActiveTab(tab)
-    if (tab === "home") setScreen("dashboard")
-    else if (tab === "subs") setScreen("allSubs")
-    else if (tab === "settings") setScreen("settings")
+    const screenMap = { home: "dashboard", subs: "allSubs", settings: "settings" } as const
+    navigateTo(screenMap[tab], { tab })
   }
 
   const handleSubscriptionClick = (id: string) => {
     const sub = subscriptions.find((s) => s.id === id)
     if (sub) {
-      setPreviousScreen(screen)
-      setSelectedSub(sub)
-      setScreen("manage")
+      navigateTo("manage", { sub, savePrevious: screen })
     }
   }
 
   const returnToPrevious = () => {
-    setSelectedSub(null)
-    setScreen(previousScreen)
-    // Sync activeTab to match the screen
-    if (previousScreen === "dashboard") setActiveTab("home")
-    else if (previousScreen === "allSubs") setActiveTab("subs")
-    else if (previousScreen === "settings") setActiveTab("settings")
+    // Use browser history.back() so the popstate handler takes care of state
+    window.history.back()
   }
 
   const handleAddSubscription = async (data: {
@@ -139,8 +190,7 @@ export default function Home() {
         renewal_date: formatLocalDate(data.renewalDate),
         cancel_url: data.cancelUrl,
       })
-      setScreen("dashboard")
-      setActiveTab("home")
+      navigateTo("dashboard", { tab: "home" })
     } catch (error) {
       console.error("Failed to add subscription:", error)
     }
@@ -169,8 +219,7 @@ export default function Home() {
   }
 
   const handleNotificationNav = () => {
-    setPreviousScreen(screen)
-    setScreen("notifications")
+    navigateTo("notifications", { savePrevious: screen })
   }
 
   // Render screens
@@ -195,11 +244,10 @@ export default function Home() {
   if (screen === "addStep1") {
     return (
       <AddSubscriptionStep1
-        onBack={() => setScreen("dashboard")}
+        onBack={() => window.history.back()}
         onSelectService={(id, customName) => {
-          setSelectedService(id)
           setCustomServiceName(customName ?? null)
-          setScreen("addStep2")
+          navigateTo("addStep2", { service: id })
         }}
         onSearch={() => {}}
       />
@@ -295,7 +343,7 @@ export default function Home() {
       return (
         <AddSubscriptionStep2
           service={serviceInfo}
-          onBack={() => setScreen("addStep1")}
+          onBack={() => window.history.back()}
           onSave={async (data) => {
             const priceNum = parseFloat(data.price.replace(/[^0-9.]/g, "")) || 0
 
@@ -375,8 +423,7 @@ export default function Home() {
           }}
           onCancelComplete={() => {
             setSelectedSub(null)
-            setScreen("dashboard")
-            setActiveTab("home")
+            navigateTo("dashboard", { tab: "home" })
           }}
         />
       </>
@@ -424,7 +471,7 @@ export default function Home() {
       totalSaved={totalSaved}
       totalMonthly={totalMonthly}
       subscriptions={subscriptions}
-      onAddSubscription={() => setScreen("addStep1")}
+      onAddSubscription={() => navigateTo("addStep1")}
       onSubscriptionClick={handleSubscriptionClick}
       onNotificationClick={handleNotificationNav}
       notificationCount={unreadCount}
