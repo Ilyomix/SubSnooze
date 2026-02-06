@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import { getFallbackLogoUrl, getInitials, nameToDomain } from "@/lib/services"
 
@@ -21,11 +21,13 @@ export function ServiceIcon({
 }: ServiceIconProps) {
   // 0 = logoUrl, 1 = Google favicon, 2 = initials
   const [stage, setStage] = useState(() => (logoUrl ? 0 : 1))
+  const [prevLogoUrl, setPrevLogoUrl] = useState(logoUrl)
 
-  // Reset when props change
-  useEffect(() => {
+  // Reset stage when logoUrl prop changes (React-recommended pattern)
+  if (prevLogoUrl !== logoUrl) {
+    setPrevLogoUrl(logoUrl)
     setStage(logoUrl ? 0 : 1)
-  }, [logoUrl, domain, name])
+  }
 
   const borderRadius = Math.round(size * 0.22)
 

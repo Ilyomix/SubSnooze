@@ -1,6 +1,6 @@
 # SubSnooze — Checklist de Commercialisation
 
-> Score global : **59/150 (39%)**
+> Score global : **64/150 (43%)**
 > Base fonctionnelle solide, mais il manque la couche production-ready.
 
 Priorite : Bloquant | Important | Souhaitable
@@ -43,14 +43,14 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] `UpgradeModal` : le bouton "Get Pro - $39" ferme juste la modale — brancher le paiement
 
 ### Tests
-- [ ] Framework de tests (Vitest)
-- [ ] Tests unitaires utilitaires (`date-utils`, `utils`, `services`)
-- [ ] Error tracking (Sentry)
+- [x] Framework de tests (Vitest) ✅ S4
+- [x] Tests unitaires utilitaires (`date-utils`, `utils`, `services`, `rate-limit`) ✅ S4 (51 tests)
+- [ ] Error tracking (Sentry) — necessite config externe
 
 ### UI/UX
 - [ ] Skeleton loaders (spinner generique actuellement)
 - [ ] Toast notifications (aucun feedback de succes)
-- [ ] Error boundaries React
+- [x] Error boundaries React ✅ S4 (ErrorBoundary + error.tsx + global-error.tsx)
 - [ ] Focus trap dans toutes les modales
 - [ ] Onboarding pour les nouveaux utilisateurs
 - [ ] Landing page marketing
@@ -162,15 +162,15 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 | Securite | 8/10 |
 | Legal & Conformite | 7/10 |
 | Paiement & Monetisation | 1/10 |
-| Tests & Qualite | 1/10 |
+| Tests & Qualite | 5/10 |
 | Monitoring & Analytics | 0/10 |
 | SEO & ASO | 2/10 |
 | PWA & Mobile | 5/10 |
-| UI/UX Etats & Feedback | 4/10 |
+| UI/UX Etats & Feedback | 5/10 |
 | UI/UX Navigation | 5/10 |
 | UI/UX Design Systeme | 4/10 |
 | Fonctionnalites | 5/10 |
 | UX TDAH | 4/10 |
 | Accessibilite | 5/10 |
 | Performance | 5/10 |
-| **TOTAL** | **59/150 (39%)** |
+| **TOTAL** | **64/150 (43%)** |

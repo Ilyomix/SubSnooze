@@ -46,7 +46,7 @@ export function CancellationSuccessModal({
 
         {/* Savings Card */}
         <div className="flex w-full flex-col items-center gap-1 rounded-xl bg-background p-4">
-          <span className="text-sm text-text-tertiary">You'll save this year</span>
+          <span className="text-sm text-text-tertiary">You&apos;ll save this year</span>
           <span className="text-3xl font-bold text-primary">
             ${yearlySavings.toFixed(2)}
           </span>
