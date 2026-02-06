@@ -1,6 +1,6 @@
 # SubSnooze — Checklist de Commercialisation
 
-> Score global : **42/150 (28%)**
+> Score global : **51/150 (34%)**
 > Base fonctionnelle solide, mais il manque la couche production-ready.
 
 Priorite : Bloquant | Important | Souhaitable
@@ -29,11 +29,11 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] Protection brute force login
 
 ### Legal
-- [ ] Politique de confidentialite (page + lien dans footer login)
-- [ ] CGU (page + lien dans footer login)
+- [x] Politique de confidentialite (page + lien dans footer login) ✅ S2
+- [x] CGU (page + lien dans footer login) ✅ S2
 - [ ] Banniere cookies RGPD
-- [ ] Suppression de compte (RGPD droit a l'oubli)
-- [ ] Checkbox consentement CGU a l'inscription (`SignupForm`)
+- [x] Suppression de compte (RGPD droit a l'oubli) ✅ S2
+- [x] Checkbox consentement CGU a l'inscription (`SignupForm`) ✅ S2
 
 ### Paiement
 - [ ] Integration Stripe
@@ -56,9 +56,11 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] Landing page marketing
 
 ### Bugs bloquants
-- [ ] Back navigateur quitte l'app — pas de `history.pushState` → [`navigation.md#NAV-1`](docs/audit/navigation.md)
-- [ ] Password recovery casse — `/?update_password=true` non gere → [`components.md#IC-3`](docs/audit/components.md)
-- [ ] Service worker Firebase avec cles placeholder → verifier `firebase-messaging-sw.js`
+- [x] Back navigateur quitte l'app — `history.pushState` integre ✅ S1
+- [x] Password recovery casse — `/update-password` page creee ✅ S1
+- [x] Service worker Firebase avec cles placeholder — query params ✅ S1
+- [x] UpgradeModal no-op — "Coming soon" state ✅ S1
+- [x] Stale `activeTab` closure dans `navigateTo` ✅ S1
 
 ---
 
@@ -158,17 +160,17 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 |---|---|
 | Infrastructure & DevOps | 1/10 |
 | Securite | 4/10 |
-| Legal & Conformite | 0/10 |
+| Legal & Conformite | 7/10 |
 | Paiement & Monetisation | 1/10 |
 | Tests & Qualite | 1/10 |
 | Monitoring & Analytics | 0/10 |
 | SEO & ASO | 2/10 |
 | PWA & Mobile | 5/10 |
 | UI/UX Etats & Feedback | 2/10 |
-| UI/UX Navigation | 3/10 |
+| UI/UX Navigation | 5/10 |
 | UI/UX Design Systeme | 4/10 |
 | Fonctionnalites | 5/10 |
 | UX TDAH | 4/10 |
 | Accessibilite | 5/10 |
 | Performance | 5/10 |
-| **TOTAL** | **42/150 (28%)** |
+| **TOTAL** | **51/150 (34%)** |

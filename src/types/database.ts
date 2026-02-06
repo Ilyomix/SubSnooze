@@ -258,7 +258,10 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      delete_user_account: {
+        Args: Record<string, never>
+        Returns: undefined
+      }
     }
     Enums: {
       billing_cycle: "weekly" | "monthly" | "yearly"

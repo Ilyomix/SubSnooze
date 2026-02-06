@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui"
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react"
@@ -16,6 +17,7 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -208,7 +210,22 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
           </div>
         </div>
 
-        <Button type="submit" size="md" className="w-full" disabled={loading}>
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={acceptedTerms}
+            onChange={(e) => setAcceptedTerms(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-divider text-primary accent-primary focus:ring-primary"
+          />
+          <span className="text-sm text-text-secondary">
+            I agree to the{" "}
+            <Link href="/terms" className="text-primary hover:underline" target="_blank">Terms of Service</Link>
+            {" "}and{" "}
+            <Link href="/privacy" className="text-primary hover:underline" target="_blank">Privacy Policy</Link>
+          </span>
+        </label>
+
+        <Button type="submit" size="md" className="w-full" disabled={loading || !acceptedTerms}>
           {loading ? "Creating account…" : "Create account"}
         </Button>
       </form>

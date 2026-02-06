@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { LoginForm, SignupForm } from "@/components/auth"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui"
@@ -143,7 +144,10 @@ export default function LoginPage() {
 
       {/* Footer */}
       <footer className="p-6 text-center text-xs text-text-tertiary">
-        By continuing, you agree to our Terms of Service and Privacy Policy.
+        By continuing, you agree to our{" "}
+        <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link>
+        {" "}and{" "}
+        <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
       </footer>
     </div>
   )

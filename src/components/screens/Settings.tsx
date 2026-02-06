@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Star, ChevronRight, LogOut, Check, BellRing } from "lucide-react"
+import { Star, ChevronRight, LogOut, Check, BellRing, Trash2, AlertTriangle } from "lucide-react"
 import { AppShell } from "@/components/layout"
 import { Card } from "@/components/ui"
 import { useUser } from "@/hooks/useUser"
@@ -172,6 +172,10 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
   } = useUser()
   const { isEnabled: pushEnabled, toggleNotifications, loading: pushLoading, isSupported } = usePushNotifications()
   const [testingSent, setTestingSent] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState("")
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const [emailEnabled, setEmailEnabled] = useState(emailRemindersEnabled)
   const [smsEnabled, setSmsEnabled] = useState(smsRemindersEnabled)
@@ -407,6 +411,107 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
             </div>
           </button>
         </Card>
+
+        {/* Delete Account */}
+        <div className="flex flex-col gap-3">
+          <span className="text-[13px] font-medium text-text-secondary">
+            Danger Zone
+          </span>
+          {!showDeleteConfirm ? (
+            <Card padding="none" className="overflow-hidden">
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded-2xl"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10">
+                    <Trash2 className="h-4 w-4 text-accent" />
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-[15px] font-medium text-accent">
+                      Delete my account
+                    </span>
+                    <span className="text-xs text-text-tertiary">Permanently remove all your data</span>
+                  </div>
+                </div>
+              </button>
+            </Card>
+          ) : (
+            <Card className="space-y-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+                <div className="space-y-1">
+                  <p className="text-[15px] font-medium text-text-primary">
+                    This action is permanent
+                  </p>
+                  <p className="text-sm text-text-secondary">
+                    All your subscriptions, notifications, and account data will be permanently deleted. This cannot be undone.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="delete-confirm" className="text-sm text-text-secondary">
+                  Type <strong>DELETE</strong> to confirm
+                </label>
+                <input
+                  id="delete-confirm"
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  autoComplete="off"
+                  className="w-full rounded-xl border border-divider bg-surface py-3 px-4 text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:border-accent focus-visible:ring-1 focus-visible:ring-accent"
+                />
+              </div>
+
+              {deleteError && (
+                <div className="rounded-lg bg-accent/10 p-3 text-sm text-accent">
+                  {deleteError}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false)
+                    setDeleteConfirmText("")
+                    setDeleteError(null)
+                  }}
+                  className="flex-1 rounded-xl border border-divider py-3 text-[15px] font-medium text-text-primary hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    setDeleting(true)
+                    setDeleteError(null)
+                    try {
+                      const { error } = await supabase.rpc("delete_user_account")
+                      if (error) throw error
+                      await signOut()
+                    } catch (err) {
+                      console.error("Failed to delete account:", err)
+                      setDeleteError("Something went wrong. Please try again or contact support.")
+                      setDeleting(false)
+                    }
+                  }}
+                  disabled={deleteConfirmText !== "DELETE" || deleting}
+                  className={`flex-1 rounded-xl py-3 text-[15px] font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
+                    deleteConfirmText === "DELETE" && !deleting
+                      ? "bg-accent hover:bg-accent/90"
+                      : "bg-accent/40 cursor-not-allowed"
+                  }`}
+                >
+                  {deleting ? "Deleting..." : "Delete forever"}
+                </button>
+              </div>
+            </Card>
+          )}
+        </div>
+
+        {/* Spacing at bottom */}
+        <div className="h-4" />
       </div>
     </AppShell>
   )
