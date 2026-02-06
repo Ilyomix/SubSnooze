@@ -26,6 +26,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh"
 import type { Subscription } from "@/types/subscription"
 import type { BillingCycle } from "@/types/database"
 import { formatLocalDate } from "@/lib/date-utils"
+import { PRICING } from "@/lib/stripe/pricing"
 
 type Screen =
   | "dashboard"
@@ -41,7 +42,7 @@ type Screen =
 type Modal = "upgrade" | null
 
 export default function Home() {
-  const { firstName, loading: userLoading, isAuthenticated } = useUser()
+  const { firstName, isPremium, loading: userLoading, isAuthenticated, refreshProfile } = useUser()
   const {
     subscriptions,
     totalMonthly,
@@ -203,6 +204,26 @@ export default function Home() {
     }
   }, [isAuthenticated, permission, requestPermission, showOnboarding])
 
+  // Handle ?upgrade=success query param (Stripe redirect)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const upgrade = params.get("upgrade")
+    if (upgrade === "success") {
+      toast("Welcome to Pro! All features unlocked.", "success")
+      refreshProfile()
+      // Clean URL
+      window.history.replaceState({}, "", window.location.pathname)
+    } else if (upgrade === "cancelled") {
+      toast("Upgrade cancelled — no worries, decide later!", "info")
+      window.history.replaceState({}, "", window.location.pathname)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Free tier subscription count
+  const activeSubscriptionCount = subscriptions.filter((s) => s.status !== "cancelled").length
+  const isAtFreeLimit = !isPremium && activeSubscriptionCount >= PRICING.FREE_SUBSCRIPTION_LIMIT
+
   // Calculate total saved from cancelled subscriptions
   useEffect(() => {
     const cancelledTotal = subscriptions
@@ -253,6 +274,15 @@ export default function Home() {
   const returnToPrevious = () => {
     // Use browser history.back() so the popstate handler takes care of state
     window.history.back()
+  }
+
+  // Gate "Add subscription" behind free tier limit
+  const handleAddSubClick = () => {
+    if (isAtFreeLimit) {
+      setModal("upgrade")
+      return
+    }
+    navigateTo("addSub")
   }
 
   const handleAddSubscription = async (data: {
@@ -475,7 +505,7 @@ export default function Home() {
         subscriptions={subscriptions}
         onSubscriptionClick={handleSubscriptionClick}
         onSearch={() => {}}
-        onAddSubscription={() => navigateTo("addSub")}
+        onAddSubscription={handleAddSubClick}
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onNotificationClick={handleNotificationNav}
@@ -483,6 +513,13 @@ export default function Home() {
         error={subsError}
         onRetry={subsRefetch}
       />
+      {modal === "upgrade" && (
+        <UpgradeModal
+          onUpgrade={() => setModal(null)}
+          onClose={() => setModal(null)}
+          isPremium={isPremium}
+        />
+      )}
       </>
     )
   }
@@ -500,11 +537,13 @@ export default function Home() {
           onAboutClick={() => navigateTo("about", { savePrevious: "settings" })}
           onFAQClick={() => navigateTo("faq", { savePrevious: "settings" })}
           onChangelogClick={() => navigateTo("changelog", { savePrevious: "settings" })}
+          isPremium={isPremium}
         />
         {modal === "upgrade" && (
           <UpgradeModal
             onUpgrade={() => setModal(null)}
             onClose={() => setModal(null)}
+            isPremium={isPremium}
           />
         )}
       </>
@@ -520,7 +559,7 @@ export default function Home() {
         totalSaved={totalSaved}
         totalMonthly={totalMonthly}
         subscriptions={subscriptions}
-        onAddSubscription={() => navigateTo("addSub")}
+        onAddSubscription={handleAddSubClick}
         onSubscriptionClick={handleSubscriptionClick}
         onNotificationClick={handleNotificationNav}
         notificationCount={unreadCount}
@@ -529,6 +568,13 @@ export default function Home() {
         error={subsError}
         onRetry={subsRefetch}
       />
+      {modal === "upgrade" && (
+        <UpgradeModal
+          onUpgrade={() => setModal(null)}
+          onClose={() => setModal(null)}
+          isPremium={isPremium}
+        />
+      )}
     </>
   )
 }

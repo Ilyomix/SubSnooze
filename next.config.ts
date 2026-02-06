@@ -7,13 +7,13 @@ const cspDirectives = [
   "default-src 'self'",
   // Next.js requires 'unsafe-inline' and 'unsafe-eval' (dev) for its scripts;
   // in production 'unsafe-eval' is not needed but 'unsafe-inline' is (inline script tags).
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://apis.google.com`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://apis.google.com https://js.stripe.com`,
   // Tailwind injects styles via <style> tags — 'unsafe-inline' required
   `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
   `font-src 'self' https://fonts.gstatic.com`,
   `img-src 'self' data: blob: https:`,
-  `connect-src 'self' ${supabaseUrl} https://*.supabase.co wss://*.supabase.co https://fcm.googleapis.com https://firebaseinstallations.googleapis.com https://accounts.google.com`,
-  "frame-src https://accounts.google.com",
+  `connect-src 'self' ${supabaseUrl} https://*.supabase.co wss://*.supabase.co https://fcm.googleapis.com https://firebaseinstallations.googleapis.com https://accounts.google.com https://api.stripe.com`,
+  "frame-src https://accounts.google.com https://js.stripe.com https://hooks.stripe.com",
   "worker-src 'self'",
   "manifest-src 'self'",
   "base-uri 'self'",
