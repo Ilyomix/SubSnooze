@@ -41,7 +41,9 @@ export async function updateSession(request: NextRequest) {
   // Define protected and public routes
   const isLoginPage = request.nextUrl.pathname === "/login"
   const isAuthCallback = request.nextUrl.pathname.startsWith("/auth")
-  const isPublicRoute = isLoginPage || isAuthCallback
+  const isLegalPage = request.nextUrl.pathname === "/terms" || request.nextUrl.pathname === "/privacy"
+  const isUpdatePassword = request.nextUrl.pathname === "/update-password"
+  const isPublicRoute = isLoginPage || isAuthCallback || isLegalPage || isUpdatePassword
 
   // Redirect unauthenticated users to login (except for public routes)
   if (!user && !isPublicRoute) {
