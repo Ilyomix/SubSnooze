@@ -35,12 +35,12 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [x] Suppression de compte (RGPD droit a l'oubli) ✅ S2
 - [x] Checkbox consentement CGU a l'inscription (`SignupForm`) ✅ S2
 
-### Paiement
-- [ ] Integration Stripe
-- [ ] Webhook paiement
+### Paiement (Phase 1 — Web / Stripe)
+- [ ] Integration Stripe Checkout + Billing Portal
+- [ ] Webhook paiement (`checkout.session.completed`, `subscription.updated/deleted`)
 - [ ] Page checkout securise
 - [ ] Limitations tier gratuit appliquees (`is_premium` existe mais rien n'est limite)
-- [ ] `UpgradeModal` : le bouton "Get Pro - $39" ferme juste la modale — brancher le paiement
+- [ ] `UpgradeModal` : brancher vers Stripe Checkout (remplacer le "Coming soon")
 
 ### Tests
 - [x] Framework de tests (Vitest) ✅ S4
@@ -151,6 +151,34 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] Ripple effect boutons
 - [ ] Bouton "Decide Later" (principe TDAH)
 - [ ] `ServiceStep2Wrapper` : extraire hors du render
+
+---
+
+## Roadmap Monetisation
+
+> Strategie en 3 phases pour maximiser la portee sans over-engineering initial.
+
+| Phase | Distribution | Paiement | Quand |
+|-------|-------------|----------|-------|
+| **1 — Web** | PWA web (lancement) | **Stripe** Checkout + Billing Portal | V1 |
+| **2 — Android** | Play Store via TWA (PWABuilder/Bubblewrap) | **RevenueCat** (unifie Stripe web + Google Play Billing) | Post-traction |
+| **3 — iOS** | App Store via Capacitor | **RevenueCat** (+ StoreKit IAP obligatoire Apple) | Si ca decolle |
+
+**Pourquoi cet ordre :**
+- Phase 1 : 0% commission store, iteration rapide, validation marche
+- Phase 2 : Play Store accepte bien les TWA/PWA, RevenueCat gratuit < $2.5k MRR
+- Phase 3 : Apple exige IAP (15-30% commission), review stricte — justifie seulement avec traction prouvee
+
+**Pre-requis Play Store (Phase 2) :**
+- [ ] Icones completes (192, 512, maskable)
+- [ ] Page offline dediee
+- [ ] Service worker avec cache strategy
+- [ ] Compte Google Play Developer ($25 one-time)
+
+**Pre-requis App Store (Phase 3) :**
+- [ ] Wrapper Capacitor ou equivalent
+- [ ] Apple Developer Program ($99/an)
+- [ ] Conformite App Store Review Guidelines
 
 ---
 
