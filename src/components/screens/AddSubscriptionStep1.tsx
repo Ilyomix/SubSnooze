@@ -8,6 +8,7 @@ import {
   stringToColor,
   getPopularServices,
   searchServices,
+  getAllServicesAlphabetical,
   type SubscriptionService,
 } from "@/lib/services"
 
@@ -62,6 +63,8 @@ export function AddSubscriptionStep1({
   const [services, setServices] = useState<SubscriptionService[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSearching, setIsSearching] = useState(false)
+  const [browseMode, setBrowseMode] = useState<"popular" | "az">("popular")
+  const [allServices, setAllServices] = useState<SubscriptionService[]>([])
 
   // Load popular services on mount
   useEffect(() => {
@@ -73,6 +76,18 @@ export function AddSubscriptionStep1({
     }
     loadPopular()
   }, [])
+
+  // Load all services when switching to A-Z mode
+  useEffect(() => {
+    if (browseMode !== "az" || allServices.length > 0) return
+    async function loadAll() {
+      setIsLoading(true)
+      const all = await getAllServicesAlphabetical()
+      setAllServices(all)
+      setIsLoading(false)
+    }
+    loadAll()
+  }, [browseMode, allServices.length])
 
   // Debounced search
   const performSearch = useCallback(async (query: string) => {
@@ -146,15 +161,75 @@ export function AddSubscriptionStep1({
           </Card>
         </div>
 
+        {/* Browse Mode Toggle */}
+        {!trimmedSearch && (
+          <div className="flex items-center gap-1 rounded-xl bg-surface p-1">
+            <button
+              onClick={() => setBrowseMode("popular")}
+              className={`flex-1 rounded-lg py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                browseMode === "popular" ? "bg-primary/10 text-primary" : "text-text-secondary"
+              }`}
+            >
+              Popular
+            </button>
+            <button
+              onClick={() => setBrowseMode("az")}
+              className={`flex-1 rounded-lg py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                browseMode === "az" ? "bg-primary/10 text-primary" : "text-text-secondary"
+              }`}
+            >
+              A — Z
+            </button>
+          </div>
+        )}
+
         {/* Services Grid */}
         <div className="flex flex-col gap-4">
           <span className="text-[15px] font-medium text-text-secondary">
-            {trimmedSearch ? "Search results" : "Popular services"}
+            {trimmedSearch ? "Search results" : browseMode === "az" ? "All services" : "Popular services"}
           </span>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 text-text-tertiary animate-spin" />
+            </div>
+          ) : browseMode === "az" && !trimmedSearch ? (
+            /* Alphabetical browsing */
+            <div className="flex flex-col gap-4">
+              {Object.entries(
+                allServices.reduce<Record<string, SubscriptionService[]>>((groups, service) => {
+                  const letter = service.name[0]?.toUpperCase() || "#"
+                  if (!groups[letter]) groups[letter] = []
+                  groups[letter].push(service)
+                  return groups
+                }, {})
+              ).map(([letter, letterServices]) => (
+                <div key={letter}>
+                  <div className="sticky top-14 z-10 bg-background/90 backdrop-blur-sm px-1 py-1.5">
+                    <span className="text-sm font-bold text-primary">{letter}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {letterServices.map((service) => (
+                      <button
+                        key={service.id}
+                        onClick={() => handleSelectService(service)}
+                        aria-label={`Select ${service.name}`}
+                        className="flex flex-col items-center gap-2 rounded-xl bg-surface p-4 motion-safe:transition-colors hover:bg-surface/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                      >
+                        <ServiceIcon
+                          name={service.name}
+                          logoColor={service.logo_color}
+                          domain={service.domain}
+                          size={48}
+                        />
+                        <span className="text-sm font-medium text-text-primary text-center line-clamp-1">
+                          {service.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           ) : services.length === 0 && !trimmedSearch ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">

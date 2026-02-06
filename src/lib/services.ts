@@ -216,3 +216,21 @@ export async function getCategories(): Promise<string[]> {
   const categories = [...new Set((data || []).map(d => d.category))]
   return categories.sort()
 }
+
+// Get all services sorted alphabetically
+export async function getAllServicesAlphabetical(): Promise<SubscriptionService[]> {
+  const supabase = createClient()
+
+  const { data, error } = await supabase
+    .from("subscription_services")
+    .select("*")
+    .eq("status", "active")
+    .order("name")
+
+  if (error) {
+    console.error("Error fetching all services:", error)
+    return []
+  }
+
+  return data || []
+}

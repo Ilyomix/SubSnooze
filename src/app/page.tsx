@@ -14,6 +14,8 @@ import {
   Onboarding,
   Pricing,
   About,
+  FAQ,
+  Changelog,
 } from "@/components"
 import { useUser } from "@/hooks/useUser"
 import { useSubscriptions } from "@/hooks/useSubscriptions"
@@ -147,6 +149,8 @@ type Screen =
   | "manage"
   | "pricing"
   | "about"
+  | "faq"
+  | "changelog"
 
 type Modal = "upgrade" | null
 
@@ -298,6 +302,9 @@ export default function Home() {
     setTotalSaved(cancelledTotal)
   }, [subscriptions])
 
+  // Chain-add state: show "Add another?" prompt after adding a subscription
+  const [showAddAnother, setShowAddAnother] = useState(false)
+
   // Show skeleton while loading
   if (userLoading || subsLoading) {
     return <DashboardSkeleton />
@@ -355,7 +362,7 @@ export default function Home() {
         cancel_url: data.cancelUrl,
       })
       toast("Subscription added")
-      navigateTo("dashboard", { tab: "home" })
+      setShowAddAnother(true)
     } catch (error) {
       console.error("Failed to add subscription:", error)
       toast("Couldn\u2019t add subscription. Try again.", "error")
@@ -436,6 +443,22 @@ export default function Home() {
     )
   }
 
+  if (screen === "faq") {
+    return (
+      <div className="motion-safe:animate-[screen-slide-in_0.25s_ease-out]">
+        <FAQ onBack={returnToPrevious} />
+      </div>
+    )
+  }
+
+  if (screen === "changelog") {
+    return (
+      <div className="motion-safe:animate-[screen-slide-in_0.25s_ease-out]">
+        <Changelog onBack={returnToPrevious} />
+      </div>
+    )
+  }
+
   if (screen === "notifications") {
     return (
       <div className="motion-safe:animate-[screen-slide-in_0.25s_ease-out]">
@@ -472,6 +495,45 @@ export default function Home() {
   }
 
   if (screen === "addStep2" && selectedService) {
+    // Show "Add another?" prompt after successful save
+    if (showAddAnother) {
+      return (
+        <div className="motion-safe:animate-[fade-in_0.2s_ease-out] flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-6">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <svg className="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6L9 17l-5-5" />
+            </svg>
+          </div>
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-text-primary">Added!</h2>
+            <p className="mt-1 text-sm text-text-secondary">Want to add another subscription?</p>
+          </div>
+          <div className="flex w-full max-w-xs flex-col gap-3">
+            <button
+              onClick={() => {
+                setShowAddAnother(false)
+                setSelectedService(null)
+                setCustomServiceName(null)
+                navigateTo("addStep1")
+              }}
+              className="w-full rounded-xl bg-primary py-4 text-base font-semibold text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              Add another
+            </button>
+            <button
+              onClick={() => {
+                setShowAddAnother(false)
+                navigateTo("dashboard", { tab: "home" })
+              }}
+              className="w-full rounded-xl border border-divider py-4 text-base font-semibold text-text-primary hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              Done for now
+            </button>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="motion-safe:animate-[screen-slide-in_0.25s_ease-out]">
       <ServiceStep2Loader
@@ -589,6 +651,8 @@ export default function Home() {
           notificationCount={unreadCount}
           onPricingClick={() => navigateTo("pricing", { savePrevious: "settings" })}
           onAboutClick={() => navigateTo("about", { savePrevious: "settings" })}
+          onFAQClick={() => navigateTo("faq", { savePrevious: "settings" })}
+          onChangelogClick={() => navigateTo("changelog", { savePrevious: "settings" })}
         />
         {modal === "upgrade" && (
           <UpgradeModal

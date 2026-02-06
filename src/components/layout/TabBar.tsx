@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import { hapticLight } from "@/lib/haptics"
 import { House, List, Settings } from "lucide-react"
 import { type ReactNode } from "react"
 
@@ -19,7 +20,7 @@ interface TabItemProps {
 function TabItem({ icon, label, isActive, onClick }: TabItemProps) {
   return (
     <button
-      onClick={onClick}
+      onClick={() => { hapticLight(); onClick() }}
       role="tab"
       aria-selected={isActive}
       aria-label={label}

@@ -59,8 +59,14 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#F8F7F4",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F8F7F4" },
+    { media: "(prefers-color-scheme: dark)", color: "#1A1918" },
+  ],
 }
+
+// Inline script to prevent FOUC (flash of unstyled content) on dark mode
+const themeScript = `(function(){try{var t=localStorage.getItem("subsnooze_theme");if(t==="dark"||(t==="system"||!t)&&window.matchMedia("(prefers-color-scheme:dark)").matches){document.documentElement.classList.add("dark")}}catch(e){}})();`
 
 export default function RootLayout({
   children,
@@ -68,7 +74,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${outfit.variable} ${inter.variable}`} style={{ colorScheme: "light" }}>
+    <html lang="en" className={`${outfit.variable} ${inter.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="font-sans">
         <AuthProvider>
           <ToastProvider>
