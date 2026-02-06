@@ -12,10 +12,9 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      // Handle password recovery
+      // Handle password recovery — redirect to dedicated update-password page
       if (type === "recovery") {
-        // Redirect to a password update page (could be added later)
-        return NextResponse.redirect(`${origin}/?update_password=true`)
+        return NextResponse.redirect(`${origin}/update-password`)
       }
 
       // Successful auth, redirect to app
