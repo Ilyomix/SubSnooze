@@ -1,6 +1,7 @@
 # SubSnooze — Checklist de Commercialisation
 
-> Score global : **109/150 (73%)** → **121/150 (81%)**
+> Score global : **109/150 (73%)** → **121/150 (81%)** → **126/150 (84%)**
+> S11 : Stripe Checkout integration, webhook handler, Billing Portal, tier enforcement, UpgradeModal wired to Stripe, CSP updated (5 items).
 > S10 : Landing page, dark mode, CORS, phone settings, chain-add, FAQ, changelog, confetti, A-Z browse, tablet layout, haptic, ripple (12 items).
 > S8 : Accessibility sweep + legal + feature fixes (10 items).
 > S7 : 10 audit fixes — auth, navigation, UX, currency, sorting.
@@ -38,11 +39,11 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [x] Checkbox consentement CGU a l'inscription (`SignupForm`) ✅ S2
 
 ### Paiement (Phase 1 — Web / Stripe)
-- [ ] Integration Stripe Checkout + Billing Portal
-- [ ] Webhook paiement (`checkout.session.completed`, `subscription.updated/deleted`)
-- [ ] Page checkout securise
-- [ ] Limitations tier gratuit appliquees (`is_premium` existe mais rien n'est limite)
-- [ ] `UpgradeModal` : brancher vers Stripe Checkout (remplacer le "Coming soon")
+- [x] Integration Stripe Checkout + Billing Portal ✅ S11 (create-checkout-session + create-portal-session API routes)
+- [x] Webhook paiement (`checkout.session.completed`, `charge.refunded`, `charge.dispute.created`) ✅ S11
+- [x] Page checkout securise ✅ S11 (Stripe hosted Checkout, CSP updated for js.stripe.com)
+- [x] Limitations tier gratuit appliquees (5 subs max, upgrade gate) ✅ S11 (PRICING.FREE_SUBSCRIPTION_LIMIT, isAtFreeLimit)
+- [x] `UpgradeModal` : brancher vers Stripe Checkout ✅ S11 (real checkout flow, isPremium state, features checklist)
 
 ### Tests
 - [x] Framework de tests (Vitest) ✅ S4
@@ -191,7 +192,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 | Infrastructure & DevOps | 3/10 |
 | Securite | 10/10 |
 | Legal & Conformite | 8/10 |
-| Paiement & Monetisation | 1/10 |
+| Paiement & Monetisation | 6/10 |
 | Tests & Qualite | 5/10 |
 | Monitoring & Analytics | 0/10 |
 | SEO & ASO | 7/10 |
@@ -203,4 +204,4 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 | UX TDAH | 7/10 |
 | Accessibilite | 9/10 |
 | Performance | 6/10 |
-| **TOTAL** | **109/150 (73%)** |
+| **TOTAL** | **114/150 (76%)** → **126/150 (84%)** |

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, type ReactNode } from "react"
-import { Star, ChevronRight, LogOut, Check, BellRing, Trash2, AlertTriangle, Key, Download, Eye, EyeOff, Info, Phone, Sun, Moon, Monitor, HelpCircle, Sparkles, Mail, Bell, MessageSquare } from "lucide-react"
+import { Star, ChevronRight, LogOut, Check, BellRing, Trash2, AlertTriangle, Key, Download, Eye, EyeOff, Info, Phone, Sun, Moon, Monitor, HelpCircle, Sparkles, Mail, Bell, MessageSquare, CreditCard } from "lucide-react"
 import { AppShell } from "@/components/layout"
 import { Card } from "@/components/ui"
 import { useUser } from "@/hooks/useUser"
@@ -127,6 +127,7 @@ interface SettingsProps {
   onAboutClick?: () => void
   onFAQClick?: () => void
   onChangelogClick?: () => void
+  isPremium?: boolean
 }
 
 interface ToggleRowProps {
@@ -183,7 +184,7 @@ function ToggleRow({
   )
 }
 
-export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClick, notificationCount, onAboutClick, onFAQClick, onChangelogClick }: SettingsProps) {
+export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClick, notificationCount, onAboutClick, onFAQClick, onChangelogClick, isPremium }: SettingsProps) {
   const {
     id: userId,
     email,
@@ -667,22 +668,59 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
           </Card>
         </div>
 
-        {/* Upgrade */}
+        {/* Subscription / Upgrade */}
         <Card padding="none" className="overflow-hidden">
-          <button
-            onClick={onUpgrade}
-            className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                <Star className="h-4 w-4 text-primary" fill="currentColor" />
+          {isPremium ? (
+            <>
+              <div className="flex items-center gap-3 px-[18px] py-4">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                  <Star className="h-4 w-4 text-primary" fill="currentColor" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[15px] font-medium text-primary">SubSnooze Pro</span>
+                  <span className="text-xs text-text-tertiary">Lifetime access — all features unlocked</span>
+                </div>
               </div>
-              <span className="text-[15px] font-medium text-text-primary">
-                Upgrade to Pro
-              </span>
-            </div>
-            <ChevronRight className="h-5 w-5 text-text-muted" />
-          </button>
+              <div className="h-px bg-divider" />
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch("/api/stripe/create-portal-session", { method: "POST" })
+                    const data = await res.json()
+                    if (data.url) window.location.href = data.url
+                  } catch {
+                    // Silently fail — user can retry
+                  }
+                }}
+                className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-b-2xl"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/10">
+                    <CreditCard className="h-4 w-4 text-sky-600" />
+                  </div>
+                  <span className="text-[15px] font-medium text-text-primary">
+                    Manage billing
+                  </span>
+                </div>
+                <ChevronRight className="h-5 w-5 text-text-muted" />
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={onUpgrade}
+              className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                  <Star className="h-4 w-4 text-primary" fill="currentColor" />
+                </div>
+                <span className="text-[15px] font-medium text-text-primary">
+                  Upgrade to Pro
+                </span>
+              </div>
+              <ChevronRight className="h-5 w-5 text-text-muted" />
+            </button>
+          )}
         </Card>
 
         {/* Pricing, About, FAQ, Changelog */}

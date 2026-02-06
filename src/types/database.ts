@@ -85,6 +85,8 @@ export interface Database {
           reminder_preset: "aggressive" | "relaxed" | "minimal"
           is_premium: boolean
           premium_expires_at: string | null
+          stripe_customer_id: string | null
+          stripe_payment_id: string | null
           created_at: string
           updated_at: string
         }
@@ -101,6 +103,8 @@ export interface Database {
           reminder_preset?: "aggressive" | "relaxed" | "minimal"
           is_premium?: boolean
           premium_expires_at?: string | null
+          stripe_customer_id?: string | null
+          stripe_payment_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -117,6 +121,8 @@ export interface Database {
           reminder_preset?: "aggressive" | "relaxed" | "minimal"
           is_premium?: boolean
           premium_expires_at?: string | null
+          stripe_customer_id?: string | null
+          stripe_payment_id?: string | null
           created_at?: string
           updated_at?: string
         }
