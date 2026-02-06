@@ -68,9 +68,34 @@
   to { opacity: 1; }
 }
 
+@keyframes confetti-fall {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes ripple {
+  to { transform: scale(4); opacity: 0; }
+}
+
 @layer base {
   body {
     @apply bg-background text-text-primary font-sans antialiased;
+  }
+
+  /* Dark mode overrides via class on <html> */
+  html.dark {
+    --color-background: #1A1918;
+    --color-surface: #2A2826;
+    --color-primary: #3CAA7A;
+    --color-accent: #E0725C;
+    --color-accent-light: #3D2420;
+    --color-text-primary: #F0EFEC;
+    --color-text-secondary: #B8B5B2;
+    --color-text-tertiary: #8E8B88;
+    --color-text-muted: #6B6966;
+    --color-divider: #3A3836;
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.2);
+    color-scheme: dark;
   }
 
   /* ADHD-friendly: Respect reduced motion preferences */

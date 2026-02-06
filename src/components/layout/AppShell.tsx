@@ -30,31 +30,33 @@ export function AppShell({
       </a>
       {/* Brand Header */}
       <header className="fixed left-0 right-0 top-0 z-40 flex items-center justify-between bg-surface/80 px-6 backdrop-blur-sm pt-[env(safe-area-inset-top)] h-[calc(3.5rem+env(safe-area-inset-top))]">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-bold text-white">S</span>
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+              <span className="text-sm font-bold text-white">S</span>
+            </div>
+            <span className="text-lg font-semibold text-text-primary">SubSnooze</span>
           </div>
-          <span className="text-lg font-semibold text-text-primary">SubSnooze</span>
-        </div>
 
-        {onNotificationClick && (
-          <button
-            onClick={onNotificationClick}
-            aria-label={`Notifications${notificationCount > 0 ? `, ${notificationCount} unread` : ""}`}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-          >
-            <Bell className="h-5 w-5 text-primary" />
-            {notificationCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1">
-                <NumberFlow value={notificationCount} className="text-[11px] font-bold tabular-nums text-white" />
-              </span>
-            )}
-          </button>
-        )}
+          {onNotificationClick && (
+            <button
+              onClick={onNotificationClick}
+              aria-label={`Notifications${notificationCount > 0 ? `, ${notificationCount} unread` : ""}`}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              <Bell className="h-5 w-5 text-primary" />
+              {notificationCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1">
+                  <NumberFlow value={notificationCount} className="text-[11px] font-bold tabular-nums text-white" />
+                </span>
+              )}
+            </button>
+          )}
+        </div>
       </header>
 
-      {/* Main Content */}
-      <main id="main-content" className="flex-1 pb-[84px] pt-14">
+      {/* Main Content — constrained on larger screens */}
+      <main id="main-content" className="mx-auto w-full max-w-3xl flex-1 pb-[84px] pt-14">
         {children}
       </main>
 

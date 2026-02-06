@@ -1,6 +1,7 @@
 # SubSnooze — Checklist de Commercialisation
 
-> Score global : **99/150 (66%)**
+> Score global : **109/150 (73%)** → **121/150 (81%)**
+> S10 : Landing page, dark mode, CORS, phone settings, chain-add, FAQ, changelog, confetti, A-Z browse, tablet layout, haptic, ripple (12 items).
 > S8 : Accessibility sweep + legal + feature fixes (10 items).
 > S7 : 10 audit fixes — auth, navigation, UX, currency, sorting.
 
@@ -54,7 +55,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [x] Error boundaries React ✅ S4 (ErrorBoundary + error.tsx + global-error.tsx)
 - [x] Focus trap dans toutes les modales ✅ S5 (useFocusTrap — 4 modales)
 - [x] Onboarding pour les nouveaux utilisateurs ✅ S9 (3-step flow, localStorage, skip/decide-later)
-- [ ] Landing page marketing
+- [x] Landing page marketing ✅ S10 (hero, features, how-it-works, ADHD callout, trust signals, CTA)
 
 ### Bugs bloquants
 - [x] Back navigateur quitte l'app — `history.pushState` integre ✅ S1
@@ -69,7 +70,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 
 ### Securite
 - [x] Headers securite (X-Content-Type-Options, X-Frame-Options) ✅ S3
-- [ ] CORS configure
+- [x] CORS configure ✅ S10 (Access-Control-Allow-Origin/Methods/Headers in next.config.ts)
 - [x] Audit dependances (`pnpm audit` automatise) ✅ S6 (CI job, continue-on-error)
 - [x] Politique mots de passe (complexite > minLength=6) ✅ S8 (min 8 chars + uppercase + lowercase + number)
 - [x] Wildcard `*.com` dans next.config images — supprime ✅ S3
@@ -107,12 +108,12 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [x] Changement de mot de passe (depuis Settings) ✅ S6 (Security section, min 8 chars, eye toggle)
 - [x] Export donnees (CSV) ✅ S6 (Your Data section, downloadCSV utility)
 - [x] SMS toggle : desactiver ou implementer le backend ✅ S8 (disabled with "Coming soon" label)
-- [ ] Ajout telephone dans Settings
+- [x] Ajout telephone dans Settings ✅ S10 (phone input form, validation, Supabase save)
 - [x] `remindMe` checkbox : brancher au parent ✅ S8 (CancelRedirectModal → SubscriptionManagement → parent)
 - [x] Prix dans CancelRedirectModal : normaliser pour yearly ✅ S7 (monthly normalization)
 - [x] Section A propos / support / contact ✅ S9 (About screen: mission, privacy, email support, legal links)
 - [x] Page pricing publique ✅ S9 (Pricing screen: Free/Pro tiers, feature comparison)
-- [ ] Ajout rapide en chaine (sans revenir au Dashboard)
+- [x] Ajout rapide en chaine (sans revenir au Dashboard) ✅ S10 ("Add another?" prompt after save)
 
 ### Monitoring
 - [ ] Analytics utilisateur (PostHog / GA4)
@@ -132,24 +133,24 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 
 ## Souhaitables (V1.1+)
 
-- [ ] Dark mode
-- [ ] Layout tablette / desktop
+- [x] Dark mode ✅ S10 (CSS vars, useDarkMode hook, light/dark/auto toggle in Settings, FOUC prevention)
+- [x] Layout tablette / desktop ✅ S10 (max-w-3xl container on AppShell/DetailShell, responsive grid on landing)
 - [ ] i18n (next-intl) + localisation devises/dates
 - [ ] Docker / docker-compose
 - [ ] MFA
 - [ ] Logs d'audit
-- [ ] Gamification (streak, confetti sur cancel success)
+- [x] Gamification (streak, confetti sur cancel success) ✅ S10 (30-piece confetti animation + haptic on CancellationSuccessModal)
 - [ ] Resume hebdomadaire
 - [ ] Categories d'abonnements
 - [ ] Partage multi-utilisateur (famille)
 - [ ] Brouillons ajout abonnement
 - [ ] Calcul automatique prix mensuel <-> annuel
 - [ ] Heures "Ne pas deranger"
-- [ ] Browse alphabetique services
-- [ ] Changelog in-app
-- [ ] FAQ
-- [ ] Haptic feedback mobile
-- [ ] Ripple effect boutons
+- [x] Browse alphabetique services ✅ S10 (A-Z toggle in AddSubscriptionStep1, sticky letter headers)
+- [x] Changelog in-app ✅ S10 (Changelog screen with versioned entries, Settings link)
+- [x] FAQ ✅ S10 (FAQ screen with 8 expandable items, Settings link)
+- [x] Haptic feedback mobile ✅ S10 (haptics.ts utility, Button/TabBar/CancellationSuccess)
+- [x] Ripple effect boutons ✅ S10 (CSS ripple keyframe + DOM ripple in Button component)
 - [x] Bouton "Decide Later" (principe TDAH) ✅ S9 (CancelRedirectModal: "Decide later — remind me")
 - [x] `ServiceStep2Wrapper` : extraire hors du render ✅ S7 (ServiceStep2Loader component)
 

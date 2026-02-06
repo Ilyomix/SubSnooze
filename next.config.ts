@@ -21,6 +21,13 @@ const cspDirectives = [
   "frame-ancestors 'none'",
 ].join("; ");
 
+// CORS: Restrict to own origin + Supabase
+const allowedOrigins = [
+  supabaseUrl,
+  "https://subsnooze.com",
+  "https://www.subsnooze.com",
+].filter(Boolean).join(", ");
+
 const securityHeaders = [
   { key: "Content-Security-Policy", value: cspDirectives },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -29,6 +36,10 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  { key: "Access-Control-Allow-Origin", value: allowedOrigins },
+  { key: "Access-Control-Allow-Methods", value: "GET, POST, PUT, DELETE, OPTIONS" },
+  { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization, X-Requested-With" },
+  { key: "Access-Control-Max-Age", value: "86400" },
 ];
 
 const nextConfig: NextConfig = {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Star, ChevronRight, LogOut, Check, BellRing, Trash2, AlertTriangle, Key, Download, Eye, EyeOff, CreditCard, Info } from "lucide-react"
+import { Star, ChevronRight, LogOut, Check, BellRing, Trash2, AlertTriangle, Key, Download, Eye, EyeOff, CreditCard, Info, Phone, Sun, Moon, Monitor, HelpCircle, Sparkles } from "lucide-react"
 import { AppShell } from "@/components/layout"
 import { Card } from "@/components/ui"
 import { useUser } from "@/hooks/useUser"
@@ -9,6 +9,7 @@ import { useSubscriptions } from "@/hooks/useSubscriptions"
 import { usePushNotifications } from "@/hooks/usePushNotifications"
 import { createClient } from "@/lib/supabase/client"
 import { subscriptionsToCSV, downloadCSV } from "@/lib/export-csv"
+import { useDarkMode } from "@/hooks/useDarkMode"
 import type { Database, ReminderPreset } from "@/types/database"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
@@ -125,6 +126,8 @@ interface SettingsProps {
   notificationCount?: number
   onPricingClick?: () => void
   onAboutClick?: () => void
+  onFAQClick?: () => void
+  onChangelogClick?: () => void
 }
 
 interface ToggleRowProps {
@@ -162,7 +165,7 @@ function ToggleRow({ label, helper, enabled, onToggle, loading }: ToggleRowProps
   )
 }
 
-export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClick, notificationCount, onPricingClick, onAboutClick }: SettingsProps) {
+export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClick, notificationCount, onPricingClick, onAboutClick, onFAQClick, onChangelogClick }: SettingsProps) {
   const {
     id: userId,
     email,
@@ -175,6 +178,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
   } = useUser()
   const { subscriptions } = useSubscriptions()
   const { isEnabled: pushEnabled, toggleNotifications, loading: pushLoading, isSupported } = usePushNotifications()
+  const { theme, setLight, setDark, setSystem } = useDarkMode()
   const [testingSent, setTestingSent] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState("")
@@ -195,7 +199,44 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [passwordSuccess, setPasswordSuccess] = useState(false)
 
+  // Phone number state
+  const [showPhoneForm, setShowPhoneForm] = useState(false)
+  const [phoneInput, setPhoneInput] = useState(phoneNumber || "")
+  const [phoneSaving, setPhoneSaving] = useState(false)
+  const [phoneError, setPhoneError] = useState<string | null>(null)
+  const [phoneSuccess, setPhoneSuccess] = useState(false)
+
   const supabase: SupabaseClient<Database> = createClient()
+
+  const handlePhoneSave = async () => {
+    setPhoneError(null)
+    const cleaned = phoneInput.replace(/\s+/g, "").trim()
+    if (cleaned && !/^\+?[0-9]{7,15}$/.test(cleaned)) {
+      setPhoneError("Enter a valid phone number (e.g. +33612345678)")
+      return
+    }
+    setPhoneSaving(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { error } = await supabase
+          .from("users")
+          .update({ phone_number: cleaned || null })
+          .eq("id", user.id)
+        if (error) throw error
+        await refreshProfile()
+        setPhoneSuccess(true)
+        setTimeout(() => {
+          setShowPhoneForm(false)
+          setPhoneSuccess(false)
+        }, 1500)
+      }
+    } catch (err) {
+      setPhoneError(err instanceof Error ? err.message : "Failed to update phone number")
+    } finally {
+      setPhoneSaving(false)
+    }
+  }
 
   const handlePasswordChange = async () => {
     setPasswordError(null)
@@ -350,6 +391,44 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
           </Card>
         </div>
 
+        {/* Appearance */}
+        <div className="flex flex-col gap-3">
+          <h2 className="text-[13px] font-medium text-text-secondary">
+            Appearance
+          </h2>
+          <Card padding="none" className="overflow-hidden">
+            <div className="flex items-center gap-1 p-1.5">
+              <button
+                onClick={setLight}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  theme === "light" ? "bg-primary/10 text-primary" : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                <Sun className="h-4 w-4" />
+                Light
+              </button>
+              <button
+                onClick={setDark}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  theme === "dark" ? "bg-primary/10 text-primary" : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                <Moon className="h-4 w-4" />
+                Dark
+              </button>
+              <button
+                onClick={setSystem}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  theme === "system" ? "bg-primary/10 text-primary" : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                <Monitor className="h-4 w-4" />
+                Auto
+              </button>
+            </div>
+          </Card>
+        </div>
+
         {/* Account */}
         <div className="flex flex-col gap-3">
           <h2 className="text-[13px] font-medium text-text-secondary">
@@ -361,10 +440,65 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
               <span className="text-[15px] text-text-primary">{email || "—"}</span>
             </div>
             <div className="h-px bg-divider" />
-            <div className="flex flex-col gap-1 px-[18px] py-4">
-              <label className="text-xs text-text-tertiary">Phone</label>
-              <span className="text-[15px] text-text-primary">{phoneNumber || "Not set"}</span>
-            </div>
+            {!showPhoneForm ? (
+              <button
+                onClick={() => {
+                  setPhoneInput(phoneNumber || "")
+                  setShowPhoneForm(true)
+                  setPhoneError(null)
+                  setPhoneSuccess(false)
+                }}
+                className="flex w-full items-center justify-between px-[18px] py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-text-tertiary">Phone</label>
+                  <span className="text-[15px] text-text-primary">{phoneNumber || "Not set"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-text-muted" />
+                  <ChevronRight className="h-4 w-4 text-text-muted" />
+                </div>
+              </button>
+            ) : (
+              <div className="px-[18px] py-4 space-y-3">
+                <label htmlFor="phone-input" className="text-xs text-text-tertiary">Phone number</label>
+                <input
+                  id="phone-input"
+                  type="tel"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  placeholder="+33 6 12 34 56 78"
+                  autoComplete="tel"
+                  className="w-full rounded-xl border border-divider bg-surface py-3 px-4 text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                />
+                {phoneError && (
+                  <p className="text-xs text-accent">{phoneError}</p>
+                )}
+                {phoneSuccess && (
+                  <p className="text-xs text-primary">Phone number updated!</p>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setShowPhoneForm(false)
+                      setPhoneError(null)
+                    }}
+                    className="flex-1 rounded-xl border border-divider py-2.5 text-sm font-medium text-text-primary hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handlePhoneSave}
+                    disabled={phoneSaving}
+                    className={`flex-1 rounded-xl py-2.5 text-sm font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                      !phoneSaving ? "bg-primary hover:bg-primary/90" : "bg-primary/40 cursor-not-allowed"
+                    }`}
+                  >
+                    {phoneSaving ? "Saving..." : "Save"}
+                  </button>
+                </div>
+              </div>
+            )}
           </Card>
         </div>
 
@@ -518,7 +652,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
           </button>
         </Card>
 
-        {/* Pricing & About */}
+        {/* Pricing, About, FAQ, Changelog */}
         <Card padding="none" className="overflow-hidden">
           {onPricingClick && (
             <>
@@ -531,6 +665,40 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                     <CreditCard className="h-4 w-4 text-primary" />
                   </div>
                   <span className="text-[15px] font-medium text-text-primary">Pricing</span>
+                </div>
+                <ChevronRight className="h-5 w-5 text-text-muted" />
+              </button>
+              <div className="h-px bg-divider" />
+            </>
+          )}
+          {onFAQClick && (
+            <>
+              <button
+                onClick={onFAQClick}
+                className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                    <HelpCircle className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-[15px] font-medium text-text-primary">FAQ</span>
+                </div>
+                <ChevronRight className="h-5 w-5 text-text-muted" />
+              </button>
+              <div className="h-px bg-divider" />
+            </>
+          )}
+          {onChangelogClick && (
+            <>
+              <button
+                onClick={onChangelogClick}
+                className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-[15px] font-medium text-text-primary">What&apos;s New</span>
                 </div>
                 <ChevronRight className="h-5 w-5 text-text-muted" />
               </button>
