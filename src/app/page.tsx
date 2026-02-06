@@ -59,6 +59,9 @@ export default function Home() {
 
   // Track whether we're handling a popstate to avoid pushing duplicate history entries
   const isPopstateRef = useRef(false)
+  // Ref to always read the latest activeTab without stale closures
+  const activeTabRef = useRef(activeTab)
+  activeTabRef.current = activeTab
 
   // Navigate to a screen and push a history entry (unless triggered by popstate)
   const navigateTo = useCallback((
@@ -79,10 +82,10 @@ export default function Home() {
 
     // Push history entry unless we're responding to browser back/forward
     if (!isPopstateRef.current) {
-      const state = { screen: newScreen, tab: options?.tab ?? activeTab }
+      const state = { screen: newScreen, tab: options?.tab ?? activeTabRef.current }
       window.history.pushState(state, "", undefined)
     }
-  }, [activeTab])
+  }, [])
 
   // Handle browser back/forward buttons
   useEffect(() => {
