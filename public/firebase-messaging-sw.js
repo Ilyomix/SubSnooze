@@ -2,15 +2,19 @@
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
 
-// Initialize Firebase in the service worker
-// Note: These values will be replaced at runtime when the app initializes
+// Parse Firebase config from query params passed during SW registration.
+// Service workers in /public cannot access process.env, so the app passes
+// the config (public Firebase keys) via the registration URL query string.
+// See: src/lib/firebase/messaging.ts (requestNotificationPermission)
+var params = new URL(self.location.href).searchParams;
+
 firebase.initializeApp({
-  apiKey: "NEXT_PUBLIC_FIREBASE_API_KEY",
-  authDomain: "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
-  projectId: "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
-  storageBucket: "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
-  messagingSenderId: "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
-  appId: "NEXT_PUBLIC_FIREBASE_APP_ID",
+  apiKey: params.get('apiKey'),
+  authDomain: params.get('authDomain'),
+  projectId: params.get('projectId'),
+  storageBucket: params.get('storageBucket'),
+  messagingSenderId: params.get('messagingSenderId'),
+  appId: params.get('appId'),
 });
 
 const messaging = firebase.messaging();
@@ -43,8 +47,6 @@ messaging.onBackgroundMessage((payload) => {
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
-  console.log('[firebase-messaging-sw.js] Notification clicked:', event);
-
   event.notification.close();
 
   if (event.action === 'dismiss') {
