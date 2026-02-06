@@ -64,6 +64,7 @@ function NotificationItem({
 
   const [offsetX, setOffsetX] = useState(0)
   const [swiped, setSwiped] = useState(false)
+  const [animating, setAnimating] = useState(false)
   const startX = useRef(0)
   const startY = useRef(0)
   const isDragging = useRef(false)
@@ -74,6 +75,7 @@ function NotificationItem({
     startY.current = e.touches[0].clientY
     isDragging.current = true
     isHorizontal.current = null
+    setAnimating(false)
   }, [])
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
@@ -98,6 +100,7 @@ function NotificationItem({
   const handleTouchEnd = useCallback(() => {
     isDragging.current = false
     isHorizontal.current = null
+    setAnimating(true)
 
     if (offsetX < -threshold / 2) {
       setOffsetX(-threshold)
@@ -171,7 +174,7 @@ function NotificationItem({
         className="relative"
         style={{
           transform: `translateX(${offsetX}px)`,
-          transition: isDragging.current ? "none" : "transform 0.25s ease-out",
+          transition: animating ? "transform 0.25s ease-out" : "none",
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -352,7 +355,7 @@ export function Notifications({
             </div>
             <span className="text-lg font-semibold text-text-primary">All caught up!</span>
             <span className="text-sm text-text-tertiary text-center max-w-[240px]">
-              No notifications right now. We'll nudge you before any renewals.
+              No notifications right now. We&apos;ll nudge you before any renewals.
             </span>
           </div>
         )}

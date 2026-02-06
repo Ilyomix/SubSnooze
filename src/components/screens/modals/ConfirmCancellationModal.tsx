@@ -56,7 +56,7 @@ export function ConfirmCancellationModal({
           className="flex items-center gap-2 text-sm text-accent hover:text-accent/80"
         >
           <X className="h-4 w-4" />
-          No, I'll do it later
+          No, I&apos;ll do it later
         </button>
       </div>
     </div>
