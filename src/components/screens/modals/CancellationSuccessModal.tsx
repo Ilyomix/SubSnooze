@@ -1,6 +1,8 @@
 "use client"
 
+import { useRef } from "react"
 import { PartyPopper } from "lucide-react"
+import { useFocusTrap } from "@/hooks/useFocusTrap"
 import { Button } from "@/components/ui"
 import type { Subscription } from "@/types/subscription"
 
@@ -16,6 +18,8 @@ export function CancellationSuccessModal({
   onClose,
 }: CancellationSuccessModalProps) {
   const yearlySavings = monthlySavings * 12
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef, onClose)
 
   return (
     <div
@@ -25,7 +29,7 @@ export function CancellationSuccessModal({
       aria-modal="true"
       aria-labelledby="cancellation-success-title"
     >
-      <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl bg-surface p-6" onClick={(e) => e.stopPropagation()}>
+      <div ref={dialogRef} tabIndex={-1} className="flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl bg-surface p-6 outline-none" onClick={(e) => e.stopPropagation()}>
         {/* Party Icon */}
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
           <PartyPopper className="h-7 w-7 text-primary" />

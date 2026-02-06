@@ -1,6 +1,8 @@
 "use client"
 
+import { useRef } from "react"
 import { HelpCircle, Check, X } from "lucide-react"
+import { useFocusTrap } from "@/hooks/useFocusTrap"
 import { Button } from "@/components/ui"
 import type { Subscription } from "@/types/subscription"
 
@@ -17,6 +19,9 @@ export function ConfirmCancellationModal({
   onNotYet,
   onClose,
 }: ConfirmCancellationModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef, onClose)
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6 overscroll-contain"
@@ -25,7 +30,7 @@ export function ConfirmCancellationModal({
       aria-modal="true"
       aria-labelledby="confirm-cancel-title"
     >
-      <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-3xl bg-surface p-6" onClick={(e) => e.stopPropagation()}>
+      <div ref={dialogRef} tabIndex={-1} className="flex w-full max-w-sm flex-col items-center gap-5 rounded-3xl bg-surface p-6 outline-none" onClick={(e) => e.stopPropagation()}>
         {/* Question Icon */}
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/10">
           <span className="text-2xl font-bold text-accent">?</span>

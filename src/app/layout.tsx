@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import { Outfit, Inter } from "next/font/google"
 import { AuthProvider } from "@/contexts/AuthContext"
+import { ToastProvider } from "@/hooks/useToast"
 import "@/styles/globals.css"
 
 const outfit = Outfit({
@@ -38,7 +39,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${outfit.variable} ${inter.variable}`} style={{ colorScheme: "light" }}>
       <body className="font-sans">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   )
