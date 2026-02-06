@@ -489,7 +489,6 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                   <span className="text-[15px] text-text-primary">{phoneNumber || "Not set"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-text-muted" />
                   <ChevronRight className="h-4 w-4 text-text-muted" />
                 </div>
               </button>

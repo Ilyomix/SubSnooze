@@ -138,53 +138,55 @@ export function SubscriptionManagement({
         </div>
 
         {/* Sticky CTA Section */}
-        <div className="fixed bottom-0 left-0 right-0 border-t border-divider bg-surface px-6 pt-4 pb-[max(2rem,env(safe-area-inset-bottom))]">
-          <div className="flex flex-col gap-3">
-            {isCancelled && (
-              <Button
-                variant="primary"
-                icon={<RotateCcw className="h-[18px] w-[18px]" aria-hidden="true" />}
-                onClick={onRestore}
-                className="w-full"
-              >
-                Restore subscription
-              </Button>
-            )}
-            {!isCancelled && (
-              <Button
-                variant="danger"
+        <div className="fixed bottom-0 left-0 right-0 border-t border-divider bg-surface pt-4 pb-[max(2rem,env(safe-area-inset-bottom))]">
+          <div className="mx-auto w-full max-w-3xl px-6">
+            <div className="flex flex-col gap-3">
+              {isCancelled && (
+                <Button
+                  variant="primary"
+                  icon={<RotateCcw className="h-[18px] w-[18px]" aria-hidden="true" />}
+                  onClick={onRestore}
+                  className="w-full"
+                >
+                  Restore subscription
+                </Button>
+              )}
+              {!isCancelled && (
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    if (subscription.cancelUrl) {
+                      setShowCancelRedirect(true)
+                    } else {
+                      setShowConfirmCancel(true)
+                    }
+                  }}
+                  className="w-full"
+                >
+                  Cancel subscription
+                </Button>
+              )}
+              <button
                 onClick={() => {
-                  if (subscription.cancelUrl) {
-                    setShowCancelRedirect(true)
+                  if (confirmingDelete) {
+                    onDelete?.()
                   } else {
-                    setShowConfirmCancel(true)
+                    setConfirmingDelete(true)
                   }
                 }}
-                className="w-full"
+                aria-label={confirmingDelete ? "Confirm removing subscription from list" : "Remove subscription from list"}
+                className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  confirmingDelete
+                    ? "bg-accent text-white"
+                    : "text-text-muted hover:bg-background/50"
+                }`}
               >
-                Cancel subscription
-              </Button>
-            )}
-            <button
-              onClick={() => {
-                if (confirmingDelete) {
-                  onDelete?.()
-                } else {
-                  setConfirmingDelete(true)
-                }
-              }}
-              aria-label={confirmingDelete ? "Confirm removing subscription from list" : "Remove subscription from list"}
-              className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                confirmingDelete
-                  ? "bg-accent text-white"
-                  : "text-text-muted hover:bg-background/50"
-              }`}
-            >
-              <Trash2 className="h-4 w-4" aria-hidden="true" />
-              <span className="text-sm">
-                {confirmingDelete ? "Tap again to confirm" : "Remove from list"}
-              </span>
-            </button>
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                <span className="text-sm">
+                  {confirmingDelete ? "Tap again to confirm" : "Remove from list"}
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

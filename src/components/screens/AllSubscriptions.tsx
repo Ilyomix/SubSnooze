@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, ChevronRight, XCircle, ArrowUpDown } from "lucide-react"
+import { Search, ChevronRight, XCircle, ArrowDownWideNarrow, Plus } from "lucide-react"
 import { AppShell } from "@/components/layout"
 import { Card, Badge, ServiceIcon, ErrorState } from "@/components/ui"
 import type { Subscription } from "@/types/subscription"
@@ -80,31 +80,31 @@ function SubscriptionItem({
           )}>
             {sub.name}
           </span>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-text-tertiary truncate">
-              {isCancelled
-                ? `Cancelled \u00B7 Was due ${sub.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
-                : `Next renewal \u00B7 ${sub.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
-              }
-            </span>
-            {!isCancelled && isRenewingSoon && (
-              <Badge variant="warning">
-                {daysUntil <= 0 ? "Renews today" : daysUntil === 1 ? "Renews tomorrow" : `Renews in ${daysUntil} days`}
-              </Badge>
-            )}
-          </div>
+          <span className="text-sm text-text-tertiary truncate">
+            {isCancelled
+              ? `Cancelled \u00B7 Was due ${sub.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+              : `Next renewal \u00B7 ${sub.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+            }
+          </span>
         </div>
       </div>
 
       {/* Right side */}
-      <div className="flex shrink-0 items-center gap-2">
-        <span className={cn(
-          "text-sm font-semibold tabular-nums text-text-primary",
-          isCancelled && "line-through"
-        )}>
-          {formatCurrency(displayPrice(sub.price, sub.billingCycle, priceView))}/{priceView === "yearly" ? "yr" : "mo"}
-        </span>
-        <ChevronRight className="h-[18px] w-[18px] text-text-muted" aria-hidden="true" />
+      <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
+        {!isCancelled && isRenewingSoon && (
+          <Badge variant="warning">
+            {daysUntil <= 0 ? "Renews today" : daysUntil === 1 ? "Renews tomorrow" : `Renews in ${daysUntil} days`}
+          </Badge>
+        )}
+        <div className="flex items-center gap-2">
+          <span className={cn(
+            "text-sm font-semibold tabular-nums text-text-primary",
+            isCancelled && "line-through"
+          )}>
+            {formatCurrency(displayPrice(sub.price, sub.billingCycle, priceView))}/{priceView === "yearly" ? "yr" : "mo"}
+          </span>
+          <ChevronRight className="h-[18px] w-[18px] text-text-muted" aria-hidden="true" />
+        </div>
       </div>
     </button>
   )
@@ -126,6 +126,10 @@ export function AllSubscriptions({
   const [priceView, setPriceView] = useState<PriceView>(getInitialPriceView)
   const [sortBy, setSortBy] = useState<SortBy>("date")
 
+  const sortLabel = sortBy === "date" ? "Due soon" : sortBy === "price" ? "Highest cost" : "A–Z"
+  const nextSortBy: SortBy = sortBy === "date" ? "price" : sortBy === "price" ? "name" : "date"
+  const nextSortLabel = nextSortBy === "date" ? "Due soon" : nextSortBy === "price" ? "Highest cost" : "A–Z"
+
   const togglePriceView = (view: PriceView) => {
     setPriceView(view)
     localStorage.setItem("subsnooze:priceView", view)
@@ -142,10 +146,26 @@ export function AllSubscriptions({
       if (sortBy === "price") {
         const aMonthly = displayPrice(a.price, a.billingCycle, "monthly")
         const bMonthly = displayPrice(b.price, b.billingCycle, "monthly")
-        return bMonthly - aMonthly
+        if (bMonthly !== aMonthly) return bMonthly - aMonthly
+        return a.name.localeCompare(b.name)
       }
-      // Default: sort by renewal date (soonest first)
-      return a.renewalDate.getTime() - b.renewalDate.getTime()
+
+      // Default: sort by urgency (renewing soon first), then soonest renewal
+      if (a.status === "cancelled" && b.status === "cancelled") {
+        const byDate = b.renewalDate.getTime() - a.renewalDate.getTime()
+        if (byDate !== 0) return byDate
+        return a.name.localeCompare(b.name)
+      }
+
+      const aRank = a.status === "renewing_soon" ? 0 : 1
+      const bRank = b.status === "renewing_soon" ? 0 : 1
+      if (aRank !== bRank) return aRank - bRank
+
+      const aDays = daysUntilRenewal(a.renewalDate)
+      const bDays = daysUntilRenewal(b.renewalDate)
+      if (aDays !== bDays) return aDays - bDays
+
+      return a.name.localeCompare(b.name)
     })
   }
 
@@ -230,11 +250,11 @@ export function AllSubscriptions({
           </div>
           <button
             onClick={cycleSortBy}
-            aria-label={`Sort by ${sortBy === "date" ? "price" : sortBy === "price" ? "name" : "date"}`}
+            aria-label={`Sort: ${sortLabel}. Tap to switch to ${nextSortLabel}.`}
             className="flex h-12 items-center gap-1.5 rounded-xl bg-surface px-3 text-text-secondary hover:bg-surface/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <ArrowUpDown className="h-4 w-4" aria-hidden="true" />
-            <span className="text-xs font-semibold capitalize">{sortBy}</span>
+            <ArrowDownWideNarrow className="h-4 w-4" aria-hidden="true" />
+            <span className="text-xs font-semibold">{sortLabel}</span>
           </button>
         </div>
 
@@ -249,18 +269,21 @@ export function AllSubscriptions({
             <h2 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
               Active ({active.length})
             </h2>
-            <Card padding="none" className="overflow-hidden">
-              {active.map((sub, index) => (
-                <div key={sub.id}>
-                  {index > 0 && <div className="h-px bg-divider" />}
-                  <SubscriptionItem
-                    sub={sub}
-                    onClick={() => onSubscriptionClick(sub.id)}
-                    priceView={priceView}
-                  />
-                </div>
-              ))}
-            </Card>
+            <div className="flex">
+              <div className="w-1 bg-primary" aria-hidden="true" />
+              <Card padding="none" className="flex-1 overflow-hidden rounded-l-none">
+                {active.map((sub, index) => (
+                  <div key={sub.id}>
+                    {index > 0 && <div className="h-px bg-divider" />}
+                    <SubscriptionItem
+                      sub={sub}
+                      onClick={() => onSubscriptionClick(sub.id)}
+                      priceView={priceView}
+                    />
+                  </div>
+                ))}
+              </Card>
+            </div>
           </div>
         )}
 
@@ -273,18 +296,21 @@ export function AllSubscriptions({
                 Cancelled ({cancelled.length})
               </h2>
             </div>
-            <Card padding="none" className="overflow-hidden">
-              {cancelled.map((sub, index) => (
-                <div key={sub.id}>
-                  {index > 0 && <div className="h-px bg-divider" />}
-                  <SubscriptionItem
-                    sub={sub}
-                    onClick={() => onSubscriptionClick(sub.id)}
-                    priceView={priceView}
-                  />
-                </div>
-              ))}
-            </Card>
+            <div className="flex">
+              <div className="w-1 bg-divider" aria-hidden="true" />
+              <Card padding="none" className="flex-1 overflow-hidden rounded-l-none">
+                {cancelled.map((sub, index) => (
+                  <div key={sub.id}>
+                    {index > 0 && <div className="h-px bg-divider" />}
+                    <SubscriptionItem
+                      sub={sub}
+                      onClick={() => onSubscriptionClick(sub.id)}
+                      priceView={priceView}
+                    />
+                  </div>
+                ))}
+              </Card>
+            </div>
           </div>
         )}
 
@@ -303,8 +329,9 @@ export function AllSubscriptions({
             {onAddSubscription && (
               <button
                 onClick={onAddSubscription}
-                className="text-sm font-semibold text-primary hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
+                className="flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
               >
+                <Plus className="h-4 w-4" aria-hidden="true" />
                 Add subscription
               </button>
             )}

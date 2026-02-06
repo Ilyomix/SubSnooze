@@ -193,6 +193,38 @@ export default function Home() {
     return !localStorage.getItem("subsnooze_onboarded")
   })
 
+  const isInitialLoading = userLoading || subsLoading
+  const [showLoadingUI, setShowLoadingUI] = useState(false)
+  const loadingShownAtRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (isInitialLoading) {
+      const delayTimer = window.setTimeout(() => {
+        loadingShownAtRef.current = Date.now()
+        setShowLoadingUI(true)
+      }, 150)
+
+      return () => {
+        window.clearTimeout(delayTimer)
+      }
+    }
+
+    if (!showLoadingUI) return
+
+    const shownAt = loadingShownAtRef.current ?? Date.now()
+    const elapsed = Date.now() - shownAt
+    const remaining = Math.max(0, 300 - elapsed)
+
+    const hideTimer = window.setTimeout(() => {
+      setShowLoadingUI(false)
+      loadingShownAtRef.current = null
+    }, remaining)
+
+    return () => {
+      window.clearTimeout(hideTimer)
+    }
+  }, [isInitialLoading, showLoadingUI])
+
   // Pull-to-refresh — only on tab screens
   const isTabScreen = screen === "dashboard" || screen === "allSubs" || screen === "settings"
   const { pulling, refreshing, pullDistance, progress } = usePullToRefresh({
@@ -304,7 +336,10 @@ export default function Home() {
   const [showAddAnother, setShowAddAnother] = useState(false)
 
   // Show skeleton while loading
-  if (userLoading || subsLoading) {
+  if (isInitialLoading || showLoadingUI) {
+    if (!showLoadingUI) {
+      return <div className="min-h-screen bg-background" />
+    }
     return <DashboardSkeleton />
   }
 

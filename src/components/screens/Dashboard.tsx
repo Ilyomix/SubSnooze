@@ -173,17 +173,20 @@ export function Dashboard({
         {renewingSoon.length > 0 && (
           <div className="flex flex-col gap-3">
             <SectionHeader title="COMING UP" count={renewingSoon.length} variant="warning" />
-            <Card padding="none" className="overflow-hidden">
-              {renewingSoon.map((sub, index) => (
-                <div key={sub.id}>
-                  {index > 0 && <div className="h-px bg-divider" />}
-                  <SubscriptionRow
-                    subscription={sub}
-                    onClick={() => onSubscriptionClick(sub.id)}
-                  />
-                </div>
-              ))}
-            </Card>
+            <div className="flex">
+              <div className="w-1 bg-accent" aria-hidden="true" />
+              <Card padding="none" className="flex-1 overflow-hidden rounded-l-none">
+                {renewingSoon.map((sub, index) => (
+                  <div key={sub.id}>
+                    {index > 0 && <div className="h-px bg-divider" />}
+                    <SubscriptionRow
+                      subscription={sub}
+                      onClick={() => onSubscriptionClick(sub.id)}
+                    />
+                  </div>
+                ))}
+              </Card>
+            </div>
           </div>
         )}
 
@@ -191,32 +194,35 @@ export function Dashboard({
         {allGood.length > 0 && (
           <div className="flex flex-col gap-3">
             <SectionHeader title="ALL GOOD" count={allGood.length} variant="success" />
-            <Card padding="none" className="overflow-hidden">
-              {visibleAllGood.map((sub, index) => (
-                <div key={sub.id}>
-                  {index > 0 && <div className="h-px bg-divider" />}
-                  <SubscriptionRow
-                    subscription={sub}
-                    onClick={() => onSubscriptionClick(sub.id)}
-                  />
-                </div>
-              ))}
-              {hasMoreAllGood && (
-                <>
-                  <div className="h-px bg-divider" />
-                  <button
-                    onClick={() => setShowAllGood(!showAllGood)}
-                    className="flex w-full items-center justify-center gap-1.5 py-3 text-sm font-medium text-primary hover:bg-background/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
-                  >
-                    {showAllGood ? (
-                      <>Show less <ChevronUp className="h-4 w-4" aria-hidden="true" /></>
-                    ) : (
-                      <>Show all {allGood.length} <ChevronDown className="h-4 w-4" aria-hidden="true" /></>
-                    )}
-                  </button>
-                </>
-              )}
-            </Card>
+            <div className="flex">
+              <div className="w-1 bg-primary" aria-hidden="true" />
+              <Card padding="none" className="flex-1 overflow-hidden rounded-l-none">
+                {visibleAllGood.map((sub, index) => (
+                  <div key={sub.id}>
+                    {index > 0 && <div className="h-px bg-divider" />}
+                    <SubscriptionRow
+                      subscription={sub}
+                      onClick={() => onSubscriptionClick(sub.id)}
+                    />
+                  </div>
+                ))}
+                {hasMoreAllGood && (
+                  <>
+                    <div className="h-px bg-divider" />
+                    <button
+                      onClick={() => setShowAllGood(!showAllGood)}
+                      className="flex w-full items-center justify-center gap-1.5 py-3 text-sm font-medium text-primary hover:bg-background/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+                    >
+                      {showAllGood ? (
+                        <>Show less <ChevronUp className="h-4 w-4" aria-hidden="true" /></>
+                      ) : (
+                        <>Show all {allGood.length} <ChevronDown className="h-4 w-4" aria-hidden="true" /></>
+                      )}
+                    </button>
+                  </>
+                )}
+              </Card>
+            </div>
           </div>
         )}
 
@@ -245,15 +251,17 @@ export function Dashboard({
       </div>
 
       {/* Fixed Add Button - positioned above TabBar */}
-      <div className="fixed bottom-[84px] left-0 right-0 bg-background px-6 pb-4 pt-2">
-        <Button
-          variant="primary"
-          icon={<Plus className="h-[18px] w-[18px]" />}
-          onClick={onAddSubscription}
-          className="w-full"
-        >
-          Add subscription
-        </Button>
+      <div className="fixed bottom-[84px] left-0 right-0 bg-background pt-2 pb-4">
+        <div className="mx-auto w-full max-w-3xl px-6">
+          <Button
+            variant="primary"
+            icon={<Plus className="h-[18px] w-[18px]" />}
+            onClick={onAddSubscription}
+            className="w-full"
+          >
+            Add subscription
+          </Button>
+        </div>
       </div>
     </AppShell>
   )

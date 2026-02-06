@@ -85,19 +85,21 @@ export function AddSubscriptionStep2({
         </div>
 
         {/* Sticky Save Button */}
-        <div className="fixed bottom-0 left-0 right-0 border-t border-divider bg-surface px-6 pt-4 pb-[max(2rem,env(safe-area-inset-bottom))]">
-          <Button
-            variant="primary"
-            onClick={() => onSave({
-              price: formData.price,
-              cycle: formData.billingCycle,
-              date: parseLocalDate(formData.renewalDate),
-            })}
-            disabled={!isValidPrice || !isValidDate}
-            className="w-full"
-          >
-            Save subscription
-          </Button>
+        <div className="fixed bottom-0 left-0 right-0 border-t border-divider bg-surface pt-4 pb-[max(2rem,env(safe-area-inset-bottom))]">
+          <div className="mx-auto w-full max-w-3xl px-6">
+            <Button
+              variant="primary"
+              onClick={() => onSave({
+                price: formData.price,
+                cycle: formData.billingCycle,
+                date: parseLocalDate(formData.renewalDate),
+              })}
+              disabled={!isValidPrice || !isValidDate}
+              className="w-full"
+            >
+              Save subscription
+            </Button>
+          </div>
         </div>
       </div>
     </DetailShell>

@@ -110,20 +110,22 @@ export function SubscriptionRow({ subscription, onClick, showReminderStage = tru
         </div>
 
         {/* Right side */}
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
           {showReminderStage && !isCancelled && getReminderBadge(daysUntil)}
           {!showReminderStage && isRenewingSoon && (
             <Badge variant="warning">
               {daysUntil <= 0 ? "Renews today" : daysUntil === 1 ? "Renews tomorrow" : `Renews in ${daysUntil} days`}
             </Badge>
           )}
-          <span className={cn(
-            "font-semibold tabular-nums text-text-primary",
-            isCancelled && "line-through"
-          )}>
-            {formatCurrency(subscription.price)}
-          </span>
-          <ChevronRight className="h-5 w-5 text-text-muted" aria-hidden="true" />
+          <div className="flex items-center gap-2">
+            <span className={cn(
+              "font-semibold tabular-nums text-text-primary",
+              isCancelled && "line-through"
+            )}>
+              {formatCurrency(subscription.price)}
+            </span>
+            <ChevronRight className="h-5 w-5 text-text-muted" aria-hidden="true" />
+          </div>
         </div>
       </div>
     </button>
