@@ -166,7 +166,6 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
     email,
     phoneNumber,
     emailRemindersEnabled,
-    smsRemindersEnabled,
     reminderPreset,
     signOut,
     refreshProfile,
@@ -181,7 +180,6 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const [emailEnabled, setEmailEnabled] = useState(emailRemindersEnabled)
-  const [smsEnabled, setSmsEnabled] = useState(smsRemindersEnabled)
   const [selectedPreset, setSelectedPreset] = useState<ReminderPreset>(reminderPreset)
   const [saving, setSaving] = useState(false)
   const [savingPreset, setSavingPreset] = useState(false)
@@ -237,10 +235,6 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
   }, [emailRemindersEnabled])
 
   useEffect(() => {
-    setSmsEnabled(smsRemindersEnabled)
-  }, [smsRemindersEnabled])
-
-  useEffect(() => {
     setSelectedPreset(reminderPreset)
   }, [reminderPreset])
 
@@ -279,27 +273,6 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
     }
   }
 
-  const handleSmsToggle = async () => {
-    setSaving(true)
-    const newValue = !smsEnabled
-    setSmsEnabled(newValue)
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        await supabase
-          .from("users")
-          .update({ sms_reminders_enabled: newValue })
-          .eq("id", user.id)
-        await refreshProfile()
-      }
-    } catch (error) {
-      console.error("Failed to update SMS setting:", error)
-      setSmsEnabled(!newValue) // Rollback
-    } finally {
-      setSaving(false)
-    }
-  }
 
   const handlePushToggle = async () => {
     await toggleNotifications()
@@ -313,9 +286,9 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
 
         {/* Reminder Schedule */}
         <div className="flex flex-col gap-3">
-          <span className="text-[13px] font-medium text-text-secondary">
+          <h2 className="text-[13px] font-medium text-text-secondary">
             Reminder Schedule
-          </span>
+          </h2>
           <p className="text-xs text-text-tertiary -mt-1">
             Choose when to get reminded before renewals
           </p>
@@ -334,9 +307,9 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
 
         {/* Notification Channels */}
         <div className="flex flex-col gap-3">
-          <span className="text-[13px] font-medium text-text-secondary">
+          <h2 className="text-[13px] font-medium text-text-secondary">
             How to Notify You
-          </span>
+          </h2>
           <Card padding="none" className="overflow-hidden">
             <ToggleRow
               label="Email reminders"
@@ -363,21 +336,23 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
               </div>
             )}
             <div className="h-px bg-divider" />
-            <ToggleRow
-              label="SMS reminders"
-              helper={phoneNumber ? `Text to ${phoneNumber}` : "Add phone number to enable"}
-              enabled={smsEnabled && !!phoneNumber}
-              onToggle={handleSmsToggle}
-              loading={saving}
-            />
+            <div className="flex items-center justify-between px-[18px] py-4 opacity-50">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[15px] font-medium text-text-primary">SMS reminders</span>
+                <span className="text-xs text-text-tertiary">Coming soon</span>
+              </div>
+              <div className="h-7 w-12 rounded-full bg-divider p-1 cursor-not-allowed">
+                <div className="h-5 w-5 rounded-full bg-white shadow" />
+              </div>
+            </div>
           </Card>
         </div>
 
         {/* Account */}
         <div className="flex flex-col gap-3">
-          <span className="text-[13px] font-medium text-text-secondary">
+          <h2 className="text-[13px] font-medium text-text-secondary">
             Account
-          </span>
+          </h2>
           <Card padding="none" className="overflow-hidden">
             <div className="flex flex-col gap-1 px-[18px] py-4">
               <label className="text-xs text-text-tertiary">Email</label>
@@ -393,9 +368,9 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
 
         {/* Change Password */}
         <div className="flex flex-col gap-3">
-          <span className="text-[13px] font-medium text-text-secondary">
+          <h2 className="text-[13px] font-medium text-text-secondary">
             Security
-          </span>
+          </h2>
           {!showPasswordForm ? (
             <Card padding="none" className="overflow-hidden">
               <button
@@ -498,9 +473,9 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
 
         {/* Your Data */}
         <div className="flex flex-col gap-3">
-          <span className="text-[13px] font-medium text-text-secondary">
+          <h2 className="text-[13px] font-medium text-text-secondary">
             Your Data
-          </span>
+          </h2>
           <Card padding="none" className="overflow-hidden">
             <button
               onClick={handleExportCSV}
@@ -592,9 +567,9 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
 
         {/* Delete Account */}
         <div className="flex flex-col gap-3">
-          <span className="text-[13px] font-medium text-text-secondary">
+          <h2 className="text-[13px] font-medium text-text-secondary">
             Danger Zone
-          </span>
+          </h2>
           {!showDeleteConfirm ? (
             <Card padding="none" className="overflow-hidden">
               <button

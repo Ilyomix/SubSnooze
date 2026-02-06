@@ -246,9 +246,9 @@ export function AllSubscriptions({
         {/* Active Subscriptions */}
         {active.length > 0 && (
           <div className="flex flex-col gap-3">
-            <span className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
               Active ({active.length})
-            </span>
+            </h2>
             <Card padding="none" className="overflow-hidden">
               {active.map((sub, index) => (
                 <div key={sub.id}>
@@ -269,9 +269,9 @@ export function AllSubscriptions({
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <XCircle className="h-4 w-4 text-text-muted" aria-hidden="true" />
-              <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
                 Cancelled ({cancelled.length})
-              </span>
+              </h2>
             </div>
             <Card padding="none" className="overflow-hidden">
               {cancelled.map((sub, index) => (
@@ -313,7 +313,7 @@ export function AllSubscriptions({
 
         {/* No Search Results */}
         {subscriptions.length > 0 && active.length === 0 && cancelled.length === 0 && (
-          <div className="flex flex-col items-center gap-2 py-16">
+          <div className="flex flex-col items-center gap-2 py-16" role="status" aria-live="polite">
             <span className="text-text-secondary">No subscriptions matching {"\u201C"}{searchTerm}{"\u201D"}</span>
           </div>
         )}

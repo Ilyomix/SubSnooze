@@ -22,6 +22,12 @@ export function AppShell({
 }: AppShellProps) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:outline-none"
+      >
+        Skip to main content
+      </a>
       {/* Brand Header */}
       <header className="fixed left-0 right-0 top-0 z-40 flex h-14 items-center justify-between bg-surface/80 px-6 backdrop-blur-sm">
         <div className="flex items-center gap-2">
@@ -48,7 +54,7 @@ export function AppShell({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 pb-[84px] pt-14">
+      <main id="main-content" className="flex-1 pb-[84px] pt-14">
         {children}
       </main>
 

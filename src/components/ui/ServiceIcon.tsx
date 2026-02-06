@@ -43,6 +43,8 @@ export function ServiceIcon({
   if (stage >= 2 || !currentUrl) {
     return (
       <div
+        role="img"
+        aria-label={`${name} logo`}
         className="flex items-center justify-center font-bold text-white"
         style={{
           backgroundColor: logoColor,

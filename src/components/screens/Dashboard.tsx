@@ -99,7 +99,7 @@ export function Dashboard({
         </h1>
 
         {/* Summary Cards */}
-        <div className="flex gap-3">
+        <div className="flex gap-3" aria-live="polite" aria-atomic="true">
           {/* Money Saved — primary card */}
           <div className="flex flex-1 flex-col gap-2 rounded-2xl bg-primary p-5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
@@ -225,9 +225,9 @@ export function Dashboard({
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <XCircle className="h-4 w-4 text-text-muted" aria-hidden="true" />
-              <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
                 Cancelled ({cancelled.length})
-              </span>
+              </h2>
             </div>
             <Card padding="none" className="overflow-hidden">
               {cancelled.map((sub, index) => (

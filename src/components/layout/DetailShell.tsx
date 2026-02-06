@@ -20,6 +20,12 @@ export function DetailShell({
 }: DetailShellProps) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white focus:outline-none"
+      >
+        Skip to main content
+      </a>
       {/* Header with back button and brand */}
       <header className="fixed left-0 right-0 top-0 z-40 flex h-14 items-center justify-between bg-surface/80 px-6 backdrop-blur-sm">
         <div className="flex items-center gap-3">
@@ -45,7 +51,7 @@ export function DetailShell({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 pt-14 pb-[env(safe-area-inset-bottom)]">
+      <main id="main-content" className="flex-1 pt-14 pb-[env(safe-area-inset-bottom)]">
         {children}
       </main>
     </div>

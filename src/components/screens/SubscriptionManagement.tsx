@@ -15,7 +15,7 @@ interface SubscriptionManagementProps {
   onRestore?: () => void
   onDelete?: () => void
   onSave?: (data: { price: number; billingCycle: string; renewalDate: Date }) => void
-  onCancelProceed?: () => void
+  onCancelProceed?: (remindMe?: boolean) => void
   onCancelConfirm?: () => void
   onCancelNotYet?: () => void
   onCancelComplete?: () => void
@@ -194,11 +194,11 @@ export function SubscriptionManagement({
     {showCancelRedirect && (
       <CancelRedirectModal
         subscription={subscription}
-        onProceed={() => {
+        onProceed={(remindMe) => {
           if (subscription.cancelUrl) {
             window.open(subscription.cancelUrl, "_blank", "noopener,noreferrer")
           }
-          onCancelProceed?.()
+          onCancelProceed?.(remindMe)
           setShowCancelRedirect(false)
           setTimeout(() => setShowConfirmCancel(true), 500)
         }}

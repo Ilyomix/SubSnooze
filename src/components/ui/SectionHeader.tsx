@@ -15,10 +15,10 @@ export function SectionHeader({ title, count, variant = "success", className }: 
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <Icon className={cn("h-[18px] w-[18px]", colorClass)} />
-      <span className={cn("text-[13px] font-semibold tracking-wide", colorClass)}>
+      <h2 className={cn("text-[13px] font-semibold tracking-wide", colorClass)}>
         {title}
         {count !== undefined && ` (${count})`}
-      </span>
+      </h2>
     </div>
   )
 }
