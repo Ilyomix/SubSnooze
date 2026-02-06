@@ -22,6 +22,7 @@ function initPostHog() {
 
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,
+    person_profiles: "identified_only",
     capture_pageview: false, // We handle this manually for SPA
     capture_pageleave: true,
     persistence: "localStorage+cookie",
