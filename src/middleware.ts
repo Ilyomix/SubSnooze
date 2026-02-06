@@ -1,7 +1,23 @@
-import { type NextRequest } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { updateSession } from "@/lib/supabase/middleware"
+import { rateLimit } from "@/lib/rate-limit"
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Rate-limit auth callback to prevent abuse (10 requests per minute per IP)
+  if (pathname.startsWith("/auth")) {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+    const { allowed } = rateLimit(ip, { maxRequests: 10, windowMs: 60_000 })
+
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      )
+    }
+  }
+
   return await updateSession(request)
 }
 

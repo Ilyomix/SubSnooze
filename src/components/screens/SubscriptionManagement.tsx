@@ -63,6 +63,9 @@ export function SubscriptionManagement({
     formData.billingCycle !== originalCycle ||
     formData.renewalDate !== originalDate
 
+  const priceNum = parseFloat(formData.price)
+  const isValidPrice = !isNaN(priceNum) && priceNum > 0
+
   // Calculate monthly savings for the cancellation success modal
   const monthlySavings =
     subscription.billingCycle === "yearly"
@@ -126,6 +129,7 @@ export function SubscriptionManagement({
                 billingCycle: formData.billingCycle,
                 renewalDate: parseLocalDate(formData.renewalDate),
               })}
+              disabled={!isValidPrice}
               className="w-full"
             >
               Save changes

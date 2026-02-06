@@ -36,6 +36,8 @@ export function SubscriptionFormFields({
     typeof priceLabel === "function" ? priceLabel(value.billingCycle) : priceLabel
 
   const handlePriceChange = (newPrice: string) => {
+    // Only allow digits and at most one decimal point (max 2 decimal places)
+    if (newPrice !== "" && !/^\d*\.?\d{0,2}$/.test(newPrice)) return
     onChange({ ...value, price: newPrice })
   }
 

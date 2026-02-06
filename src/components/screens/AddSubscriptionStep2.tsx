@@ -41,6 +41,10 @@ export function AddSubscriptionStep2({
     renewalDate: calculateNextRenewalDate("monthly"),
   })
 
+  const priceNum = parseFloat(formData.price)
+  const isValidPrice = !isNaN(priceNum) && priceNum > 0
+  const isValidDate = formData.renewalDate !== ""
+
   return (
     <DetailShell
       title={service.name}
@@ -89,6 +93,7 @@ export function AddSubscriptionStep2({
               cycle: formData.billingCycle,
               date: parseLocalDate(formData.renewalDate),
             })}
+            disabled={!isValidPrice || !isValidDate}
             className="w-full"
           >
             Save subscription

@@ -1,9 +1,47 @@
 import type { NextConfig } from "next";
 
+// CSP directives — Supabase URL is injected at build time via env var
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const cspDirectives = [
+  "default-src 'self'",
+  // Next.js requires 'unsafe-inline' and 'unsafe-eval' (dev) for its scripts;
+  // in production 'unsafe-eval' is not needed but 'unsafe-inline' is (inline script tags).
+  `script-src 'self' 'unsafe-inline' https://apis.google.com`,
+  // Tailwind injects styles via <style> tags — 'unsafe-inline' required
+  `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+  `font-src 'self' https://fonts.gstatic.com`,
+  `img-src 'self' data: blob: https:`,
+  `connect-src 'self' ${supabaseUrl} https://*.supabase.co wss://*.supabase.co https://fcm.googleapis.com https://firebaseinstallations.googleapis.com https://accounts.google.com`,
+  "frame-src https://accounts.google.com",
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join("; ");
+
+const securityHeaders = [
+  { key: "Content-Security-Policy", value: cspDirectives },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "X-XSS-Protection", value: "1; mode=block" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+];
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   experimental: {
     optimizePackageImports: ['lucide-react', '@/components'],
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: securityHeaders,
+      },
+    ];
   },
   images: {
     remotePatterns: [
@@ -11,6 +49,7 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'www.google.com',
+        pathname: '/s2/favicons/**',
       },
       // Wikimedia/Wikipedia logos
       {
@@ -155,11 +194,6 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'static.twitchcdn.net',
-      },
-      // Catch-all for favicon.ico files (many domains)
-      {
-        protocol: 'https',
-        hostname: '*.com',
       },
     ],
   },
