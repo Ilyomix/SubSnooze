@@ -53,7 +53,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [x] Toast notifications ✅ S5 (useToast — success/error/info, auto-dismiss, max 3)
 - [x] Error boundaries React ✅ S4 (ErrorBoundary + error.tsx + global-error.tsx)
 - [x] Focus trap dans toutes les modales ✅ S5 (useFocusTrap — 4 modales)
-- [ ] Onboarding pour les nouveaux utilisateurs
+- [x] Onboarding pour les nouveaux utilisateurs ✅ S9 (3-step flow, localStorage, skip/decide-later)
 - [ ] Landing page marketing
 
 ### Bugs bloquants
@@ -83,17 +83,17 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [x] Favicon complet (SVG + apple-touch-icon) ✅ S6 (icon.svg + apple-icon.tsx ImageResponse)
 
 ### PWA
-- [ ] Icones completes (192, 256, 384, 512, maskable)
-- [ ] Page offline dediee
-- [ ] Service worker avec cache strategy
-- [ ] Safe-area gestion (notch iPhone)
+- [x] Icones completes (192, 256, 384, 512, maskable) ✅ S9 (sharp gen, 8 PNGs + apple-touch)
+- [x] Page offline dediee ✅ S9 (public/offline.html, ADHD-friendly messaging)
+- [x] Service worker avec cache strategy ✅ S9 (sw.js, network-first pages, cache-first assets)
+- [x] Safe-area gestion (notch iPhone) ✅ S9 (viewport-fit=cover, env(safe-area-inset) on header/tabs/CTAs)
 
 ### UI/UX
 - [x] Error states visuels pour echecs reseau ✅ S5 (ErrorState + integration Dashboard/AllSubs)
 - [x] Loading state sur les boutons (empecher double-clic) ✅ S5 (Button loading prop — spinner + disabled)
-- [ ] Transitions animees entre ecrans
-- [ ] Scroll position restoration
-- [ ] Pull-to-refresh
+- [x] Transitions animees entre ecrans ✅ S9 (CSS screen-slide-in/fade-in, motion-safe)
+- [x] Scroll position restoration ✅ S9 (useScrollRestore hook, per-screen save/restore)
+- [x] Pull-to-refresh ✅ S9 (usePullToRefresh hook, touch events, spinner indicator)
 - [x] Tri des abonnements (prix, nom, date) ✅ S7 (cycle sort button, 3 modes)
 - [x] Empty state Dashboard avec CTA ✅ S7 (icon + message + Add button)
 - [x] Empty state AllSubscriptions avec CTA ✅ S7 (icon + message + Add link)
@@ -110,8 +110,8 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] Ajout telephone dans Settings
 - [x] `remindMe` checkbox : brancher au parent ✅ S8 (CancelRedirectModal → SubscriptionManagement → parent)
 - [x] Prix dans CancelRedirectModal : normaliser pour yearly ✅ S7 (monthly normalization)
-- [ ] Section A propos / support / contact
-- [ ] Page pricing publique
+- [x] Section A propos / support / contact ✅ S9 (About screen: mission, privacy, email support, legal links)
+- [x] Page pricing publique ✅ S9 (Pricing screen: Free/Pro tiers, feature comparison)
 - [ ] Ajout rapide en chaine (sans revenir au Dashboard)
 
 ### Monitoring
@@ -150,7 +150,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] FAQ
 - [ ] Haptic feedback mobile
 - [ ] Ripple effect boutons
-- [ ] Bouton "Decide Later" (principe TDAH)
+- [x] Bouton "Decide Later" (principe TDAH) ✅ S9 (CancelRedirectModal: "Decide later — remind me")
 - [x] `ServiceStep2Wrapper` : extraire hors du render ✅ S7 (ServiceStep2Loader component)
 
 ---
@@ -194,12 +194,12 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 | Tests & Qualite | 5/10 |
 | Monitoring & Analytics | 0/10 |
 | SEO & ASO | 7/10 |
-| PWA & Mobile | 5/10 |
+| PWA & Mobile | 9/10 |
 | UI/UX Etats & Feedback | 9/10 |
 | UI/UX Navigation | 8/10 |
-| UI/UX Design Systeme | 6/10 |
-| Fonctionnalites | 9/10 |
-| UX TDAH | 5/10 |
+| UI/UX Design Systeme | 9/10 |
+| Fonctionnalites | 10/10 |
+| UX TDAH | 7/10 |
 | Accessibilite | 9/10 |
 | Performance | 6/10 |
-| **TOTAL** | **99/150 (66%)** |
+| **TOTAL** | **109/150 (73%)** |

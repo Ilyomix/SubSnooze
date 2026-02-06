@@ -11,12 +11,18 @@ import {
   SubscriptionManagement,
   UpgradeModal,
   DashboardSkeleton,
+  Onboarding,
+  Pricing,
+  About,
 } from "@/components"
 import { useUser } from "@/hooks/useUser"
 import { useSubscriptions } from "@/hooks/useSubscriptions"
 import { useNotifications } from "@/hooks/useNotifications"
 import { usePushNotifications } from "@/hooks/usePushNotifications"
 import { useToast } from "@/hooks/useToast"
+import { useServiceWorker } from "@/hooks/useServiceWorker"
+import { useScrollRestore } from "@/hooks/useScrollRestore"
+import { usePullToRefresh } from "@/hooks/usePullToRefresh"
 import type { Subscription } from "@/types/subscription"
 import type { BillingCycle } from "@/types/database"
 import { getServiceBySlug, getServiceLogoUrl, getFallbackLogoUrl, getInitials, stringToColor, nameToDomain } from "@/lib/services"
@@ -139,6 +145,8 @@ type Screen =
   | "addStep1"
   | "addStep2"
   | "manage"
+  | "pricing"
+  | "about"
 
 type Modal = "upgrade" | null
 
@@ -162,6 +170,12 @@ export default function Home() {
   const { notifications, unreadCount, markAsRead, markAsUnread, deleteNotification: deleteNotif, deleteAllNotifications, hasMore, loadingMore, loadMore } = useNotifications()
   const { requestPermission, permission } = usePushNotifications()
 
+  // Register PWA service worker
+  useServiceWorker()
+
+  // Scroll position restoration
+  const { save: saveScroll, restore: restoreScroll } = useScrollRestore()
+
   const [screen, setScreen] = useState<Screen>("dashboard")
   const [modal, setModal] = useState<Modal>(null)
   const [activeTab, setActiveTab] = useState<"home" | "subs" | "settings">("home")
@@ -171,11 +185,28 @@ export default function Home() {
   const [customServiceName, setCustomServiceName] = useState<string | null>(null)
   const [totalSaved, setTotalSaved] = useState(0)
 
+  // Onboarding state — check localStorage to see if user has completed it
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    if (typeof window === "undefined") return false
+    return !localStorage.getItem("subsnooze_onboarded")
+  })
+
+  // Pull-to-refresh — only on tab screens
+  const isTabScreen = screen === "dashboard" || screen === "allSubs" || screen === "settings"
+  const { pulling, refreshing, pullDistance, progress } = usePullToRefresh({
+    onRefresh: async () => {
+      await subsRefetch()
+    },
+    enabled: isTabScreen,
+  })
+
   // Track whether we're handling a popstate to avoid pushing duplicate history entries
   const isPopstateRef = useRef(false)
   // Ref to always read the latest activeTab without stale closures
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
+  // Ref to track previous screen for scroll save
+  const prevScreenRef = useRef<Screen>(screen)
 
   // Navigate to a screen and push a history entry (unless triggered by popstate)
   const navigateTo = useCallback((
@@ -187,19 +218,31 @@ export default function Home() {
       savePrevious?: Screen
     }
   ) => {
+    // Save scroll position of current screen before navigating away
+    saveScroll(prevScreenRef.current)
+
     if (options?.savePrevious !== undefined) setPreviousScreen(options.savePrevious)
     if (options?.sub !== undefined) setSelectedSub(options.sub)
     if (options?.service !== undefined) setSelectedService(options.service)
     if (options?.tab !== undefined) setActiveTab(options.tab)
 
     setScreen(newScreen)
+    prevScreenRef.current = newScreen
+
+    // Restore scroll position for tab screens, reset for detail screens
+    const tabScreens: Screen[] = ["dashboard", "allSubs", "settings"]
+    if (tabScreens.includes(newScreen)) {
+      restoreScroll(newScreen)
+    } else {
+      window.scrollTo(0, 0)
+    }
 
     // Push history entry unless we're responding to browser back/forward
     if (!isPopstateRef.current) {
       const state = { screen: newScreen, tab: options?.tab ?? activeTabRef.current }
       window.history.pushState(state, "", undefined)
     }
-  }, [])
+  }, [saveScroll, restoreScroll])
 
   // Handle browser back/forward buttons
   useEffect(() => {
@@ -233,16 +276,15 @@ export default function Home() {
     return () => window.removeEventListener("popstate", handlePopstate)
   }, [])
 
-  // Request push notification permission on first load (if not already granted)
+  // Request push notification permission (skip if onboarding not completed)
   useEffect(() => {
-    if (isAuthenticated && permission === "default") {
-      // Delay the permission request slightly to not overwhelm new users
+    if (isAuthenticated && permission === "default" && !showOnboarding) {
       const timer = setTimeout(() => {
         requestPermission()
       }, 3000)
       return () => clearTimeout(timer)
     }
-  }, [isAuthenticated, permission, requestPermission])
+  }, [isAuthenticated, permission, requestPermission, showOnboarding])
 
   // Calculate total saved from cancelled subscriptions
   useEffect(() => {
@@ -259,6 +301,21 @@ export default function Home() {
   // Show skeleton while loading
   if (userLoading || subsLoading) {
     return <DashboardSkeleton />
+  }
+
+  // Show onboarding for new users
+  if (isAuthenticated && showOnboarding) {
+    return (
+      <Onboarding
+        onComplete={() => {
+          localStorage.setItem("subsnooze_onboarded", "1")
+          setShowOnboarding(false)
+        }}
+        onRequestNotifications={() => {
+          requestPermission()
+        }}
+      />
+    )
   }
 
   const handleTabChange = (tab: "home" | "subs" | "settings") => {
@@ -338,9 +395,50 @@ export default function Home() {
     navigateTo("notifications", { savePrevious: screen })
   }
 
+  // Pull-to-refresh indicator
+  const pullIndicator = (pulling || refreshing) && (
+    <div
+      className="fixed left-0 right-0 top-0 z-50 flex items-center justify-center motion-safe:transition-transform"
+      style={{ transform: `translateY(${pullDistance - 40}px)` }}
+    >
+      <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-surface shadow-card ${refreshing ? "motion-safe:animate-spin" : ""}`}>
+        <svg
+          className="h-5 w-5 text-primary"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          style={{ transform: `rotate(${progress * 360}deg)`, opacity: Math.max(0.3, progress) }}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </div>
+    </div>
+  )
+
   // Render screens
+  if (screen === "pricing") {
+    return (
+      <div className="motion-safe:animate-[screen-slide-in_0.25s_ease-out]">
+        <Pricing
+          onBack={returnToPrevious}
+          onUpgrade={() => setModal("upgrade")}
+        />
+      </div>
+    )
+  }
+
+  if (screen === "about") {
+    return (
+      <div className="motion-safe:animate-[screen-slide-in_0.25s_ease-out]">
+        <About onBack={returnToPrevious} />
+      </div>
+    )
+  }
+
   if (screen === "notifications") {
     return (
+      <div className="motion-safe:animate-[screen-slide-in_0.25s_ease-out]">
       <Notifications
         notifications={notifications}
         onBack={returnToPrevious}
@@ -354,11 +452,13 @@ export default function Home() {
         loadingMore={loadingMore}
         onLoadMore={loadMore}
       />
+      </div>
     )
   }
 
   if (screen === "addStep1") {
     return (
+      <div className="motion-safe:animate-[screen-slide-in_0.25s_ease-out]">
       <AddSubscriptionStep1
         onBack={() => window.history.back()}
         onSelectService={(id, customName) => {
@@ -367,23 +467,26 @@ export default function Home() {
         }}
         onSearch={() => {}}
       />
+      </div>
     )
   }
 
   if (screen === "addStep2" && selectedService) {
     return (
+      <div className="motion-safe:animate-[screen-slide-in_0.25s_ease-out]">
       <ServiceStep2Loader
         selectedService={selectedService}
         customServiceName={customServiceName}
         onBack={() => window.history.back()}
         onAdd={handleAddSubscription}
       />
+      </div>
     )
   }
 
   if (screen === "manage" && selectedSub) {
     return (
-      <>
+      <div className="motion-safe:animate-[screen-slide-in_0.25s_ease-out]">
         <SubscriptionManagement
           subscription={selectedSub}
           onBack={returnToPrevious}
@@ -450,12 +553,14 @@ export default function Home() {
             navigateTo("dashboard", { tab: "home" })
           }}
         />
-      </>
+      </div>
     )
   }
 
   if (screen === "allSubs") {
     return (
+      <>
+      {pullIndicator}
       <AllSubscriptions
         subscriptions={subscriptions}
         onSubscriptionClick={handleSubscriptionClick}
@@ -468,18 +573,22 @@ export default function Home() {
         error={subsError}
         onRetry={subsRefetch}
       />
+      </>
     )
   }
 
   if (screen === "settings") {
     return (
       <>
+        {pullIndicator}
         <Settings
           activeTab={activeTab}
           onTabChange={handleTabChange}
           onUpgrade={() => setModal("upgrade")}
           onNotificationClick={handleNotificationNav}
           notificationCount={unreadCount}
+          onPricingClick={() => navigateTo("pricing", { savePrevious: "settings" })}
+          onAboutClick={() => navigateTo("about", { savePrevious: "settings" })}
         />
         {modal === "upgrade" && (
           <UpgradeModal
@@ -493,19 +602,22 @@ export default function Home() {
 
   // Default: Dashboard
   return (
-    <Dashboard
-      userName={firstName}
-      totalSaved={totalSaved}
-      totalMonthly={totalMonthly}
-      subscriptions={subscriptions}
-      onAddSubscription={() => navigateTo("addStep1")}
-      onSubscriptionClick={handleSubscriptionClick}
-      onNotificationClick={handleNotificationNav}
-      notificationCount={unreadCount}
-      activeTab={activeTab}
-      onTabChange={handleTabChange}
-      error={subsError}
-      onRetry={subsRefetch}
-    />
+    <>
+      {pullIndicator}
+      <Dashboard
+        userName={firstName}
+        totalSaved={totalSaved}
+        totalMonthly={totalMonthly}
+        subscriptions={subscriptions}
+        onAddSubscription={() => navigateTo("addStep1")}
+        onSubscriptionClick={handleSubscriptionClick}
+        onNotificationClick={handleNotificationNav}
+        notificationCount={unreadCount}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        error={subsError}
+        onRetry={subsRefetch}
+      />
+    </>
   )
 }

@@ -38,7 +38,7 @@ function TabItem({ icon, label, isActive, onClick }: TabItemProps) {
 
 export function TabBar({ activeTab, onTabChange }: TabBarProps) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 flex h-[84px] items-start justify-around bg-surface px-6 pb-[34px] pt-3">
+    <div className="fixed bottom-0 left-0 right-0 flex items-start justify-around bg-surface px-6 pt-3 pb-[max(34px,env(safe-area-inset-bottom))]" style={{ minHeight: "calc(50px + max(34px, env(safe-area-inset-bottom)))" }}>
       <TabItem
         icon={<House className="h-[22px] w-[22px]" />}
         label="Home"

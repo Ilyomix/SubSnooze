@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react"
 import { useFocusTrap } from "@/hooks/useFocusTrap"
-import { ExternalLink, PiggyBank, Calendar, Check } from "lucide-react"
+import { ExternalLink, PiggyBank, Calendar, Check, Clock } from "lucide-react"
 import { Button, ServiceIcon } from "@/components/ui"
 import { formatCurrency } from "@/lib/utils"
 import type { Subscription } from "@/types/subscription"
@@ -79,11 +79,16 @@ export function CancelRedirectModal({
           Go to {subscription.name}
         </Button>
 
+        {/* Decide Later — ADHD-friendly: no pressure, come back anytime */}
         <button
-          onClick={onClose}
-          className="text-sm text-text-tertiary hover:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
+          onClick={() => {
+            setRemindMe(true)
+            onClose()
+          }}
+          className="flex items-center gap-2 rounded-xl border border-divider px-4 py-2.5 text-sm font-medium text-text-secondary hover:bg-background/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
-          Not now
+          <Clock className="h-4 w-4 text-text-tertiary" aria-hidden="true" />
+          Decide later — remind me
         </button>
 
         {/* Reminder checkbox */}

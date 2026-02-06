@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Star, ChevronRight, LogOut, Check, BellRing, Trash2, AlertTriangle, Key, Download, Eye, EyeOff } from "lucide-react"
+import { Star, ChevronRight, LogOut, Check, BellRing, Trash2, AlertTriangle, Key, Download, Eye, EyeOff, CreditCard, Info } from "lucide-react"
 import { AppShell } from "@/components/layout"
 import { Card } from "@/components/ui"
 import { useUser } from "@/hooks/useUser"
@@ -123,6 +123,8 @@ interface SettingsProps {
   onUpgrade: () => void
   onNotificationClick?: () => void
   notificationCount?: number
+  onPricingClick?: () => void
+  onAboutClick?: () => void
 }
 
 interface ToggleRowProps {
@@ -160,7 +162,7 @@ function ToggleRow({ label, helper, enabled, onToggle, loading }: ToggleRowProps
   )
 }
 
-export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClick, notificationCount }: SettingsProps) {
+export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClick, notificationCount, onPricingClick, onAboutClick }: SettingsProps) {
   const {
     id: userId,
     email,
@@ -514,6 +516,41 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
             </div>
             <ChevronRight className="h-5 w-5 text-text-muted" />
           </button>
+        </Card>
+
+        {/* Pricing & About */}
+        <Card padding="none" className="overflow-hidden">
+          {onPricingClick && (
+            <>
+              <button
+                onClick={onPricingClick}
+                className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-t-2xl"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                    <CreditCard className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-[15px] font-medium text-text-primary">Pricing</span>
+                </div>
+                <ChevronRight className="h-5 w-5 text-text-muted" />
+              </button>
+              <div className="h-px bg-divider" />
+            </>
+          )}
+          {onAboutClick && (
+            <button
+              onClick={onAboutClick}
+              className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-b-2xl"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                  <Info className="h-4 w-4 text-primary" />
+                </div>
+                <span className="text-[15px] font-medium text-text-primary">About & Support</span>
+              </div>
+              <ChevronRight className="h-5 w-5 text-text-muted" />
+            </button>
+          )}
         </Card>
 
         {/* Dev: Test Notification */}
