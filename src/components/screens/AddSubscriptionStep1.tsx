@@ -47,7 +47,7 @@ function CustomServiceCard({
         size={48}
       />
       <span className="text-sm font-medium text-primary text-center line-clamp-1">
-        Add "{capitalizedName}"
+        Add &ldquo;{capitalizedName}&rdquo;
       </span>
     </button>
   )

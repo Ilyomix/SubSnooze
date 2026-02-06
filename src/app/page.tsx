@@ -11,6 +11,8 @@ import {
   SubscriptionManagement,
   UpgradeModal,
 } from "@/components"
+import { DashboardSkeleton } from "@/components/ui/Skeleton"
+import { useToast } from "@/components/ui/Toast"
 import { useUser } from "@/hooks/useUser"
 import { useSubscriptions } from "@/hooks/useSubscriptions"
 import { useNotifications } from "@/hooks/useNotifications"
@@ -47,6 +49,7 @@ export default function Home() {
   } = useSubscriptions()
   const { notifications, unreadCount, markAsRead, markAsUnread, deleteNotification: deleteNotif, deleteAllNotifications, hasMore, loadingMore, loadMore } = useNotifications()
   const { requestPermission, permission } = usePushNotifications()
+  const { toast } = useToast()
 
   const [screen, setScreen] = useState<Screen>("dashboard")
   const [modal, setModal] = useState<Modal>(null)
@@ -142,17 +145,11 @@ export default function Home() {
     setTotalSaved(cancelledTotal)
   }, [subscriptions])
 
-  // Show loading state while auth is being checked
+  // Show skeleton loading state while auth is being checked
   if (userLoading || subsLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 motion-safe:animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-text-secondary">Loading...</p>
-          <p className="text-xs text-text-tertiary">
-            {userLoading ? "Auth loading..." : "Subscriptions loading..."}
-          </p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <DashboardSkeleton />
       </div>
     )
   }
@@ -193,9 +190,11 @@ export default function Home() {
         renewal_date: formatLocalDate(data.renewalDate),
         cancel_url: data.cancelUrl,
       })
+      toast(`${data.name} added!`, "success")
       navigateTo("dashboard", { tab: "home" })
     } catch (error) {
       console.error("Failed to add subscription:", error)
+      toast("Failed to add subscription", "error")
     }
   }
 
@@ -378,16 +377,20 @@ export default function Home() {
           onRestore={async () => {
             try {
               await restoreSubscription(selectedSub.id)
+              toast(`${selectedSub.name} restored!`, "success")
             } catch (error) {
               console.error("Failed to restore subscription:", error)
+              toast("Failed to restore subscription", "error")
             }
             returnToPrevious()
           }}
           onDelete={async () => {
             try {
               await deleteSubscription(selectedSub.id)
+              toast(`${selectedSub.name} removed`, "success")
             } catch (error) {
               console.error("Failed to delete subscription:", error)
+              toast("Failed to remove subscription", "error")
             }
             returnToPrevious()
           }}
@@ -398,8 +401,10 @@ export default function Home() {
                 billingCycle: data.billingCycle as BillingCycle,
                 renewalDate: data.renewalDate,
               })
+              toast("Changes saved", "success")
             } catch (error) {
               console.error("Failed to update subscription:", error)
+              toast("Failed to save changes", "error")
             }
             returnToPrevious()
           }}
@@ -413,8 +418,10 @@ export default function Home() {
           onCancelConfirm={async () => {
             try {
               await verifyCancellation(selectedSub.id)
+              toast(`${selectedSub.name} cancelled — nice work!`, "success")
             } catch (error) {
               console.error("Failed to verify cancellation:", error)
+              toast("Failed to confirm cancellation", "error")
             }
           }}
           onCancelNotYet={async () => {
@@ -443,6 +450,7 @@ export default function Home() {
         onTabChange={handleTabChange}
         onNotificationClick={handleNotificationNav}
         notificationCount={unreadCount}
+        onAddSubscription={() => navigateTo("addStep1")}
       />
     )
   }

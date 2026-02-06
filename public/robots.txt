@@ -1,0 +1,7 @@
+# SubSnooze robots.txt
+User-agent: *
+Allow: /
+Disallow: /auth/
+Disallow: /update-password
+
+Sitemap: https://subsnooze.app/sitemap.xml

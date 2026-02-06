@@ -352,7 +352,7 @@ export function Notifications({
             </div>
             <span className="text-lg font-semibold text-text-primary">All caught up!</span>
             <span className="text-sm text-text-tertiary text-center max-w-[240px]">
-              No notifications right now. We'll nudge you before any renewals.
+              No notifications right now. We&apos;ll nudge you before any renewals.
             </span>
           </div>
         )}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, ChevronRight, XCircle } from "lucide-react"
+import { Search, ChevronRight, XCircle, Plus, ListX } from "lucide-react"
 import { AppShell } from "@/components/layout"
 import { Card, Badge, ServiceIcon } from "@/components/ui"
 import type { Subscription } from "@/types/subscription"
@@ -34,6 +34,7 @@ interface AllSubscriptionsProps {
   onTabChange: (tab: "home" | "subs" | "settings") => void
   onNotificationClick?: () => void
   notificationCount?: number
+  onAddSubscription?: () => void
 }
 
 function SubscriptionItem({
@@ -114,6 +115,7 @@ export function AllSubscriptions({
   onTabChange,
   onNotificationClick,
   notificationCount,
+  onAddSubscription,
 }: AllSubscriptionsProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [priceView, setPriceView] = useState<PriceView>(getInitialPriceView)
@@ -249,14 +251,34 @@ export function AllSubscriptions({
 
         {/* Empty State */}
         {subscriptions.length === 0 && (
-          <div className="flex flex-col items-center gap-2 py-16">
-            <span className="text-text-secondary">No subscriptions yet</span>
+          <div className="flex flex-col items-center gap-4 py-16 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <ListX className="h-7 w-7 text-primary" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <h2 className="text-base font-semibold text-text-primary">No subscriptions yet</h2>
+              <p className="text-sm text-text-secondary px-4">
+                Track your subscriptions so you never pay for something you forgot about.
+              </p>
+            </div>
+            {onAddSubscription && (
+              <button
+                onClick={onAddSubscription}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add subscription
+              </button>
+            )}
           </div>
         )}
 
         {/* No Search Results */}
         {subscriptions.length > 0 && active.length === 0 && cancelled.length === 0 && (
-          <div className="flex flex-col items-center gap-2 py-16">
+          <div className="flex flex-col items-center gap-2 py-16 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface">
+              <Search className="h-6 w-6 text-text-muted" />
+            </div>
             <span className="text-text-secondary">No subscriptions matching {"\u201C"}{searchTerm}{"\u201D"}</span>
           </div>
         )}

@@ -71,16 +71,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+    // Get initial user (getUser() validates the JWT server-side, unlike deprecated getSession())
+    const getInitialUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
 
-      if (session?.user) {
-        setAuthUser(session.user)
+      if (user) {
+        setAuthUser(user)
         // Set loading false immediately - don't wait for profile
         setLoading(false)
         // Fetch profile in background
-        fetchProfile(session.user.id, session.user.email).then(profileData => {
+        fetchProfile(user.id, user.email).then(profileData => {
           setProfile(profileData)
         })
       } else {
@@ -88,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    getInitialSession()
+    getInitialUser()
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(

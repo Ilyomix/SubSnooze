@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Plus, XCircle, PiggyBank, CreditCard, ChevronDown, ChevronUp } from "lucide-react"
+import { Plus, XCircle, PiggyBank, CreditCard, ChevronDown, ChevronUp, BellOff } from "lucide-react"
 import NumberFlow from "@number-flow/react"
 import { AppShell } from "@/components/layout"
 import { Card, Button, SectionHeader, SubscriptionRow } from "@/components/ui"
@@ -136,6 +136,29 @@ export function Dashboard({
             </span>
           </div>
         </div>
+
+        {/* Empty state when no subscriptions */}
+        {subscriptions.length === 0 && (
+          <div className="flex flex-col items-center gap-4 py-12 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <BellOff className="h-8 w-8 text-primary" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg font-semibold text-text-primary">No subscriptions yet</h2>
+              <p className="text-sm text-text-secondary px-8">
+                Add your first subscription and we&apos;ll remind you before it renews. No more surprise charges.
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Plus className="h-4 w-4" />}
+              onClick={onAddSubscription}
+            >
+              Add your first subscription
+            </Button>
+          </div>
+        )}
 
         {/* Renewing Soon Section — always fully expanded, sorted by urgency */}
         {renewingSoon.length > 0 && (

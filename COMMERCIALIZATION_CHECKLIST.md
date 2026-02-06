@@ -1,7 +1,7 @@
 # SubSnooze — Checklist de Commercialisation
 
-> Score global : **59/150 (39%)**
-> Base fonctionnelle solide, mais il manque la couche production-ready.
+> Score global : **72/150 (48%)**
+> Base fonctionnelle solide, couche testing + UI feedback + SEO ajoutee (S4).
 
 Priorite : Bloquant | Important | Souhaitable
 
@@ -31,7 +31,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 ### Legal
 - [x] Politique de confidentialite (page + lien dans footer login) ✅ S2
 - [x] CGU (page + lien dans footer login) ✅ S2
-- [ ] Banniere cookies RGPD
+- [x] Banniere cookies RGPD ✅ S4
 - [x] Suppression de compte (RGPD droit a l'oubli) ✅ S2
 - [x] Checkbox consentement CGU a l'inscription (`SignupForm`) ✅ S2
 
@@ -43,14 +43,14 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] `UpgradeModal` : le bouton "Get Pro - $39" ferme juste la modale — brancher le paiement
 
 ### Tests
-- [ ] Framework de tests (Vitest)
-- [ ] Tests unitaires utilitaires (`date-utils`, `utils`, `services`)
+- [x] Framework de tests (Vitest) ✅ S4
+- [x] Tests unitaires utilitaires (`date-utils`, `utils`, `services`) ✅ S4 (47 tests)
 - [ ] Error tracking (Sentry)
 
 ### UI/UX
-- [ ] Skeleton loaders (spinner generique actuellement)
-- [ ] Toast notifications (aucun feedback de succes)
-- [ ] Error boundaries React
+- [x] Skeleton loaders (spinner generique actuellement) ✅ S4
+- [x] Toast notifications (aucun feedback de succes) ✅ S4
+- [x] Error boundaries React ✅ S4
 - [ ] Focus trap dans toutes les modales
 - [ ] Onboarding pour les nouveaux utilisateurs
 - [ ] Landing page marketing
@@ -61,6 +61,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [x] Service worker Firebase avec cles placeholder — query params ✅ S1
 - [x] UpgradeModal no-op — "Coming soon" state ✅ S1
 - [x] Stale `activeTab` closure dans `navigateTo` ✅ S1
+- [x] Lint errors (unescaped entities) ✅ S4
 
 ---
 
@@ -72,13 +73,13 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] Audit dependances (`pnpm audit` automatise)
 - [ ] Politique mots de passe (complexite > minLength=6)
 - [x] Wildcard `*.com` dans next.config images — supprime ✅ S3
-- [ ] `getSession()` deprecie — migrer vers `getUser()`
+- [x] `getSession()` deprecie — migrer vers `getUser()` ✅ S4
 - [ ] Gestion token expire cote client (redirect /login)
 
 ### SEO
-- [ ] `robots.txt` + `sitemap.xml`
-- [ ] Open Graph meta tags
-- [ ] Meta description par page
+- [x] `robots.txt` + `sitemap.xml` ✅ S4
+- [x] Open Graph meta tags ✅ S4
+- [x] Meta description par page ✅ S4
 - [ ] Favicon complet (16, 32, apple-touch-icon)
 
 ### PWA
@@ -89,13 +90,13 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 
 ### UI/UX
 - [ ] Error states visuels pour echecs reseau
-- [ ] Loading state sur les boutons (empecher double-clic)
+- [x] Loading state sur les boutons (empecher double-clic) ✅ S4
 - [ ] Transitions animees entre ecrans
 - [ ] Scroll position restoration
 - [ ] Pull-to-refresh
 - [ ] Tri des abonnements (prix, nom, date)
-- [ ] Empty state Dashboard avec CTA
-- [ ] Empty state AllSubscriptions avec CTA
+- [x] Empty state Dashboard avec CTA ✅ S4
+- [x] Empty state AllSubscriptions avec CTA ✅ S4
 - [ ] Navigation depuis notification vers l'abonnement
 - [ ] Validation inline formulaires (prix > 0, date valide)
 - [ ] `$` hardcode partout — utiliser `formatCurrency` systematiquement
@@ -159,18 +160,18 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 | Categorie | Score |
 |---|---|
 | Infrastructure & DevOps | 1/10 |
-| Securite | 8/10 |
-| Legal & Conformite | 7/10 |
+| Securite | 9/10 |
+| Legal & Conformite | 9/10 |
 | Paiement & Monetisation | 1/10 |
-| Tests & Qualite | 1/10 |
+| Tests & Qualite | 4/10 |
 | Monitoring & Analytics | 0/10 |
-| SEO & ASO | 2/10 |
+| SEO & ASO | 5/10 |
 | PWA & Mobile | 5/10 |
-| UI/UX Etats & Feedback | 4/10 |
+| UI/UX Etats & Feedback | 7/10 |
 | UI/UX Navigation | 5/10 |
-| UI/UX Design Systeme | 4/10 |
+| UI/UX Design Systeme | 5/10 |
 | Fonctionnalites | 5/10 |
 | UX TDAH | 4/10 |
 | Accessibilite | 5/10 |
 | Performance | 5/10 |
-| **TOTAL** | **59/150 (39%)** |
+| **TOTAL** | **72/150 (48%)** |
