@@ -66,7 +66,7 @@ export function AddSubscriptionStep2({
         )}
 
         {showProgress && (
-          <StepProgress current={2} total={2} subtitle="Almost there · Add the details" />
+          <StepProgress current={2} total={2} subtitle="Almost there, add the details" />
         )}
 
         <SubscriptionFormFields
