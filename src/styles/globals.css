@@ -25,6 +25,9 @@
 
   /* Animations */
   --animate-toast-in: toast-in 0.25s ease-out;
+  --animate-screen-in: screen-slide-in 0.25s ease-out;
+  --animate-screen-out: screen-slide-out 0.2s ease-in;
+  --animate-fade-in: fade-in 0.2s ease-out;
 }
 
 @keyframes toast-in {
@@ -36,6 +39,33 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes screen-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes screen-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @layer base {
