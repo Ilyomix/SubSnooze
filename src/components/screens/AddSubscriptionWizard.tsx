@@ -194,7 +194,7 @@ export function AddSubscriptionWizard({ onBack, onAdd, onDoneForNow }: AddSubscr
           <StepProgress
             current={step}
             total={2}
-            subtitle={step === 1 ? "Choose a service to track" : "Almost there · Add the details"}
+            subtitle={step === 1 ? "Choose a service to track" : "Almost there, add the details"}
           />
         </div>
       </div>
