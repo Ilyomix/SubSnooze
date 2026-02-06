@@ -15,9 +15,29 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "SubSnooze - Subscription Tracker",
-  description: "Track and manage your subscriptions. Never forget to cancel again.",
+  title: {
+    default: "SubSnooze - ADHD-Friendly Subscription Tracker",
+    template: "%s | SubSnooze",
+  },
+  description:
+    "Stop paying the ADHD tax on subscriptions. Track renewals, get timely reminders, and cancel on time.",
   manifest: "/manifest.json",
+  metadataBase: new URL("https://subsnooze.com"),
+  openGraph: {
+    title: "SubSnooze - ADHD-Friendly Subscription Tracker",
+    description:
+      "Stop paying the ADHD tax on subscriptions. Track renewals, get timely reminders, and cancel on time.",
+    url: "https://subsnooze.com",
+    siteName: "SubSnooze",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "SubSnooze - ADHD-Friendly Subscription Tracker",
+    description:
+      "Stop paying the ADHD tax on subscriptions. Track renewals, get timely reminders, and cancel on time.",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

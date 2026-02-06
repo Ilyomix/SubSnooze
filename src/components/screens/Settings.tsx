@@ -1,12 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Star, ChevronRight, LogOut, Check, BellRing, Trash2, AlertTriangle } from "lucide-react"
+import { Star, ChevronRight, LogOut, Check, BellRing, Trash2, AlertTriangle, Key, Download, Eye, EyeOff } from "lucide-react"
 import { AppShell } from "@/components/layout"
 import { Card } from "@/components/ui"
 import { useUser } from "@/hooks/useUser"
+import { useSubscriptions } from "@/hooks/useSubscriptions"
 import { usePushNotifications } from "@/hooks/usePushNotifications"
 import { createClient } from "@/lib/supabase/client"
+import { subscriptionsToCSV, downloadCSV } from "@/lib/export-csv"
 import type { Database, ReminderPreset } from "@/types/database"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
@@ -170,6 +172,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
     refreshProfile,
     updateReminderPreset,
   } = useUser()
+  const { subscriptions } = useSubscriptions()
   const { isEnabled: pushEnabled, toggleNotifications, loading: pushLoading, isSupported } = usePushNotifications()
   const [testingSent, setTestingSent] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -183,7 +186,50 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
   const [saving, setSaving] = useState(false)
   const [savingPreset, setSavingPreset] = useState(false)
 
+  // Password change state
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
+
   const supabase: SupabaseClient<Database> = createClient()
+
+  const handlePasswordChange = async () => {
+    setPasswordError(null)
+    if (newPassword.length < 8) {
+      setPasswordError("Password must be at least 8 characters")
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords don't match")
+      return
+    }
+    setPasswordSaving(true)
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) throw error
+      setPasswordSuccess(true)
+      setNewPassword("")
+      setConfirmPassword("")
+      setTimeout(() => {
+        setShowPasswordForm(false)
+        setPasswordSuccess(false)
+      }, 2000)
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : "Failed to update password")
+    } finally {
+      setPasswordSaving(false)
+    }
+  }
+
+  const handleExportCSV = () => {
+    const csv = subscriptionsToCSV(subscriptions)
+    const date = new Date().toISOString().split("T")[0]
+    downloadCSV(csv, `subsnooze-export-${date}.csv`)
+  }
 
   // Sync each setting independently to avoid cross-contamination
   useEffect(() => {
@@ -342,6 +388,138 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
               <label className="text-xs text-text-tertiary">Phone</label>
               <span className="text-[15px] text-text-primary">{phoneNumber || "Not set"}</span>
             </div>
+          </Card>
+        </div>
+
+        {/* Change Password */}
+        <div className="flex flex-col gap-3">
+          <span className="text-[13px] font-medium text-text-secondary">
+            Security
+          </span>
+          {!showPasswordForm ? (
+            <Card padding="none" className="overflow-hidden">
+              <button
+                onClick={() => setShowPasswordForm(true)}
+                className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                    <Key className="h-4 w-4 text-primary" />
+                  </div>
+                  <span className="text-[15px] font-medium text-text-primary">
+                    Change password
+                  </span>
+                </div>
+                <ChevronRight className="h-5 w-5 text-text-muted" />
+              </button>
+            </Card>
+          ) : (
+            <Card className="space-y-4">
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label htmlFor="new-password" className="text-sm text-text-secondary">
+                    New password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="new-password"
+                      type={showPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Min. 8 characters"
+                      autoComplete="new-password"
+                      className="w-full rounded-xl border border-divider bg-surface py-3 px-4 pr-12 text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="confirm-password" className="text-sm text-text-secondary">
+                    Confirm password
+                  </label>
+                  <input
+                    id="confirm-password"
+                    type={showPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repeat password"
+                    autoComplete="new-password"
+                    className="w-full rounded-xl border border-divider bg-surface py-3 px-4 text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
+                  />
+                </div>
+              </div>
+
+              {passwordError && (
+                <div className="rounded-lg bg-accent/10 p-3 text-sm text-accent">
+                  {passwordError}
+                </div>
+              )}
+
+              {passwordSuccess && (
+                <div className="rounded-lg bg-primary/10 p-3 text-sm text-primary">
+                  Password updated successfully!
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowPasswordForm(false)
+                    setNewPassword("")
+                    setConfirmPassword("")
+                    setPasswordError(null)
+                  }}
+                  className="flex-1 rounded-xl border border-divider py-3 text-[15px] font-medium text-text-primary hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePasswordChange}
+                  disabled={!newPassword || !confirmPassword || passwordSaving}
+                  className={`flex-1 rounded-xl py-3 text-[15px] font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                    newPassword && confirmPassword && !passwordSaving
+                      ? "bg-primary hover:bg-primary/90"
+                      : "bg-primary/40 cursor-not-allowed"
+                  }`}
+                >
+                  {passwordSaving ? "Saving..." : "Update password"}
+                </button>
+              </div>
+            </Card>
+          )}
+        </div>
+
+        {/* Your Data */}
+        <div className="flex flex-col gap-3">
+          <span className="text-[13px] font-medium text-text-secondary">
+            Your Data
+          </span>
+          <Card padding="none" className="overflow-hidden">
+            <button
+              onClick={handleExportCSV}
+              disabled={subscriptions.length === 0}
+              className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl disabled:opacity-50"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                  <Download className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex flex-col items-start">
+                  <span className="text-[15px] font-medium text-text-primary">
+                    Export subscriptions
+                  </span>
+                  <span className="text-xs text-text-tertiary">Download as CSV file</span>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-text-muted" />
+            </button>
           </Card>
         </div>
 

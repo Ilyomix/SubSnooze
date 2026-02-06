@@ -1,7 +1,7 @@
 # SubSnooze — Checklist de Commercialisation
 
-> Score global : **69/150 (46%)**
-> Base fonctionnelle solide, mais il manque la couche production-ready.
+> Score global : **79/150 (53%)**
+> Base fonctionnelle solide. CI/CD, SEO et fonctionnalites cles ajoutees en S6.
 
 Priorite : Bloquant | Important | Souhaitable
 
@@ -16,7 +16,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 ## Bloquants (avant lancement)
 
 ### Infrastructure
-- [ ] Pipeline CI/CD (GitHub Actions)
+- [x] Pipeline CI/CD (GitHub Actions) ✅ S6 (lint + tsc + test + audit)
 - [ ] Config deploiement (Vercel / Netlify)
 - [ ] Environnements staging + production
 - [ ] Nom de domaine + SSL
@@ -69,17 +69,17 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 ### Securite
 - [x] Headers securite (X-Content-Type-Options, X-Frame-Options) ✅ S3
 - [ ] CORS configure
-- [ ] Audit dependances (`pnpm audit` automatise)
+- [x] Audit dependances (`pnpm audit` automatise) ✅ S6 (CI job, continue-on-error)
 - [ ] Politique mots de passe (complexite > minLength=6)
 - [x] Wildcard `*.com` dans next.config images — supprime ✅ S3
 - [ ] `getSession()` deprecie — migrer vers `getUser()`
 - [ ] Gestion token expire cote client (redirect /login)
 
 ### SEO
-- [ ] `robots.txt` + `sitemap.xml`
-- [ ] Open Graph meta tags
-- [ ] Meta description par page
-- [ ] Favicon complet (16, 32, apple-touch-icon)
+- [x] `robots.txt` + `sitemap.xml` + `llms.txt` ✅ S6 (Next.js metadata API + static)
+- [x] Open Graph meta tags ✅ S6 (OG + Twitter cards dans layout.tsx)
+- [x] Meta description par page ✅ S6 (layout, terms, privacy)
+- [x] Favicon complet (SVG + apple-touch-icon) ✅ S6 (icon.svg + apple-icon.tsx ImageResponse)
 
 ### PWA
 - [ ] Icones completes (192, 256, 384, 512, maskable)
@@ -97,14 +97,14 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] Empty state Dashboard avec CTA
 - [ ] Empty state AllSubscriptions avec CTA
 - [ ] Navigation depuis notification vers l'abonnement
-- [ ] Validation inline formulaires (prix > 0, date valide)
+- [x] Validation inline formulaires (prix > 0, date valide) ✅ S6 (touched state + error hints)
 - [ ] `$` hardcode partout — utiliser `formatCurrency` systematiquement
 - [ ] "Clear all" notifications avec confirmation
 - [ ] Save/Delete/Restore : ne pas naviguer si erreur
 
 ### Fonctionnalites
-- [ ] Changement de mot de passe (depuis Settings)
-- [ ] Export donnees (CSV)
+- [x] Changement de mot de passe (depuis Settings) ✅ S6 (Security section, min 8 chars, eye toggle)
+- [x] Export donnees (CSV) ✅ S6 (Your Data section, downloadCSV utility)
 - [ ] SMS toggle : desactiver ou implementer le backend
 - [ ] Ajout telephone dans Settings
 - [ ] `remindMe` checkbox : brancher au parent
@@ -186,19 +186,19 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 
 | Categorie | Score |
 |---|---|
-| Infrastructure & DevOps | 1/10 |
-| Securite | 8/10 |
+| Infrastructure & DevOps | 3/10 |
+| Securite | 9/10 |
 | Legal & Conformite | 7/10 |
 | Paiement & Monetisation | 1/10 |
 | Tests & Qualite | 5/10 |
 | Monitoring & Analytics | 0/10 |
-| SEO & ASO | 2/10 |
+| SEO & ASO | 7/10 |
 | PWA & Mobile | 5/10 |
-| UI/UX Etats & Feedback | 8/10 |
+| UI/UX Etats & Feedback | 9/10 |
 | UI/UX Navigation | 5/10 |
 | UI/UX Design Systeme | 4/10 |
-| Fonctionnalites | 5/10 |
+| Fonctionnalites | 7/10 |
 | UX TDAH | 5/10 |
 | Accessibilite | 6/10 |
 | Performance | 5/10 |
-| **TOTAL** | **69/150 (46%)** |
+| **TOTAL** | **79/150 (53%)** |

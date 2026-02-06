@@ -2,7 +2,8 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 
 export const metadata = {
-  title: "Terms of Service — SubSnooze",
+  title: "Terms of Service",
+  description: "SubSnooze terms of service — subscription tracker rules of use, limitations, and your rights.",
 }
 
 export default function TermsPage() {

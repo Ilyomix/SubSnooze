@@ -2,7 +2,8 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 
 export const metadata = {
-  title: "Privacy Policy — SubSnooze",
+  title: "Privacy Policy",
+  description: "SubSnooze privacy policy — what data we collect, how we store it, and your GDPR rights.",
 }
 
 export default function PrivacyPage() {
