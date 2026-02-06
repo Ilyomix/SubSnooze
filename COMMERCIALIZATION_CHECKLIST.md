@@ -1,6 +1,6 @@
 # SubSnooze — Checklist de Commercialisation
 
-> Score global : **51/150 (34%)**
+> Score global : **59/150 (39%)**
 > Base fonctionnelle solide, mais il manque la couche production-ready.
 
 Priorite : Bloquant | Important | Souhaitable
@@ -23,10 +23,10 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [ ] Backups DB automatiques
 
 ### Securite
-- [ ] Content Security Policy headers
-- [ ] Rate limiting sur auth
-- [ ] Validation inputs cote serveur
-- [ ] Protection brute force login
+- [x] Content Security Policy headers ✅ S3
+- [x] Rate limiting sur auth ✅ S3
+- [x] Validation inputs cote serveur ✅ S3
+- [x] Protection brute force login ✅ S3 (rate limit 10 req/min)
 
 ### Legal
 - [x] Politique de confidentialite (page + lien dans footer login) ✅ S2
@@ -67,11 +67,11 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 ## Importants (V1)
 
 ### Securite
-- [ ] Headers securite (X-Content-Type-Options, X-Frame-Options)
+- [x] Headers securite (X-Content-Type-Options, X-Frame-Options) ✅ S3
 - [ ] CORS configure
 - [ ] Audit dependances (`pnpm audit` automatise)
 - [ ] Politique mots de passe (complexite > minLength=6)
-- [ ] Wildcard `*.com` dans next.config images — trop permissif
+- [x] Wildcard `*.com` dans next.config images — supprime ✅ S3
 - [ ] `getSession()` deprecie — migrer vers `getUser()`
 - [ ] Gestion token expire cote client (redirect /login)
 
@@ -159,18 +159,18 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 | Categorie | Score |
 |---|---|
 | Infrastructure & DevOps | 1/10 |
-| Securite | 4/10 |
+| Securite | 8/10 |
 | Legal & Conformite | 7/10 |
 | Paiement & Monetisation | 1/10 |
 | Tests & Qualite | 1/10 |
 | Monitoring & Analytics | 0/10 |
 | SEO & ASO | 2/10 |
 | PWA & Mobile | 5/10 |
-| UI/UX Etats & Feedback | 2/10 |
+| UI/UX Etats & Feedback | 4/10 |
 | UI/UX Navigation | 5/10 |
 | UI/UX Design Systeme | 4/10 |
 | Fonctionnalites | 5/10 |
 | UX TDAH | 4/10 |
 | Accessibilite | 5/10 |
 | Performance | 5/10 |
-| **TOTAL** | **51/150 (34%)** |
+| **TOTAL** | **59/150 (39%)** |
