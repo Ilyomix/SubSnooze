@@ -2,11 +2,12 @@ import type { NextConfig } from "next";
 
 // CSP directives — Supabase URL is injected at build time via env var
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const isDev = process.env.NODE_ENV === "development";
 const cspDirectives = [
   "default-src 'self'",
   // Next.js requires 'unsafe-inline' and 'unsafe-eval' (dev) for its scripts;
   // in production 'unsafe-eval' is not needed but 'unsafe-inline' is (inline script tags).
-  `script-src 'self' 'unsafe-inline' https://apis.google.com`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://apis.google.com`,
   // Tailwind injects styles via <style> tags — 'unsafe-inline' required
   `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
   `font-src 'self' https://fonts.gstatic.com`,

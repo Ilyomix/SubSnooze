@@ -32,8 +32,10 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
     if (error) {
       setError(error.message)
       setLoading(false)
+    } else {
+      // Full page load so middleware validates the session cookie and lets us through
+      window.location.href = "/"
     }
-    // On success, middleware will redirect to /
   }
 
   const handleGoogleLogin = async () => {
