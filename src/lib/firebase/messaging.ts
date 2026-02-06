@@ -62,8 +62,20 @@ export async function requestNotificationPermission(): Promise<string | null> {
   if (!messagingInstance) return null
 
   try {
-    // Register service worker
-    const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js")
+    // Register service worker with Firebase config passed as query params.
+    // Service workers in /public cannot access process.env, so we pass the
+    // config values (which are public Firebase keys) via the registration URL.
+    const swParams = new URLSearchParams({
+      apiKey: firebaseConfig.apiKey || "",
+      authDomain: firebaseConfig.authDomain || "",
+      projectId: firebaseConfig.projectId || "",
+      storageBucket: firebaseConfig.storageBucket || "",
+      messagingSenderId: firebaseConfig.messagingSenderId || "",
+      appId: firebaseConfig.appId || "",
+    })
+    const registration = await navigator.serviceWorker.register(
+      `/firebase-messaging-sw.js?${swParams.toString()}`
+    )
 
     const token = await getToken(messagingInstance, {
       vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
