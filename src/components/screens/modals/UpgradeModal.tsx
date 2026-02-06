@@ -1,6 +1,7 @@
 "use client"
 
-import { Star } from "lucide-react"
+import { useState } from "react"
+import { Star, Bell } from "lucide-react"
 import { Button } from "@/components/ui"
 
 interface UpgradeModalProps {
@@ -11,10 +12,40 @@ interface UpgradeModalProps {
 const FEATURES = [
   "Unlimited subscriptions",
   "SMS + Push + Email reminders",
-  "Money saved dashboard",
+  "Priority support",
 ]
 
 export function UpgradeModal({ onUpgrade, onClose }: UpgradeModalProps) {
+  const [showComingSoon, setShowComingSoon] = useState(false)
+
+  if (showComingSoon) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6 overscroll-contain"
+        onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="upgrade-modal-title"
+      >
+        <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-3xl bg-surface p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+            <Bell className="h-7 w-7 text-primary" />
+          </div>
+
+          <h2 id="upgrade-modal-title" className="text-xl font-bold text-text-primary">Coming soon!</h2>
+
+          <p className="text-center text-[15px] text-text-secondary">
+            SubSnooze Pro is not available yet. We&apos;ll notify you as soon as it launches.
+          </p>
+
+          <Button variant="primary" onClick={onClose} className="w-full">
+            Got it
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6 overscroll-contain"
@@ -23,7 +54,7 @@ export function UpgradeModal({ onUpgrade, onClose }: UpgradeModalProps) {
       aria-modal="true"
       aria-labelledby="upgrade-modal-title"
     >
-      <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-3xl bg-surface p-8" onClick={(e) => e.stopPropagation()}>
+      <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-3xl bg-surface p-6" onClick={(e) => e.stopPropagation()}>
         {/* Star Icon */}
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/10">
           <Star className="h-7 w-7 text-accent" fill="currentColor" />
@@ -49,7 +80,7 @@ export function UpgradeModal({ onUpgrade, onClose }: UpgradeModalProps) {
 
         {/* CTA */}
         <div className="flex w-full flex-col gap-3">
-          <Button variant="primary" onClick={onUpgrade} className="w-full">
+          <Button variant="primary" onClick={() => setShowComingSoon(true)} className="w-full">
             Get Pro - $39
           </Button>
           <button
