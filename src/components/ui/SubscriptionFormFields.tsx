@@ -116,7 +116,7 @@ export function SubscriptionFormFields({
                 onChange={(e) => handlePriceChange(e.target.value)}
                 onBlur={() => setPriceTouched(true)}
                 className="min-w-1 tabular-nums bg-transparent text-right text-[15px] font-semibold text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-                style={{ width: `${Math.max(value.price.length || 4, 4) / 1.66}em` }}
+                style={{ width: `${Math.max(value.price.length || 4, 4)}ch` }}
               />
             )}
           </div>
