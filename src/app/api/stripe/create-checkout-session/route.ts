@@ -77,7 +77,9 @@ export async function POST() {
 
     return NextResponse.json({ url: session.url })
   } catch (error) {
-    console.error("Stripe checkout error:", error)
+    if (process.env.NODE_ENV === "development") {
+      console.error("Stripe checkout error:", error)
+    }
     return NextResponse.json(
       { error: "Failed to create checkout session" },
       { status: 500 }

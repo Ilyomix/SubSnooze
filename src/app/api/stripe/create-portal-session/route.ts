@@ -44,7 +44,9 @@ export async function POST() {
 
     return NextResponse.json({ url: session.url })
   } catch (error) {
-    console.error("Stripe portal error:", error)
+    if (process.env.NODE_ENV === "development") {
+      console.error("Stripe portal error:", error)
+    }
     return NextResponse.json(
       { error: "Failed to create portal session" },
       { status: 500 }
