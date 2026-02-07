@@ -56,7 +56,7 @@ export function AppShell({
       </header>
 
       {/* Main Content — constrained on larger screens */}
-      <main id="main-content" className="mx-auto w-full max-w-3xl flex-1 pb-[84px] pt-14">
+      <main id="main-content" className="mx-auto w-full max-w-3xl flex-1 pb-[66px] pt-14">
         {children}
       </main>
 
