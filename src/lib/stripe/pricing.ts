@@ -14,13 +14,13 @@ export const PRICING = {
   // Features comparison (used in UpgradeModal + Pricing page)
   FREE_FEATURES: [
     "Track up to 5 subscriptions",
-    "Email reminders",
     "Push notifications",
+    "Renewal reminders",
   ] as const,
 
   PRO_FEATURES: [
     "Unlimited subscriptions",
-    "Push + Email reminders",
+    "Push notifications",
     "CSV export",
   ] as const,
 } as const
