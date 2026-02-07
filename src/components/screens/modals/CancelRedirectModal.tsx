@@ -6,6 +6,7 @@ import { ExternalLink, PiggyBank, Calendar, Clock } from "lucide-react"
 import { Button } from "@/components/ui"
 import { ServiceIcon } from "@/components/ui"
 import { useI18n } from "@/lib/i18n"
+import { toMonthlyPrice } from "@/lib/date-utils"
 import type { Subscription } from "@/types/subscription"
 
 interface ActionModalProps {
@@ -95,21 +96,19 @@ export function ActionModal({
 interface CancelRedirectModalProps {
   subscription: Subscription
   onProceed: (remindMe: boolean) => void
+  onDecideLater?: () => void
   onClose: () => void
 }
 
 export function CancelRedirectModal({
   subscription,
   onProceed,
+  onDecideLater,
   onClose,
 }: CancelRedirectModalProps) {
-  const [remindMe, setRemindMe] = useState(false)
   const { t, formatCurrency, formatDate } = useI18n()
 
-  const monthlyCost =
-    subscription.billingCycle === "yearly" ? subscription.price / 12
-    : subscription.billingCycle === "weekly" ? subscription.price * 4.33
-    : subscription.price
+  const monthlyCost = toMonthlyPrice(subscription.price, subscription.billingCycle)
 
   return (
     <ActionModal
@@ -143,13 +142,13 @@ export function CancelRedirectModal({
         label: t("cancelFlow.goTo", { name: subscription.name }),
         icon: <ExternalLink className="h-[18px] w-[18px]" aria-hidden="true" />,
         variant: "danger",
-        onClick: () => onProceed(remindMe),
+        onClick: () => onProceed(false),
       }}
       secondaryAction={{
         label: t("cancelFlow.decideLater"),
         icon: <Clock className="h-4 w-4 text-text-tertiary" aria-hidden="true" />,
         onClick: () => {
-          setRemindMe(true)
+          onDecideLater?.()
           onClose()
         },
       }}

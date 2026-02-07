@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useUser } from "./useUser"
 import type { Subscription, SubscriptionStatus } from "@/types/subscription"
 import { dbToSubscription } from "@/types/subscription"
-import { daysUntilRenewal, parseLocalDate, formatLocalDate } from "@/lib/date-utils"
+import { daysUntilRenewal, parseLocalDate, formatLocalDate, toMonthlyPrice } from "@/lib/date-utils"
 import type { Insertable, Updatable, BillingCycle } from "@/types/database"
 import * as api from "@/lib/api/subscriptions"
 
@@ -350,11 +350,7 @@ export function useSubscriptions() {
 
   const totalMonthly = subscriptions
     .filter((s) => s.status !== "cancelled")
-    .reduce((sum, s) => {
-      if (s.billingCycle === "yearly") return sum + s.price / 12
-      if (s.billingCycle === "weekly") return sum + s.price * 4.33
-      return sum + s.price
-    }, 0)
+    .reduce((sum, s) => sum + toMonthlyPrice(s.price, s.billingCycle), 0)
 
   return {
     subscriptions,

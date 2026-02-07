@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getStripe } from "@/lib/stripe/server"
 import { createClient } from "@supabase/supabase-js"
-import type { Database } from "@/types/database"
 
 // Use the service role key for webhook handlers — they run without user context
 function getAdminSupabase() {
@@ -10,7 +9,8 @@ function getAdminSupabase() {
   if (!url || !key) {
     throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_URL")
   }
-  return createClient<Database>(url, key)
+  // Use untyped client — stripe_events table may not be in generated types yet
+  return createClient(url, key)
 }
 
 export async function POST(request: NextRequest) {
@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
   if (!webhookSecret) {
-    console.error("STRIPE_WEBHOOK_SECRET is not set")
     return NextResponse.json({ error: "Webhook not configured" }, { status: 500 })
   }
 
@@ -34,11 +33,31 @@ export async function POST(request: NextRequest) {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error"
-    console.error("Webhook signature verification failed:", message)
+    if (process.env.NODE_ENV === "development") {
+      console.error("Webhook signature verification failed:", message)
+    }
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
   }
 
   const supabase = getAdminSupabase()
+
+  // Idempotency check — prevent duplicate event processing
+  const { data: existingEvent } = await supabase
+    .from("stripe_events")
+    .select("id")
+    .eq("event_id", event.id)
+    .single()
+
+  if (existingEvent) {
+    return NextResponse.json({ received: true, duplicate: true })
+  }
+
+  // Record the event ID before processing
+  await supabase.from("stripe_events").insert({
+    event_id: event.id,
+    event_type: event.type,
+    processed_at: new Date().toISOString(),
+  })
 
   try {
     switch (event.type) {
@@ -48,18 +67,16 @@ export async function POST(request: NextRequest) {
         const userId = session.metadata?.supabase_user_id
 
         if (!userId) {
-          console.error("checkout.session.completed: no supabase_user_id in metadata")
           break
         }
 
         // Only process completed payments
         if (session.payment_status !== "paid") {
-          console.log("checkout.session.completed: payment not yet paid, skipping")
           break
         }
 
         // Activate Pro
-        const { error } = await supabase
+        await supabase
           .from("users")
           .update({
             is_premium: true,
@@ -67,12 +84,6 @@ export async function POST(request: NextRequest) {
             stripe_payment_id: session.payment_intent as string,
           })
           .eq("id", userId)
-
-        if (error) {
-          console.error("Failed to activate Pro for user:", userId, error)
-        } else {
-          console.log("Pro activated for user:", userId)
-        }
 
         break
       }
@@ -95,7 +106,6 @@ export async function POST(request: NextRequest) {
             .from("users")
             .update({ is_premium: false })
             .eq("id", user.id)
-          console.log("Pro revoked (refund) for user:", user.id)
         }
         break
       }
@@ -122,7 +132,6 @@ export async function POST(request: NextRequest) {
             .from("users")
             .update({ is_premium: false })
             .eq("id", user.id)
-          console.log("Pro revoked (dispute) for user:", user.id)
         }
         break
       }
@@ -132,7 +141,9 @@ export async function POST(request: NextRequest) {
         break
     }
   } catch (error) {
-    console.error("Webhook handler error:", error)
+    if (process.env.NODE_ENV === "development") {
+      console.error("Webhook handler error:", error)
+    }
     return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 })
   }
 

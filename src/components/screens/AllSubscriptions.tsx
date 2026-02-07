@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout"
 import { Card, Badge, ServiceIcon, ErrorState } from "@/components/ui"
 import type { Subscription } from "@/types/subscription"
 import type { BillingCycle } from "@/types/database"
-import { daysUntilRenewal } from "@/lib/date-utils"
+import { daysUntilRenewal, toMonthlyPrice } from "@/lib/date-utils"
 import { cn } from "@/lib/utils"
 import { useI18n } from "@/lib/i18n"
 
@@ -20,11 +20,7 @@ function getInitialPriceView(): PriceView {
 }
 
 function displayPrice(price: number, billingCycle: BillingCycle, view: PriceView): number {
-  // Normalize to monthly first
-  let monthly = price
-  if (billingCycle === "yearly") monthly = price / 12
-  else if (billingCycle === "weekly") monthly = price * 4.33
-
+  const monthly = toMonthlyPrice(price, billingCycle)
   return view === "yearly" ? monthly * 12 : monthly
 }
 
@@ -186,10 +182,7 @@ export function AllSubscriptions({
 
   // Calculate total in the selected view
   const totalNormalized = allActive.reduce((sum, s) => {
-    // Normalize everything to monthly first
-    if (s.billingCycle === "yearly") return sum + s.price / 12
-    if (s.billingCycle === "weekly") return sum + s.price * 4.33
-    return sum + s.price
+    return sum + toMonthlyPrice(s.price, s.billingCycle)
   }, 0)
   const totalDisplay = priceView === "yearly" ? totalNormalized * 12 : totalNormalized
 

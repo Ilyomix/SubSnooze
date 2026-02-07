@@ -91,7 +91,8 @@
     "lastRenewal": "Last renewal",
     "enterPrice": "Enter a price",
     "pricePositive": "Price must be greater than 0",
-    "selectDate": "Select a renewal date"
+    "selectDate": "Select a renewal date",
+    "dontKnow": "I don't know \u2014 estimate for me"
   },
   "manage": {
     "cancelSubscription": "Cancel subscription",
@@ -263,7 +264,11 @@
     "couldntConfirmCancel": "Couldn't confirm cancellation. Try again.",
     "somethingWentWrong": "Something went wrong. Try again.",
     "welcomePro": "Welcome to Pro! All features unlocked.",
-    "upgradeCancelled": "Upgrade cancelled \u2014 no worries, decide later!"
+    "upgradeCancelled": "Upgrade cancelled \u2014 no worries, decide later!",
+    "decideLaterReminder": "No pressure! We'll remind you about this in a few days.",
+    "noConnection": "No internet connection \u2014 check your network and try again.",
+    "freeLimitReached": "You've reached 5 subscriptions \u2014 upgrade for unlimited.",
+    "portalError": "Couldn't open billing portal. Try again."
   },
   "csv": {
     "name": "Name",
@@ -272,5 +277,9 @@
     "billingCycle": "Billing Cycle",
     "renewalDate": "Renewal Date",
     "status": "Status"
+  },
+  "session": {
+    "takingLong": "Taking longer than usual\u2026 your connection might be slow.",
+    "retry": "Tap to retry"
   }
 }

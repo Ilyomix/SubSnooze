@@ -10,6 +10,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications"
 import { createClient } from "@/lib/supabase/client"
 import { subscriptionsToCSV, downloadCSV } from "@/lib/export-csv"
 import { useDarkMode } from "@/hooks/useDarkMode"
+import { useToast } from "@/hooks/useToast"
 import { trackExportCSV, trackUpgradeClick } from "@/lib/analytics/events"
 import { useI18n, SUPPORTED_LOCALES, SUPPORTED_CURRENCIES, LOCALE_LABELS, CURRENCY_LABELS, type Locale, type CurrencyCode } from "@/lib/i18n"
 import type { Database, ReminderPreset } from "@/types/database"
@@ -157,6 +158,7 @@ function ToggleRow({
 
 export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClick, notificationCount, onAboutClick, onFAQClick, onChangelogClick, isPremium }: SettingsProps) {
   const { t, locale, currency, setLocale, setCurrency } = useI18n()
+  const { toast } = useToast()
   const {
     id: userId,
     email,
@@ -770,9 +772,13 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                   try {
                     const res = await fetch("/api/stripe/create-portal-session", { method: "POST" })
                     const data = await res.json()
-                    if (data.url) window.location.href = data.url
+                    if (data.url) {
+                      window.location.href = data.url
+                    } else {
+                      toast(t("toast.portalError"), "error")
+                    }
                   } catch {
-                    // Silently fail — user can retry
+                    toast(t("toast.portalError"), "error")
                   }
                 }}
                 className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-b-2xl"

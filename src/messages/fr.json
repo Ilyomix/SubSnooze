@@ -91,7 +91,8 @@
     "lastRenewal": "Dernier renouvellement",
     "enterPrice": "Entrez un prix",
     "pricePositive": "Le prix doit \u00eatre sup\u00e9rieur \u00e0 0",
-    "selectDate": "S\u00e9lectionnez une date de renouvellement"
+    "selectDate": "S\u00e9lectionnez une date de renouvellement",
+    "dontKnow": "Je ne sais pas \u2014 estimez pour moi"
   },
   "manage": {
     "cancelSubscription": "R\u00e9silier l'abonnement",
@@ -263,7 +264,11 @@
     "couldntConfirmCancel": "Impossible de confirmer la r\u00e9siliation. R\u00e9essayez.",
     "somethingWentWrong": "Une erreur s'est produite. R\u00e9essayez.",
     "welcomePro": "Bienvenue chez Pro\u202f! Toutes les fonctionnalit\u00e9s sont d\u00e9bloqu\u00e9es.",
-    "upgradeCancelled": "Mise \u00e0 niveau annul\u00e9e \u2014 pas de souci, d\u00e9cidez plus tard\u202f!"
+    "upgradeCancelled": "Mise \u00e0 niveau annul\u00e9e \u2014 pas de souci, d\u00e9cidez plus tard\u202f!",
+    "decideLaterReminder": "Pas de pression\u202f! On vous rappellera dans quelques jours.",
+    "noConnection": "Pas de connexion internet \u2014 v\u00e9rifiez votre r\u00e9seau et r\u00e9essayez.",
+    "freeLimitReached": "Vous avez atteint 5 abonnements \u2014 passez \u00e0 Pro pour illimit\u00e9.",
+    "portalError": "Impossible d'ouvrir le portail de facturation. R\u00e9essayez."
   },
   "csv": {
     "name": "Nom",
@@ -272,5 +277,9 @@
     "billingCycle": "Fr\u00e9quence",
     "renewalDate": "Date de renouvellement",
     "status": "Statut"
+  },
+  "session": {
+    "takingLong": "C'est plus long que d'habitude\u2026 votre connexion est peut-\u00eatre lente.",
+    "retry": "Appuyez pour r\u00e9essayer"
   }
 }

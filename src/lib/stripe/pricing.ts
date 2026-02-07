@@ -20,8 +20,7 @@ export const PRICING = {
 
   PRO_FEATURES: [
     "Unlimited subscriptions",
-    "SMS + Push + Email reminders",
-    "Priority support",
+    "Push + Email reminders",
     "CSV export",
   ] as const,
 } as const

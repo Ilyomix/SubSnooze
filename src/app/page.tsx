@@ -26,7 +26,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh"
 import { useI18n } from "@/lib/i18n"
 import type { Subscription } from "@/types/subscription"
 import type { BillingCycle } from "@/types/database"
-import { formatLocalDate } from "@/lib/date-utils"
+import { formatLocalDate, toMonthlyPrice } from "@/lib/date-utils"
 import { PRICING } from "@/lib/stripe/pricing"
 import { initSentry, setUser as setSentryUser } from "@/lib/sentry/client"
 import { identifyUser, resetUser, trackScreenView, trackAddSubscription, trackCancelSubscription, trackDeleteSubscription, trackRestoreSubscription, trackUpgradeClick, trackUpgradeComplete, trackOnboardingComplete } from "@/lib/analytics/events"
@@ -105,6 +105,7 @@ export default function Home() {
 
   const isInitialLoading = userLoading || subsLoading
   const [showLoadingUI, setShowLoadingUI] = useState(false)
+  const [sessionTimeout, setSessionTimeout] = useState(false)
   const loadingShownAtRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -114,10 +115,18 @@ export default function Home() {
         setShowLoadingUI(true)
       }, 150)
 
+      // Session recovery timeout — if still loading after 10s, show retry option
+      const timeoutTimer = window.setTimeout(() => {
+        setSessionTimeout(true)
+      }, 10_000)
+
       return () => {
         window.clearTimeout(delayTimer)
+        window.clearTimeout(timeoutTimer)
       }
     }
+
+    setSessionTimeout(false)
 
     if (!showLoadingUI) return
 
@@ -172,20 +181,18 @@ export default function Home() {
     prevScreenRef.current = newScreen
     trackScreenView(newScreen)
 
-    // Restore scroll position for tab screens, reset for detail screens
-    const tabScreens: Screen[] = ["dashboard", "allSubs", "settings"]
-    if (tabScreens.includes(newScreen)) {
-      restoreScroll(newScreen)
-    } else {
+    // Always scroll to top on any screen change.
+    // Restoring scroll on tabs is more confusing than helpful for ADHD users.
+    requestAnimationFrame(() => {
       window.scrollTo(0, 0)
-    }
+    })
 
     // Push history entry unless we're responding to browser back/forward
     if (!isPopstateRef.current) {
       const state = { screen: newScreen, tab: options?.tab ?? activeTabRef.current }
       window.history.pushState(state, "", undefined)
     }
-  }, [saveScroll, restoreScroll])
+  }, [saveScroll])
 
   // Handle browser back/forward buttons
   useEffect(() => {
@@ -210,6 +217,11 @@ export default function Home() {
       if (state?.screen && tabScreens.includes(state.screen)) {
         setSelectedSub(null)
       }
+
+      // Always scroll to top on back/forward navigation
+      requestAnimationFrame(() => {
+        window.scrollTo(0, 0)
+      })
 
       isPopstateRef.current = false
     }
@@ -262,11 +274,7 @@ export default function Home() {
   useEffect(() => {
     const cancelledTotal = subscriptions
       .filter((s) => s.status === "cancelled")
-      .reduce((sum, s) => {
-        if (s.billingCycle === "yearly") return sum + s.price / 12
-        if (s.billingCycle === "weekly") return sum + s.price * 4.33
-        return sum + s.price
-      }, 0)
+      .reduce((sum, s) => sum + toMonthlyPrice(s.price, s.billingCycle), 0)
     setTotalSaved(cancelledTotal)
   }, [subscriptions])
 
@@ -274,6 +282,19 @@ export default function Home() {
   if (isInitialLoading || showLoadingUI) {
     if (!showLoadingUI) {
       return <div className="min-h-screen bg-background" />
+    }
+    if (sessionTimeout) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background px-6">
+          <p className="text-center text-text-secondary">{t("session.takingLong")}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white"
+          >
+            {t("session.retry")}
+          </button>
+        </div>
+      )
     }
     return <DashboardSkeleton />
   }
@@ -345,7 +366,8 @@ export default function Home() {
       return true
     } catch (error) {
       console.error("Failed to add subscription:", error)
-      toast(t("toast.couldntAdd"), "error")
+      const msg = !navigator.onLine ? t("toast.noConnection") : t("toast.couldntAdd")
+      toast(msg, "error")
       return false
     }
   }
@@ -517,10 +539,20 @@ export default function Home() {
               toast(t("toast.somethingWentWrong"), "error")
             }
           }}
+          onCancelDecideLater={async () => {
+            try {
+              // Record cancel attempt so cancel-followup cron sends a reminder
+              await recordCancelAttempt(selectedSub.id)
+              toast(t("toast.decideLaterReminder"), "info")
+            } catch (error) {
+              console.error("Failed to schedule decide-later reminder:", error)
+              toast(t("toast.somethingWentWrong"), "error")
+            }
+          }}
           onCancelConfirm={async () => {
             try {
               await verifyCancellation(selectedSub.id)
-              const monthlyPrice = selectedSub.billingCycle === "yearly" ? selectedSub.price / 12 : selectedSub.billingCycle === "weekly" ? selectedSub.price * 4.33 : selectedSub.price
+              const monthlyPrice = toMonthlyPrice(selectedSub.price, selectedSub.billingCycle)
               trackCancelSubscription({ name: selectedSub.name, monthlyPrice })
             } catch (error) {
               console.error("Failed to verify cancellation:", error)
@@ -614,6 +646,8 @@ export default function Home() {
         onTabChange={handleTabChange}
         error={subsError}
         onRetry={subsRefetch}
+        isPremium={isPremium}
+        freeLimit={PRICING.FREE_SUBSCRIPTION_LIMIT}
       />
       {modal === "upgrade" && (
         <UpgradeModal

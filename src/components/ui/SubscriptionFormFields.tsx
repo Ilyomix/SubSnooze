@@ -186,6 +186,18 @@ export function SubscriptionFormFields({
         {dateError && (
           <p className="px-4 pb-3 -mt-2 text-xs text-accent" role="alert">{dateError}</p>
         )}
+        {!readOnly && !value.renewalDate && (
+          <button
+            type="button"
+            onClick={() => {
+              const estimated = calculateNextRenewalDate(value.billingCycle)
+              onChange({ ...value, renewalDate: estimated })
+            }}
+            className="w-full px-4 pb-3 -mt-1 text-left text-xs font-medium text-primary hover:text-primary/80"
+          >
+            {t("subscriptionForm.dontKnow")}
+          </button>
+        )}
       </div>
     </Card>
   )
