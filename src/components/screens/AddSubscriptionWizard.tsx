@@ -34,9 +34,13 @@ interface AddSubscriptionWizardProps {
   onBack: () => void
   onAdd: (data: WizardAddPayload) => Promise<boolean>
   onDoneForNow: () => void
+  /** Returns true if the user can add more subscriptions (not at free limit). */
+  canAddMore?: () => boolean
+  /** Called when user wants to add another but is at the free limit. */
+  onHitLimit?: () => void
 }
 
-export function AddSubscriptionWizard({ onBack, onAdd, onDoneForNow }: AddSubscriptionWizardProps) {
+export function AddSubscriptionWizard({ onBack, onAdd, onDoneForNow, canAddMore, onHitLimit }: AddSubscriptionWizardProps) {
   const [selectedService, setSelectedService] = useState<string | null>(null)
   const [customServiceName, setCustomServiceName] = useState<string | null>(null)
   const [showAddAnother, setShowAddAnother] = useState(false)
@@ -156,6 +160,10 @@ export function AddSubscriptionWizard({ onBack, onAdd, onDoneForNow }: AddSubscr
         <div className="flex w-full max-w-xs flex-col gap-3">
           <button
             onClick={() => {
+              if (canAddMore && !canAddMore()) {
+                onHitLimit?.()
+                return
+              }
               setShowAddAnother(false)
               setSelectedService(null)
               setCustomServiceName(null)

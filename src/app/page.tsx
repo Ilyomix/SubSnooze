@@ -445,6 +445,12 @@ export default function Home() {
         onBack={() => window.history.back()}
         onAdd={handleAddSubscription}
         onDoneForNow={() => navigateTo("dashboard", { tab: "home" })}
+        canAddMore={() => !isAtFreeLimit}
+        onHitLimit={() => {
+          trackUpgradeClick()
+          navigateTo("dashboard", { tab: "home" })
+          setModal("upgrade")
+        }}
       />
       </div>
     )
