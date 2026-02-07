@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client"
 import { Button } from "@/components/ui"
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react"
+import { trackSignup } from "@/lib/analytics/events"
 
 interface SignupFormProps {
   onSwitchToLogin: () => void
@@ -59,11 +60,17 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
       setError(error.message)
       setLoading(false)
     } else {
+      trackSignup("email")
       onSuccess()
     }
   }
 
   const handleGoogleSignup = async () => {
+    if (!isSupabaseConfigured()) {
+      setError("Authentication is not configured. Please contact support.")
+      return
+    }
+
     setLoading(true)
     setError(null)
 
@@ -77,6 +84,8 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
     if (error) {
       setError(error.message)
       setLoading(false)
+    } else {
+      trackSignup("google")
     }
   }
 

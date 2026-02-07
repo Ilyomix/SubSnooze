@@ -32,8 +32,8 @@ export function CookieBanner() {
     >
       <div className="mx-auto flex max-w-lg flex-col gap-3">
         <p className="text-sm text-text-secondary">
-          We use essential cookies to keep you signed in and remember your preferences.
-          No tracking, no ads.{" "}
+          We use essential cookies to keep you signed in. Accepting enables
+          privacy-friendly analytics to improve SubSnooze. No ads, ever.{" "}
           <a href="/privacy" className="text-primary underline">
             Learn more
           </a>

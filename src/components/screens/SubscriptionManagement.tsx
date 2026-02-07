@@ -198,7 +198,15 @@ export function SubscriptionManagement({
         subscription={subscription}
         onProceed={(remindMe) => {
           if (subscription.cancelUrl) {
-            window.open(subscription.cancelUrl, "_blank", "noopener,noreferrer")
+            // Only allow https:// URLs to prevent javascript: or data: scheme attacks
+            try {
+              const url = new URL(subscription.cancelUrl)
+              if (url.protocol === "https:" || url.protocol === "http:") {
+                window.open(subscription.cancelUrl, "_blank", "noopener,noreferrer")
+              }
+            } catch {
+              // Invalid URL — skip opening
+            }
           }
           onCancelProceed?.(remindMe)
           setShowCancelRedirect(false)

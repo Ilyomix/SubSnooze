@@ -27,6 +27,9 @@ import type { Subscription } from "@/types/subscription"
 import type { BillingCycle } from "@/types/database"
 import { formatLocalDate } from "@/lib/date-utils"
 import { PRICING } from "@/lib/stripe/pricing"
+import { initSentry, setUser as setSentryUser } from "@/lib/sentry/client"
+import { identifyUser, resetUser, trackScreenView, trackAddSubscription, trackCancelSubscription, trackDeleteSubscription, trackRestoreSubscription, trackUpgradeClick, trackUpgradeComplete, trackOnboardingComplete } from "@/lib/analytics/events"
+import { reportWebVitals } from "@/lib/analytics/web-vitals"
 
 type Screen =
   | "dashboard"
@@ -63,6 +66,24 @@ export default function Home() {
 
   // Register PWA service worker
   useServiceWorker()
+
+  // Initialize monitoring
+  useEffect(() => {
+    initSentry()
+    reportWebVitals()
+  }, [])
+
+  // Identify user for analytics + error tracking
+  useEffect(() => {
+    if (isAuthenticated) {
+      const userId = subscriptions.length > 0 ? "authenticated" : "new"
+      identifyUser(userId, { isPremium, subscriptionCount: subscriptions.length })
+      setSentryUser(userId)
+    } else {
+      resetUser()
+      setSentryUser(null)
+    }
+  }, [isAuthenticated, isPremium, subscriptions.length])
 
   // Scroll position restoration
   const { save: saveScroll, restore: restoreScroll } = useScrollRestore()
@@ -147,6 +168,7 @@ export default function Home() {
 
     setScreen(newScreen)
     prevScreenRef.current = newScreen
+    trackScreenView(newScreen)
 
     // Restore scroll position for tab screens, reset for detail screens
     const tabScreens: Screen[] = ["dashboard", "allSubs", "settings"]
@@ -211,6 +233,7 @@ export default function Home() {
     if (upgrade === "success") {
       toast("Welcome to Pro! All features unlocked.", "success")
       refreshProfile()
+      trackUpgradeComplete()
       // Clean URL
       window.history.replaceState({}, "", window.location.pathname)
     } else if (upgrade === "cancelled") {
@@ -251,6 +274,7 @@ export default function Home() {
         onComplete={() => {
           localStorage.setItem("subsnooze_onboarded", "1")
           setShowOnboarding(false)
+          trackOnboardingComplete()
         }}
         onRequestNotifications={() => {
           requestPermission()
@@ -279,6 +303,7 @@ export default function Home() {
   // Gate "Add subscription" behind free tier limit
   const handleAddSubClick = () => {
     if (isAtFreeLimit) {
+      trackUpgradeClick()
       setModal("upgrade")
       return
     }
@@ -305,10 +330,11 @@ export default function Home() {
         cancel_url: data.cancelUrl,
       })
       toast("Subscription added")
+      trackAddSubscription({ name: data.name, billingCycle: data.billingCycle, price: data.price })
       return true
     } catch (error) {
       console.error("Failed to add subscription:", error)
-      toast("Couldn’t add subscription. Try again.", "error")
+      toast("Couldn't add subscription. Try again.", "error")
       return false
     }
   }
@@ -434,6 +460,7 @@ export default function Home() {
             try {
               await restoreSubscription(selectedSub.id)
               toast("Subscription restored")
+              trackRestoreSubscription(selectedSub.name)
               returnToPrevious()
             } catch (error) {
               console.error("Failed to restore subscription:", error)
@@ -444,6 +471,7 @@ export default function Home() {
             try {
               await deleteSubscription(selectedSub.id)
               toast("Removed from list")
+              trackDeleteSubscription(selectedSub.name)
               returnToPrevious()
             } catch (error) {
               console.error("Failed to delete subscription:", error)
@@ -475,6 +503,8 @@ export default function Home() {
           onCancelConfirm={async () => {
             try {
               await verifyCancellation(selectedSub.id)
+              const monthlyPrice = selectedSub.billingCycle === "yearly" ? selectedSub.price / 12 : selectedSub.billingCycle === "weekly" ? selectedSub.price * 4.33 : selectedSub.price
+              trackCancelSubscription({ name: selectedSub.name, monthlyPrice })
             } catch (error) {
               console.error("Failed to verify cancellation:", error)
               toast("Couldn\u2019t confirm cancellation. Try again.", "error")

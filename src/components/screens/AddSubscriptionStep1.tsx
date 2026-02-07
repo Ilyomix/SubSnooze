@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Search, Loader2, Plus } from "lucide-react"
+import { Search, Loader2, Plus, ChevronDown } from "lucide-react"
 import { DetailShell } from "@/components/layout"
 import { Card, ServiceIcon, StepProgress } from "@/components/ui"
 import {
@@ -9,6 +9,8 @@ import {
   getPopularServices,
   searchServices,
   getAllServicesAlphabetical,
+  getCategories,
+  getServicesByCategory,
   type SubscriptionService,
 } from "@/lib/services"
 
@@ -67,8 +69,11 @@ export function AddSubscriptionStep1({
   const [services, setServices] = useState<SubscriptionService[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSearching, setIsSearching] = useState(false)
-  const [browseMode, setBrowseMode] = useState<"popular" | "az">("popular")
+  const [browseMode, setBrowseMode] = useState<"popular" | "az" | "categories">("popular")
   const [allServices, setAllServices] = useState<SubscriptionService[]>([])
+  const [categories, setCategories] = useState<string[]>([])
+  const [categoryServices, setCategoryServices] = useState<Record<string, SubscriptionService[]>>({})
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
 
   // Load popular services on mount
   useEffect(() => {
@@ -92,6 +97,28 @@ export function AddSubscriptionStep1({
     }
     loadAll()
   }, [browseMode, allServices.length])
+
+  // Load categories when switching to categories mode
+  useEffect(() => {
+    if (browseMode !== "categories" || categories.length > 0) return
+    async function loadCategories() {
+      setIsLoading(true)
+      const cats = await getCategories()
+      setCategories(cats)
+      setIsLoading(false)
+    }
+    loadCategories()
+  }, [browseMode, categories.length])
+
+  // Load services for an expanded category
+  useEffect(() => {
+    if (!expandedCategory || categoryServices[expandedCategory]) return
+    async function loadCategoryServices() {
+      const services = await getServicesByCategory(expandedCategory!)
+      setCategoryServices((prev) => ({ ...prev, [expandedCategory!]: services }))
+    }
+    loadCategoryServices()
+  }, [expandedCategory, categoryServices])
 
   // Debounced search
   const performSearch = useCallback(async (query: string) => {
@@ -170,6 +197,14 @@ export function AddSubscriptionStep1({
               Popular
             </button>
             <button
+              onClick={() => setBrowseMode("categories")}
+              className={`flex-1 rounded-lg py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                browseMode === "categories" ? "bg-primary/10 text-primary" : "text-text-secondary"
+              }`}
+            >
+              Categories
+            </button>
+            <button
               onClick={() => setBrowseMode("az")}
               className={`flex-1 rounded-lg py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 browseMode === "az" ? "bg-primary/10 text-primary" : "text-text-secondary"
@@ -183,12 +218,55 @@ export function AddSubscriptionStep1({
         {/* Services Grid */}
         <div className="flex flex-col gap-4">
           <span className="text-[15px] font-medium text-text-secondary">
-            {trimmedSearch ? "Search results" : browseMode === "az" ? "All services" : "Popular services"}
+            {trimmedSearch ? "Search results" : browseMode === "az" ? "All services" : browseMode === "categories" ? "Browse by category" : "Popular services"}
           </span>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 text-text-tertiary animate-spin" />
+            </div>
+          ) : browseMode === "categories" && !trimmedSearch ? (
+            /* Category browsing */
+            <div className="flex flex-col gap-2">
+              {categories.map((category) => (
+                <div key={category}>
+                  <button
+                    onClick={() => setExpandedCategory(expandedCategory === category ? null : category)}
+                    className="flex w-full items-center justify-between rounded-xl bg-surface px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    <span className="text-[15px] font-medium text-text-primary capitalize">{category}</span>
+                    <ChevronDown className={`h-4 w-4 text-text-muted motion-safe:transition-transform ${expandedCategory === category ? "rotate-180" : ""}`} />
+                  </button>
+                  {expandedCategory === category && (
+                    <div className="mt-2 grid grid-cols-3 gap-3 px-1 pb-2">
+                      {categoryServices[category] ? (
+                        categoryServices[category].map((service) => (
+                          <button
+                            key={service.id}
+                            onClick={() => handleSelectService(service)}
+                            aria-label={`Select ${service.name}`}
+                            className="flex flex-col items-center gap-2 rounded-xl bg-surface p-4 motion-safe:transition-colors hover:bg-surface/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                          >
+                            <ServiceIcon
+                              name={service.name}
+                              logoColor={service.logo_color}
+                              domain={service.domain}
+                              size={48}
+                            />
+                            <span className="text-sm font-medium text-text-primary text-center line-clamp-1">
+                              {service.name}
+                            </span>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="col-span-3 flex items-center justify-center py-6">
+                          <Loader2 className="h-5 w-5 text-text-tertiary animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           ) : browseMode === "az" && !trimmedSearch ? (
             /* Alphabetical browsing */

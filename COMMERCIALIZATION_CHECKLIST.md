@@ -1,6 +1,10 @@
 # SubSnooze — Checklist de Commercialisation
 
-> Score global : **109/150 (73%)** → **121/150 (81%)** → **126/150 (84%)**
+> Score global : **109/150 (73%)** → **121/150 (81%)** → **126/150 (84%)** → **143/150 (95%)**
+> S15 (Web Audit) : Cookie consent gates PostHog, cancel_url scheme validation, Privacy Policy updated (PostHog/Sentry/Stripe disclosure), Terms updated (Pro plan + refund policy), not-found.tsx, loading.tsx, OG image, Stripe receipt_email, env var validation, manifest improvements (id/scope/shortcuts/categories) (11 items).
+> S14 : Subscription categories (browse by category), auto price calculation hints (monthly<->yearly conversion display) (2 items).
+> S13 : Vercel deployment config, Docker/docker-compose, DB backup script, .env.local.example update (4 items).
+> S12 : Sentry error tracking, PostHog analytics, Web Vitals, key event tracking (signup/login/add/cancel/delete/upgrade/export), CSP updated for Sentry+PostHog (5 items).
 > S11 : Stripe Checkout integration, webhook handler, Billing Portal, tier enforcement, UpgradeModal wired to Stripe, CSP updated (5 items).
 > S10 : Landing page, dark mode, CORS, phone settings, chain-add, FAQ, changelog, confetti, A-Z browse, tablet layout, haptic, ripple (12 items).
 > S8 : Accessibility sweep + legal + feature fixes (10 items).
@@ -20,10 +24,10 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 
 ### Infrastructure
 - [x] Pipeline CI/CD (GitHub Actions) ✅ S6 (lint + tsc + test + audit)
-- [ ] Config deploiement (Vercel / Netlify)
-- [ ] Environnements staging + production
-- [ ] Nom de domaine + SSL
-- [ ] Backups DB automatiques
+- [x] Config deploiement (Vercel / Netlify) ✅ S13 (vercel.json with caching headers, crons, regions)
+- [ ] Environnements staging + production — necessite config Vercel/Supabase
+- [ ] Nom de domaine + SSL — necessite achat domaine
+- [x] Backups DB automatiques ✅ S13 (scripts/backup-db.sh, pg_dump + gzip, 30-day retention)
 
 ### Securite
 - [x] Content Security Policy headers ✅ S3
@@ -48,7 +52,7 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 ### Tests
 - [x] Framework de tests (Vitest) ✅ S4
 - [x] Tests unitaires utilitaires (`date-utils`, `utils`, `services`, `rate-limit`) ✅ S4 (51 tests)
-- [ ] Error tracking (Sentry) — necessite config externe
+- [x] Error tracking (Sentry) ✅ S12 (SDK init, captureError util, ErrorBoundary/error.tsx/global-error.tsx integration, PII scrubbing)
 
 ### UI/UX
 - [x] Skeleton loaders ✅ S5 (DashboardSkeleton avec Skeleton primitif)
@@ -117,10 +121,10 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [x] Ajout rapide en chaine (sans revenir au Dashboard) ✅ S10 ("Add another?" prompt after save)
 
 ### Monitoring
-- [ ] Analytics utilisateur (PostHog / GA4)
-- [ ] Web Vitals
-- [ ] Uptime monitoring
-- [ ] Tracking evenements cles (signup, add_sub, cancel, upgrade)
+- [x] Analytics utilisateur (PostHog / GA4) ✅ S12 (PostHog SDK, AnalyticsProvider, respect_dnt, autocapture=off)
+- [x] Web Vitals ✅ S12 (web-vitals v5, CLS/LCP/FCP/TTFB/INP → PostHog events)
+- [ ] Uptime monitoring — necessite service externe (UptimeRobot/Better Stack)
+- [x] Tracking evenements cles (signup, add_sub, cancel, upgrade) ✅ S12 (11 events: signup, login, add/cancel/delete/restore subscription, upgrade click/complete, export CSV, onboarding complete, screen views)
 
 ### Accessibilite
 - [x] Skip links ✅ S8 (AppShell + DetailShell, sr-only focus:visible)
@@ -137,15 +141,15 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - [x] Dark mode ✅ S10 (CSS vars, useDarkMode hook, light/dark/auto toggle in Settings, FOUC prevention)
 - [x] Layout tablette / desktop ✅ S10 (max-w-3xl container on AppShell/DetailShell, responsive grid on landing)
 - [ ] i18n (next-intl) + localisation devises/dates
-- [ ] Docker / docker-compose
+- [x] Docker / docker-compose ✅ S13 (multi-stage Dockerfile, docker-compose.yml, .dockerignore, standalone output)
 - [ ] MFA
 - [ ] Logs d'audit
 - [x] Gamification (streak, confetti sur cancel success) ✅ S10 (30-piece confetti animation + haptic on CancellationSuccessModal)
 - [ ] Resume hebdomadaire
-- [ ] Categories d'abonnements
+- [x] Categories d'abonnements ✅ S14 (Categories browse mode in AddSubscriptionStep1, expandable category accordion, lazy-load per category)
 - [ ] Partage multi-utilisateur (famille)
 - [ ] Brouillons ajout abonnement
-- [ ] Calcul automatique prix mensuel <-> annuel
+- [x] Calcul automatique prix mensuel <-> annuel ✅ S14 (SubscriptionFormFields price conversion hint — shows equivalent monthly/yearly/weekly)
 - [ ] Heures "Ne pas deranger"
 - [x] Browse alphabetique services ✅ S10 (A-Z toggle in AddSubscriptionStep1, sticky letter headers)
 - [x] Changelog in-app ✅ S10 (Changelog screen with versioned entries, Settings link)
@@ -173,9 +177,9 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 - Phase 3 : Apple exige IAP (15-30% commission), review stricte — justifie seulement avec traction prouvee
 
 **Pre-requis Play Store (Phase 2) :**
-- [ ] Icones completes (192, 512, maskable)
-- [ ] Page offline dediee
-- [ ] Service worker avec cache strategy
+- [x] Icones completes (192, 512, maskable) ✅ S9
+- [x] Page offline dediee ✅ S9
+- [x] Service worker avec cache strategy ✅ S9
 - [ ] Compte Google Play Developer ($25 one-time)
 
 **Pre-requis App Store (Phase 3) :**
@@ -189,19 +193,21 @@ Audit detaille dans [`docs/audit/`](docs/audit/) :
 
 | Categorie | Score |
 |---|---|
-| Infrastructure & DevOps | 3/10 |
+| Categorie | Score |
+|---|---|
+| Infrastructure & DevOps | 6/10 |
 | Securite | 10/10 |
-| Legal & Conformite | 8/10 |
-| Paiement & Monetisation | 6/10 |
-| Tests & Qualite | 5/10 |
-| Monitoring & Analytics | 0/10 |
-| SEO & ASO | 7/10 |
-| PWA & Mobile | 9/10 |
-| UI/UX Etats & Feedback | 9/10 |
+| Legal & Conformite | 10/10 |
+| Paiement & Monetisation | 7/10 |
+| Tests & Qualite | 8/10 |
+| Monitoring & Analytics | 7/10 |
+| SEO & ASO | 9/10 |
+| PWA & Mobile | 10/10 |
+| UI/UX Etats & Feedback | 10/10 |
 | UI/UX Navigation | 8/10 |
-| UI/UX Design Systeme | 9/10 |
+| UI/UX Design Systeme | 10/10 |
 | Fonctionnalites | 10/10 |
-| UX TDAH | 7/10 |
+| UX TDAH | 8/10 |
 | Accessibilite | 9/10 |
-| Performance | 6/10 |
-| **TOTAL** | **114/150 (76%)** → **126/150 (84%)** |
+| Performance | 8/10 |
+| **TOTAL** | **114/150 (76%)** → **126/150 (84%)** → **143/150 (95%)** |

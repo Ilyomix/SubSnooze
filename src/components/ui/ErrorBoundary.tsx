@@ -1,6 +1,7 @@
 "use client"
 
 import { Component, type ErrorInfo, type ReactNode } from "react"
+import { captureError } from "@/lib/sentry/client"
 
 interface Props {
   children: ReactNode
@@ -24,6 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("ErrorBoundary caught:", error, errorInfo)
+    captureError(error, { componentStack: errorInfo.componentStack ?? undefined })
   }
 
   render() {

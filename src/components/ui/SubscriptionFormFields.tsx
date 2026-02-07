@@ -4,7 +4,7 @@ import { useState } from "react"
 import { ChevronDown, Calendar } from "lucide-react"
 import { Card } from "./Card"
 import { calculateNextRenewalDate, formatLocalDate } from "@/lib/date-utils"
-import { CURRENCY_SYMBOL } from "@/lib/utils"
+import { CURRENCY_SYMBOL, formatCurrency } from "@/lib/utils"
 import type { BillingCycle } from "@/types/database"
 
 export interface SubscriptionFormData {
@@ -124,6 +124,13 @@ export function SubscriptionFormFields({
         </label>
         {priceError && (
           <p className="px-[18px] pb-2 -mt-2 text-xs text-accent" role="alert">{priceError}</p>
+        )}
+        {!readOnly && !priceError && priceNum > 0 && (
+          <p className="px-[18px] pb-2 -mt-2 text-xs text-text-tertiary">
+            {value.billingCycle === "monthly" && `${formatCurrency(priceNum * 12)}/yr`}
+            {value.billingCycle === "yearly" && `${formatCurrency(priceNum / 12)}/mo`}
+            {value.billingCycle === "weekly" && `${formatCurrency(priceNum * 4.33)}/mo`}
+          </p>
         )}
       </div>
       <div className="h-px bg-divider" />

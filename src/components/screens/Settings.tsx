@@ -10,6 +10,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications"
 import { createClient } from "@/lib/supabase/client"
 import { subscriptionsToCSV, downloadCSV } from "@/lib/export-csv"
 import { useDarkMode } from "@/hooks/useDarkMode"
+import { trackExportCSV, trackUpgradeClick } from "@/lib/analytics/events"
 import type { Database, ReminderPreset } from "@/types/database"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
@@ -289,6 +290,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
     const csv = subscriptionsToCSV(subscriptions)
     const date = new Date().toISOString().split("T")[0]
     downloadCSV(csv, `subsnooze-export-${date}.csv`)
+    trackExportCSV(subscriptions.length)
   }
 
   // Sync each setting independently to avoid cross-contamination
@@ -707,7 +709,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
             </>
           ) : (
             <button
-              onClick={onUpgrade}
+              onClick={() => { trackUpgradeClick(); onUpgrade() }}
               className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl"
             >
               <div className="flex items-center gap-3">

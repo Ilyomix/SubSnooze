@@ -3,6 +3,7 @@ import { Outfit, Inter } from "next/font/google"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ToastProvider } from "@/hooks/useToast"
 import { CookieBanner } from "@/components/ui/CookieBanner"
+import { AnalyticsProvider } from "@/lib/analytics/provider"
 import "@/styles/globals.css"
 
 const outfit = Outfit({
@@ -79,12 +80,14 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="font-sans">
-        <AuthProvider>
-          <ToastProvider>
-            {children}
-            <CookieBanner />
-          </ToastProvider>
-        </AuthProvider>
+        <AnalyticsProvider>
+          <AuthProvider>
+            <ToastProvider>
+              {children}
+              <CookieBanner />
+            </ToastProvider>
+          </AuthProvider>
+        </AnalyticsProvider>
       </body>
     </html>
   )
