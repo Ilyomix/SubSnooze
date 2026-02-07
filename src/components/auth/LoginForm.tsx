@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client"
 import { Button } from "@/components/ui"
 import { Mail, Lock, Eye, EyeOff } from "lucide-react"
 import { trackLogin } from "@/lib/analytics/events"
@@ -41,6 +41,11 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
   }
 
   const handleGoogleLogin = async () => {
+    if (!isSupabaseConfigured()) {
+      setError("Authentication is not configured. Please contact support.")
+      return
+    }
+
     setLoading(true)
     setError(null)
 

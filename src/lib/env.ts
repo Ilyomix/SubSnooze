@@ -20,22 +20,36 @@ const optionalVarsWithWarning = [
   "NEXT_PUBLIC_POSTHOG_KEY",
 ] as const
 
+const PLACEHOLDER_PATTERNS = ["placeholder", "your_", "your-", "example", "xxx"]
+
+function looksLikePlaceholder(value: string): boolean {
+  const lower = value.toLowerCase()
+  return PLACEHOLDER_PATTERNS.some((p) => lower.includes(p))
+}
+
 export function validateEnv() {
   const missing: string[] = []
+  const invalid: string[] = []
   const warnings: string[] = []
 
   // Check required public vars (available at build time)
   for (const key of requiredPublicVars) {
-    if (!process.env[key]) {
+    const val = process.env[key]
+    if (!val) {
       missing.push(key)
+    } else if (looksLikePlaceholder(val)) {
+      invalid.push(`${key} (contains placeholder value: "${val}")`)
     }
   }
 
   // Check required server vars (only on server)
   if (typeof window === "undefined") {
     for (const key of requiredServerVars) {
-      if (!process.env[key]) {
+      const val = process.env[key]
+      if (!val) {
         missing.push(key)
+      } else if (looksLikePlaceholder(val)) {
+        invalid.push(`${key} (contains placeholder value)`)
       }
     }
   }
@@ -50,6 +64,12 @@ export function validateEnv() {
   if (missing.length > 0) {
     console.error(
       `[SubSnooze] Missing required environment variables:\n${missing.map((k) => `  - ${k}`).join("\n")}\n\nCopy .env.local.example to .env.local and fill in the values.`
+    )
+  }
+
+  if (invalid.length > 0) {
+    console.error(
+      `[SubSnooze] Environment variables contain placeholder values:\n${invalid.map((k) => `  - ${k}`).join("\n")}\n\nReplace these with real values from your Supabase/Stripe/etc. dashboard.`
     )
   }
 
