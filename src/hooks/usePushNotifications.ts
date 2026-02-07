@@ -21,10 +21,32 @@ export function usePushNotifications() {
 
   const supabase: SupabaseClient<Database> = createClient()
 
-  // Check initial permission status
+  // Check initial permission status and refresh stale tokens
   useEffect(() => {
     setPermission(getNotificationPermissionStatus())
-  }, [])
+
+    // Refresh FCM token on app load if push is enabled
+    // Tokens can go stale — Firebase recommends periodic refreshes
+    if (userId && pushEnabled && getNotificationPermissionStatus() === "granted") {
+      const refreshToken = async () => {
+        try {
+          const freshToken = await requestNotificationPermission()
+          if (freshToken) {
+            setToken(freshToken)
+            // Update token in DB if it changed
+            await supabase
+              .from("users")
+              .update({ fcm_token: freshToken })
+              .eq("id", userId)
+          }
+        } catch {
+          // Silent failure — push will still work with existing token
+        }
+      }
+      refreshToken()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, pushEnabled])
 
   // Listen for foreground messages
   useEffect(() => {

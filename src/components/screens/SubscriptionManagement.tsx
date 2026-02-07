@@ -6,7 +6,7 @@ import { DetailShell } from "@/components/layout"
 import { Button, SubscriptionFormFields, ServiceIcon } from "@/components/ui"
 import type { SubscriptionFormData } from "@/components/ui"
 import { CancelRedirectModal, ConfirmCancellationModal, CancellationSuccessModal } from "@/components/screens/modals"
-import { daysUntilRenewal, formatLocalDate, parseLocalDate } from "@/lib/date-utils"
+import { daysUntilRenewal, formatLocalDate, parseLocalDate, toMonthlyPrice } from "@/lib/date-utils"
 import { useI18n } from "@/lib/i18n"
 import type { Subscription } from "@/types/subscription"
 
@@ -17,6 +17,7 @@ interface SubscriptionManagementProps {
   onDelete?: () => void
   onSave?: (data: { price: number; billingCycle: string; renewalDate: Date }) => void
   onCancelProceed?: (remindMe?: boolean) => void
+  onCancelDecideLater?: () => void
   onCancelConfirm?: () => void
   onCancelNotYet?: () => void
   onCancelComplete?: () => void
@@ -29,6 +30,7 @@ export function SubscriptionManagement({
   onDelete,
   onSave,
   onCancelProceed,
+  onCancelDecideLater,
   onCancelConfirm,
   onCancelNotYet,
   onCancelComplete,
@@ -69,12 +71,7 @@ export function SubscriptionManagement({
   const isValidPrice = !isNaN(priceNum) && priceNum > 0
 
   // Calculate monthly savings for the cancellation success modal
-  const monthlySavings =
-    subscription.billingCycle === "yearly"
-      ? subscription.price / 12
-      : subscription.billingCycle === "weekly"
-        ? subscription.price * 4.33
-        : subscription.price
+  const monthlySavings = toMonthlyPrice(subscription.price, subscription.billingCycle)
 
   return (
     <>
@@ -204,7 +201,7 @@ export function SubscriptionManagement({
             try {
               const url = new URL(subscription.cancelUrl)
               if (url.protocol === "https:" || url.protocol === "http:") {
-                window.open(subscription.cancelUrl, "_blank", "noopener,noreferrer")
+                window.open(url.href, "_blank", "noopener,noreferrer")
               }
             } catch {
               // Invalid URL — skip opening
@@ -213,6 +210,10 @@ export function SubscriptionManagement({
           onCancelProceed?.(remindMe)
           setShowCancelRedirect(false)
           setTimeout(() => setShowConfirmCancel(true), 500)
+        }}
+        onDecideLater={() => {
+          onCancelDecideLater?.()
+          setShowCancelRedirect(false)
         }}
         onClose={() => setShowCancelRedirect(false)}
       />

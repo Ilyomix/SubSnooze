@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Plus, XCircle, PiggyBank, CreditCard, ChevronDown, ChevronUp } from "lucide-react"
+import { Plus, XCircle, PiggyBank, CreditCard, ChevronDown, ChevronUp, Star } from "lucide-react"
 import NumberFlow from "@number-flow/react"
 import { AppShell } from "@/components/layout"
 import { Card, Button, SectionHeader, SubscriptionRow, ErrorState } from "@/components/ui"
@@ -23,6 +23,8 @@ interface DashboardProps {
   onTabChange: (tab: "home" | "subs" | "settings") => void
   error?: Error | null
   onRetry?: () => void
+  isPremium?: boolean
+  freeLimit?: number
 }
 
 export function Dashboard({
@@ -38,6 +40,8 @@ export function Dashboard({
   onTabChange,
   error,
   onRetry,
+  isPremium,
+  freeLimit = 5,
 }: DashboardProps) {
   const { t, currency, locale } = useI18n()
   const localeTag = locale === "fr" ? "fr-FR" : "en-US"
@@ -95,10 +99,22 @@ export function Dashboard({
       notificationCount={notificationCount}
     >
       <div className="flex flex-col gap-6 px-6 pt-4 pb-40">
-        {/* Greeting */}
-        <h1 className="text-2xl font-semibold text-text-primary">
-          {t("dashboard.greeting", { name: userName })}
-        </h1>
+        {/* Greeting + Usage Indicator */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold text-text-primary">
+            {t("dashboard.greeting", { name: userName })}
+          </h1>
+          {isPremium ? (
+            <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+              <Star className="h-3 w-3" fill="currentColor" />
+              Pro
+            </span>
+          ) : (
+            <span className="rounded-full bg-surface px-2.5 py-1 text-xs font-medium text-text-secondary">
+              {activeCount}/{freeLimit}
+            </span>
+          )}
+        </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 gap-3" aria-live="polite" aria-atomic="true">

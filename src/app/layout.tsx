@@ -1,21 +1,10 @@
 import type { Metadata, Viewport } from "next"
-import { Outfit, Inter } from "next/font/google"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ToastProvider } from "@/hooks/useToast"
 import { I18nProvider } from "@/lib/i18n"
 import { CookieBanner } from "@/components/ui/CookieBanner"
 import { AnalyticsProvider } from "@/lib/analytics/provider"
 import "@/styles/globals.css"
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-})
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-})
 
 export const metadata: Metadata = {
   title: {
@@ -76,8 +65,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${outfit.variable} ${inter.variable}`} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Outfit:wght@100..900&display=swap" rel="stylesheet" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="font-sans">

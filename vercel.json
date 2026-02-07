@@ -31,5 +31,18 @@
       "destination": "/api/stripe/webhook"
     }
   ],
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/cron/advance-renewals",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/send-reminders",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/cancel-followup",
+      "schedule": "0 9 * * *"
+    }
+  ]
 }

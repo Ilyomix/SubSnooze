@@ -72,6 +72,16 @@ export function getNextRenewalDate(renewalDate: Date, billingCycle: BillingCycle
 }
 
 /**
+ * Convert a price to its monthly equivalent based on billing cycle.
+ * Uses 52/12 for weekly-to-monthly conversion (more accurate than 4.33).
+ */
+export function toMonthlyPrice(price: number, billingCycle: BillingCycle | string): number {
+  if (billingCycle === "yearly") return price / 12
+  if (billingCycle === "weekly") return price * (52 / 12)
+  return price
+}
+
+/**
  * Calculate days until renewal using date-only comparison
  */
 export function daysUntilRenewal(renewalDate: Date): number {
