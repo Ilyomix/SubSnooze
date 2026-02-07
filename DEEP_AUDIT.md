@@ -1,333 +1,338 @@
-# SubSnooze — Deep Production Audit
+# SubSnooze — Deep Production Audit (Mission-Aligned)
 
 > Date: 2026-02-07
-> Overall status: **~95% feature-complete, ~75% production-ready**
-> Key blockers: Custom email, Stripe hardening, scroll bugs, security fixes
+> Product: ADHD-friendly subscription tracker
+> Core promise: **"Stop paying the ADHD tax on subscriptions"**
+> Overall: The app looks 95% done. It's closer to **60% functional** — because the reminder system, the entire product, doesn't actually run.
 
 ---
 
-## Table of Contents
+## How This Audit Is Organized
 
-1. [Critical Bugs](#1-critical-bugs)
-2. [Supabase Auth & Email](#2-supabase-auth--email)
-3. [Stripe Production Readiness](#3-stripe-production-readiness)
-4. [Scroll-to-Top Bug](#4-scroll-to-top-bug)
-5. [Security Issues](#5-security-issues)
-6. [UX/UI Issues](#6-uxui-issues)
-7. [Code Quality](#7-code-quality)
-8. [Missing Features](#8-missing-features)
-9. [Infrastructure & Ops](#9-infrastructure--ops)
-10. [Priority Action Plan](#10-priority-action-plan)
+Everything is evaluated against one question: **does this help an ADHD user stop wasting money on forgotten subscriptions?**
+
+Three tiers:
+- **THE PRODUCT** — the reminder pipeline. If this doesn't work, nothing else matters.
+- **THE EXPERIENCE** — friction points that cause ADHD users to abandon the app.
+- **THE BUSINESS** — Stripe, billing, email branding. Important but not the product.
 
 ---
 
-## 1. Critical Bugs
+## 1. THE PRODUCT: Reminder System
 
-### 1.1 Cancel URL XSS Vulnerability
-**File:** `src/components/screens/SubscriptionManagement.tsx` ~line 203
+### 1.1 The Cron Jobs Don't Run
 
-```tsx
-const url = new URL(subscription.cancelUrl)
-if (url.protocol === "https:" || url.protocol === "http:") {
-  window.open(subscription.cancelUrl, "_blank", "noopener,noreferrer")
-  //          ^^^^^^^^^^^^^^^^^^^^^^^^ USES ORIGINAL, NOT VALIDATED url.href
-}
+**This is a showstopper.** `vercel.json` has `"crons": []` — empty.
+
+The three edge functions that ARE the product:
+- `send-reminders` — sends 7/3/1-day push notifications
+- `advance-renewals` — advances renewal dates when they pass
+- `cancel-followup` — follows up 3 days after a cancel attempt
+
+**None of them are scheduled.** They will never execute. The entire 3-touch reminder system is dead code in production.
+
+**Fix:** Configure Supabase scheduled jobs (or Vercel crons):
+- `advance-renewals`: daily at 05:00 UTC (must run before send-reminders)
+- `send-reminders`: daily at 06:00 UTC
+- `cancel-followup`: daily at 09:00 UTC
+
+### 1.2 Email Reminders Don't Exist
+
+The Settings UI has an "Email reminders" toggle. It saves `email_reminders_enabled` to the database. **No backend code reads this flag.** No email service is integrated. No templates exist.
+
+This isn't just a missing feature — it breaks the product promise:
+- ADHD users dismiss push notifications compulsively
+- Push notifications require permission (many deny it)
+- If phone is off/dead, push is lost forever
+- Email is the safety net that catches what push misses
+
+**What `send-reminders` actually does today:**
+1. Checks `push_enabled && fcm_token` → sends FCM push
+2. Creates in-app notification record
+3. That's it. No email path exists.
+
+**Impact:** A user who denies push permission receives **zero reminders ever**. The product doesn't work for them.
+
+### 1.3 SMS Reminders Don't Exist (But Should)
+
+Settings has an SMS toggle showing "Coming soon." No Twilio/SMS backend. For ADHD users, SMS is the hardest channel to ignore — it's the escalation path when push and email fail.
+
+**Decision needed:** Is SMS part of V1 or V1.1? Either way, the `PRO_FEATURES` list in `pricing.ts` currently claims "SMS + Push + Email reminders" — advertising three channels when only one works.
+
+### 1.4 No Escalation When Reminders Are Ignored
+
+The 3-touch system (7/3/1 days) is brilliant in theory. In practice:
+- All 3 reminders use the same format, same urgency, same channel
+- If user dismisses all 3 push notifications, **nothing changes**
+- No email fallback. No SMS escalation. No "URGENT" styling on the final reminder
+- No way to detect if the user even saw the notification
+- The subscription renews silently
+
+For an ADHD user who will dismiss notifications reflexively, same-channel same-urgency repetition is insufficient.
+
+### 1.5 FCM Token Goes Stale Silently
+
+- FCM tokens expire when users clear browser data, uninstall, or switch devices
+- `send-reminders` tries to send to a stale token → FCM returns error → reminder is silently dropped
+- No retry logic, no token refresh, no fallback to email
+- User has no idea their reminders stopped working
+
+### 1.6 "Decide Later" Doesn't Actually Remind
+
+**File:** `src/components/screens/modals/CancelRedirectModal.tsx`
+
+The cancel flow offers a "Decide Later — remind me" button. This is a core ADHD UX principle.
+
+**What it actually does:** Sets `remindMe = true`, passes it up the component tree... and it's never used. The flag is ignored. No reminder is scheduled. The user believes they'll be reminded but won't be.
+
+This is the most ADHD-hostile bug in the app — it exploits the exact executive function deficit the product is supposed to help with.
+
+### 1.7 Reminder Flags Are Correct (One Thing That Works)
+
+The `subscriptions_needing_reminders` view correctly checks per-subscription flags (`reminder_7_day_sent`, `reminder_3_day_sent`, etc.) before querying. `advance-renewals` resets these flags when the renewal date advances. Duplicates are prevented.
+
+**But this only matters if the cron jobs actually run.**
+
+### Summary: Reminder System Reliability
+
+| Component | Status | Impact |
+|-----------|--------|--------|
+| Cron job execution | **NOT CONFIGURED** | System is non-functional |
+| Push notifications (FCM) | Works when token is valid | Only delivery channel |
+| Email reminders | **DEAD CODE** — toggle exists, backend ignores it | No fallback for push |
+| SMS reminders | **NOT IMPLEMENTED** | No escalation path |
+| Escalation logic | **DOESN'T EXIST** | All 3 touches identical |
+| "Decide Later" reminder | **BROKEN** — flag ignored | Betrays user trust |
+| FCM token staleness | **UNHANDLED** | Silent failure |
+| Reminder flags/dedup | Correct | Works if crons run |
+| Notification content | Good (name + price included) | Push has no action buttons |
+
+---
+
+## 2. THE EXPERIENCE: ADHD Friction Points
+
+### 2.1 Scroll-to-Top Bug
+
+**File:** `src/app/page.tsx:175-181`
+
+When switching between tabs (Dashboard ↔ All Subs ↔ Settings), `useScrollRestore` restores the old scroll position instead of resetting to top. For detail screens it correctly scrolls to top, but tab screens restore old positions.
+
+Additionally, the `popstate` handler (browser back) never calls `scrollTo(0, 0)` or `restoreScroll()` at all — the screen changes but scroll position is random.
+
+For ADHD users, unexpected scroll positions are disorienting and break spatial memory.
+
+**Fix:** Always scroll to top on any screen change. Remove scroll restoration for tabs — it's more confusing than helpful in a single-page app.
+
+### 2.2 Renewal Date Picker Requires Knowledge ADHD Users Don't Have
+
+**File:** `src/components/ui/SubscriptionFormFields.tsx`
+
+Adding a subscription requires an exact renewal date. Default: `today + 1 billing cycle`. But Netflix doesn't renew "one month from today" — it renews on the 15th, or the 3rd, or whatever day the user originally signed up.
+
+Most ADHD users subscribed months ago and have no idea when renewal is. They'd need to check email or bank statements — exactly the kind of task ADHD users avoid.
+
+**Recommendations:**
+- Make renewal date optional with a default estimate + "we'll refine this" message
+- Add a "Check your email for the exact date" helper with encouraging framing
+- Or: "Not sure? We'll remind you around this time" (approximate is better than abandoned)
+
+### 2.3 Cancel Flow Requires Leaving the App
+
+**File:** `src/components/screens/SubscriptionManagement.tsx`
+
+The cancel flow opens the service's cancellation URL in a new tab. User must:
+1. Leave SubSnooze
+2. Navigate the service's (often hostile) cancellation flow
+3. Remember to come back to SubSnooze
+4. Confirm they cancelled
+
+For ADHD users, step 3 is where it breaks. Context switching is the #1 executive function deficit. They'll cancel Netflix, see a YouTube recommendation, and forget to confirm in SubSnooze.
+
+**The `cancel-followup` edge function is designed to catch this** — it sends a "Did you actually cancel?" notification 3 days later. But it doesn't run (see 1.1 — cron not configured).
+
+### 2.4 Session Recovery After Weeks Away
+
+**File:** `src/app/page.tsx`, `src/hooks/useUser.ts`
+
+When an ADHD user opens the app after 2 weeks (common pattern — use it once when motivated, forget for weeks):
+- Supabase JWT is expired
+- Refresh token should silently get a new JWT
+- If refresh token is also expired → user should see login screen
+
+**Problem:** The transition from "checking auth" to "show login" isn't clearly handled. There's a loading skeleton but the path from expired-session to login-redirect could leave the user staring at a skeleton indefinitely if auth recovery fails silently.
+
+**Also missing:** No "Welcome back! Here's what happened" message. User opens app after 2 weeks and sees their dashboard with no context about what they missed. A "2 subscriptions renewed since your last visit" banner would help.
+
+### 2.5 Generic Error Messages
+
+Throughout the app, errors show as `toast("Couldn't add subscription", "error")`. For ADHD users, vague errors cause anxiety and abandonment. "Couldn't add" — why? Network? Did I do something wrong? Am I at the free limit?
+
+Specific, shame-free messages like "No internet connection — try again" or "You've reached 5 subscriptions — upgrade for unlimited" are dramatically better for ADHD users.
+
+### 2.6 ADHD Scorecard
+
+| User Loop | Strength | Weakness | Rating |
+|-----------|----------|----------|--------|
+| **Adding a subscription** | Service search, chain add, auto-fill | Renewal date requires exact knowledge | 7/10 |
+| **Viewing subscriptions** | Visual hierarchy, monthly spend prominence, "Coming Up" section | No "what changed since last visit" | 8/10 |
+| **Cancelling** | Shame-free, celebratory, cancel URLs | Context switch to external site, broken "Decide Later" | 5/10 |
+| **Returning after absence** | Real-time data, no re-onboarding | Unclear session recovery, no welcome-back | 5/10 |
+| **Getting reminders** | Good architecture, 3-touch design | **Cron not configured, email dead, no escalation** | 2/10 |
+
+---
+
+## 3. THE BUSINESS: Stripe, Billing, Pro Plan
+
+### 3.1 Pro Plan Is Invisible
+
+| Touchpoint | What Happens |
+|------------|-------------|
+| Dashboard | Zero Pro references. No usage indicator |
+| AllSubscriptions | Nothing |
+| Onboarding | Nothing |
+| Settings | "Upgrade to Pro" button (buried) |
+| 5-sub limit hit | UpgradeModal auto-opens (user must fail first) |
+| Public pricing page | Does not exist (checklist claims done, but no component/route) |
+
+Free users have no organic way to discover Pro until they hit a wall. The Dashboard should show a "3/5 subscriptions" usage indicator — it's useful context AND natural upgrade discovery.
+
+### 3.2 No Billing / Plan Page
+
+The entire billing experience for Pro users is:
+- Settings: "SubSnooze Pro — Lifetime access" badge + "Manage Billing" button → opens external Stripe Portal
+
+There's no `/billing` or `/plan` screen. No in-app payment history, upgrade date, or usage dashboard.
+
+**But is a full billing page actually needed?** It's a one-time $39 lifetime purchase. The user pays once and never thinks about it again. A complex billing dashboard is enterprise thinking — not ADHD-friendly.
+
+**What actually makes sense:**
+- Usage indicator on Dashboard ("3/5 subscriptions" for free users, "Pro" badge for premium)
+- Settings already has the "Manage Billing" link to Stripe Portal (which handles receipts/refunds)
+- A simple plan comparison accessible from Settings (not just hidden in the upgrade modal)
+
+Don't build a full billing page. Build a clear plan status + usage indicator.
+
+### 3.3 Stripe Is Code-Ready But Dashboard-Unconfigured
+
+The code is solid:
+- Checkout flow works (one-time $39)
+- Webhook signature verification correct
+- Customer creation + dedup correct
+- receipt_email passed
+- CSP correct for Stripe.js
+
+**Missing:**
+| Item | What to do |
+|------|-----------|
+| Create Stripe product | Dashboard → Products → "SubSnooze Pro Lifetime" |
+| Create $39 one-time price | Copy Price ID → `STRIPE_PRICE_ID_PRO_LIFETIME` |
+| Create webhook endpoint | `https://yourdomain.com/api/stripe/webhook` |
+| Subscribe to events | `checkout.session.completed`, `charge.refunded`, `charge.dispute.created` |
+| Webhook idempotency | Add `stripe_event_id` tracking to prevent duplicate processing |
+| Silent portal failure | `Settings.tsx:774` — empty catch block. Add error toast |
+
+### 3.4 PRO_FEATURES List Is Misleading
+
+**File:** `src/lib/stripe/pricing.ts`
+
+```typescript
+PRO_FEATURES: [
+  "Unlimited subscriptions",       // ✓ works
+  "SMS + Push + Email reminders",  // ✗ only Push works
+  "Priority support",              // ✗ no support system exists
+  "CSV export",                    // ✓ works
+]
 ```
 
-**Problem:** Opens the original user-supplied string, not the validated `URL` object. A crafted input could bypass the protocol check.
-**Fix:** Use `url.href` instead of `subscription.cancelUrl`.
+Two of four claimed Pro features don't work. This needs to be updated to reflect reality — or the features need to be built before launch.
 
-### 1.2 Inaccurate Weekly-to-Monthly Price Conversion (5 locations)
-Uses `* 4.33` in 5 separate files. Correct value is `52/12 ≈ 4.3333`. Off by ~0.08% per weekly subscription — compounds across a user's subscriptions.
+### 3.5 Supabase Auth Email: 3/hour Limit
 
-**Affected files:**
-- `src/hooks/useSubscriptions.ts`
-- `src/app/page.tsx`
-- `src/components/screens/AllSubscriptions.tsx`
-- `src/components/screens/SubscriptionManagement.tsx`
-- `src/components/screens/modals/CancelRedirectModal.tsx`
+Supabase free tier limits auth emails (signup confirmation, password reset) to 3 per hour. At any real scale, users won't receive confirmation emails.
 
-**Fix:** Extract to a shared utility function using `52/12`.
-
-### 1.3 Stripe Webhook Has No Idempotency Protection
-**File:** `src/app/api/stripe/webhook/route.ts`
-
-Stripe retries failed webhooks. Without checking `event.id`, a `checkout.session.completed` event could be processed multiple times.
-
-**Fix:** Add a `stripe_events` table or `stripe_event_id` column with UNIQUE constraint. Check before processing.
+**Fix:** Configure custom SMTP in Supabase Dashboard (Resend, SendGrid, or any SMTP provider). This is a dashboard configuration, not a code change.
 
 ---
 
-## 2. Supabase Auth & Email
+## 4. SECURITY (Quick Fixes)
 
-### 2.1 Current State
-
-| Email Type | Implemented | How |
-|------------|------------|-----|
-| Signup confirmation | Yes | Supabase Auth built-in |
-| Password reset | Yes | Supabase Auth built-in |
-| Subscription reminders | **NO** | FCM push notifications only |
-| Cancel follow-up | **NO** | FCM push notifications only |
-| Weekly digest | **NO** | Not implemented |
-
-### 2.2 Supabase Free Tier Limit: **3 emails/hour**
-
-This is a hard blocker for production. With even moderate signups, confirmation emails will be delayed or dropped.
-
-### 2.3 `email_reminders_enabled` Is Dead Code
-
-The Settings UI has an "Email reminders" toggle that saves to the database, but:
-- `send-reminders` edge function **ignores** this flag entirely
-- `cancel-followup` edge function **ignores** this flag entirely
-- No email service (Resend, SendGrid, etc.) is integrated
-- No email templates exist
-
-### 2.4 What Needs to Happen
-
-**Option A — Full email support (recommended):**
-1. Integrate an email service (Resend is simplest for Next.js)
-2. Configure custom SMTP in Supabase Dashboard for auth emails (removes 3/hr limit, adds branding)
-3. Create HTML email templates for reminders (7-day, 3-day, 1-day)
-4. Update `send-reminders` edge function to check `email_reminders_enabled` and send emails
-5. Add email env vars: `RESEND_API_KEY`, `EMAIL_FROM_ADDRESS`
-
-**Option B — Push-only (minimal):**
-1. Remove the `email_reminders_enabled` toggle from Settings (it's misleading)
-2. Still configure custom SMTP for auth emails to remove the 3/hr limit
-3. Document that reminders are push-notification-only
-
-### 2.5 Missing Environment Variables for Email
-
-```
-# Not in .env.local.example yet:
-RESEND_API_KEY=             # or SENDGRID_API_KEY
-EMAIL_FROM_ADDRESS=         # e.g. notifications@subsnooze.com
-SUPABASE_SMTP_HOST=         # Custom SMTP for auth emails
-SUPABASE_SMTP_PORT=
-SUPABASE_SMTP_USER=
-SUPABASE_SMTP_PASS=
-```
+| Issue | File | Fix | Effort |
+|-------|------|-----|--------|
+| Cancel URL XSS | `SubscriptionManagement.tsx:203` | Use `url.href` instead of raw user string | 5 min |
+| console.log in production | `webhook/route.ts`, `web-vitals.ts` | Gate behind `NODE_ENV === 'development'` | 15 min |
+| Webhook idempotency | `webhook/route.ts` | Track `event.id`, check before processing | 1-2 hrs |
 
 ---
 
-## 3. Stripe Production Readiness
+## 5. CODE QUALITY (Cleanup)
 
-### 3.1 What's Working
-
-| Component | Status |
-|-----------|--------|
-| Checkout flow (one-time $39) | Working |
-| Webhook signature verification | Correct |
-| Customer creation & dedup | Working |
-| `receipt_email` passed | Yes |
-| CSP for Stripe.js | Correct |
-| Env-var based keys (no hardcoded test keys) | Correct |
-| Billing Portal | Working |
-| Tier enforcement (5 free subs) | Working |
-
-### 3.2 What's Missing
-
-| Issue | Severity | Details |
-|-------|----------|---------|
-| **No webhook idempotency** | Critical | Duplicate events could grant/revoke Pro twice |
-| **Silent portal failure** | High | `Settings.tsx` catches Stripe portal errors silently — no user feedback |
-| **No structured logging** | Medium | Webhook uses `console.log` for payment events — should use Sentry |
-| **No checkout rate limiting** | Medium | Users could spam the checkout endpoint |
-| **No webhook retry tracking** | Medium | No dead-letter queue for failed webhook processing |
-
-### 3.3 Stripe Dashboard Setup Checklist
-
-```
-[ ] Create "SubSnooze Pro Lifetime" product
-[ ] Create $39 USD one-time price → copy ID to STRIPE_PRICE_ID_PRO_LIFETIME
-[ ] Create webhook endpoint → https://yourdomain.com/api/stripe/webhook
-[ ] Subscribe to events: checkout.session.completed, charge.refunded, charge.dispute.created
-[ ] Copy webhook signing secret → STRIPE_WEBHOOK_SECRET
-[ ] Enable Billing Portal in Settings
-[ ] Switch from test keys to live keys
-[ ] Test end-to-end with a real $1 charge
-```
+| Issue | Scope | Fix |
+|-------|-------|-----|
+| Price calc duplicated in 5 files using `* 4.33` | 5 files | Extract `toMonthlyPrice()` utility using `52/12` |
+| Empty catch blocks | `Settings.tsx:774`, `layout.tsx:71` | Add error toasts / dev logging |
+| 51 unit tests, 0 integration/E2E tests | Project-wide | Add Playwright for critical flows (add, cancel, upgrade) |
 
 ---
 
-## 4. Scroll-to-Top Bug
+## 6. PRIORITY ACTION PLAN
 
-### 4.1 Root Cause
+### Tier 1 — The Product Doesn't Work Without These
 
-**File:** `src/app/page.tsx` ~line 156 (`navigateTo` function)
+| # | Task | Why It Matters | Effort |
+|---|------|---------------|--------|
+| 1 | **Configure cron jobs** for send-reminders, advance-renewals, cancel-followup | Reminder system is completely non-functional without this | 30 min |
+| 2 | **Implement email reminders** — integrate Resend/SendGrid, create templates, wire into send-reminders | Push-only is single point of failure. ADHD users need redundancy | 4-6 hrs |
+| 3 | **Configure custom SMTP** for Supabase auth emails | 3 emails/hour kills signup at any scale | 30 min (dashboard) |
+| 4 | **Fix "Decide Later" button** — actually schedule a reminder or rename the button | Broken promise to the user. Core ADHD principle violated | 1-2 hrs |
+| 5 | **Fix PRO_FEATURES list** — only claim what works | Advertising non-functional features is dishonest | 15 min |
 
-The `useScrollRestore` hook **intentionally saves and restores scroll positions** per screen. When switching tabs:
-1. Current scroll position is saved for the old screen
-2. New screen renders
-3. Old scroll position is **restored** for the new screen (if previously visited)
+### Tier 2 — ADHD Users Will Abandon Without These
 
-This means going back to Dashboard after scrolling down will **return you to the old scroll position**, not the top.
+| # | Task | Why It Matters | Effort |
+|---|------|---------------|--------|
+| 6 | **Fix scroll-to-top** on all view/tab changes + popstate | Disorienting for ADHD users, breaks spatial memory | 30 min |
+| 7 | **Add usage indicator to Dashboard** ("3/5 subs" for free, "Pro" badge for premium) | Users need context without thinking. Also natural upgrade discovery | 1-2 hrs |
+| 8 | **Add escalation to final reminder** — 1-day reminder should be visually urgent + different channel | Same-format 3x repetition doesn't break through ADHD dismissal | 2 hrs |
+| 9 | **Make renewal date optional or approximate** in add subscription flow | ADHD users don't know exact dates, will abandon the form | 1-2 hrs |
+| 10 | **Fix cancel URL XSS** (`url.href` not original string) | Security vulnerability | 5 min |
+| 11 | **Improve session recovery** — clear login redirect when session expires, "welcome back" banner | ADHD users returning after weeks shouldn't see infinite skeleton | 1-2 hrs |
 
-### 4.2 Timing Race Condition
+### Tier 3 — Business / Polish
 
-```tsx
-setScreen(newScreen)          // React queues re-render (async)
-restoreScroll(newScreen)      // Called IMMEDIATELY before render completes
-```
+| # | Task | Why It Matters | Effort |
+|---|------|---------------|--------|
+| 12 | **Create Stripe product + price** in Dashboard | Can't accept payments without it | 30 min |
+| 13 | **Add webhook idempotency** (event ID tracking) | Duplicate webhooks could grant/revoke Pro twice | 1-2 hrs |
+| 14 | **Add plan comparison accessible from Settings** (not just hidden in modal) | Users should be able to compare Free vs Pro without hitting a wall | 1-2 hrs |
+| 15 | **Handle silent Stripe portal failure** — add error toast | Empty catch block = user clicks, nothing happens | 10 min |
+| 16 | **Remove console.log** from production paths | Leaks user IDs and payment data | 15 min |
+| 17 | **Extract price calculation** to shared utility (fix 4.33 → 52/12) | Duplicated in 5 files, slightly inaccurate | 30 min |
+| 18 | **Add specific error messages** (not generic toasts) | "Couldn't add" is anxiety-inducing for ADHD users | 1 hr |
 
-`restoreScroll` uses `requestAnimationFrame`, but the new screen may not be fully rendered by then — especially with animations (`screen-slide-in`) or async data loading.
+### Tier 4 — Future (V1.1+)
 
-### 4.3 Browser Back Button Doesn't Restore Scroll
-
-**File:** `src/app/page.tsx` ~line 195
-
-The `popstate` handler restores the screen and tab but **never calls** `restoreScroll()` or `window.scrollTo(0, 0)`.
-
-### 4.4 Recommended Fixes
-
-1. **Always scroll to top on tab switch** — more ADHD-friendly, less confusing:
-   ```tsx
-   // In navigateTo, replace restoreScroll with:
-   requestAnimationFrame(() => window.scrollTo(0, 0))
-   ```
-2. **Move scroll logic into a `useEffect`** triggered by `screen` state change (ensures render is complete)
-3. **Add `window.scrollTo(0, 0)` to the popstate handler**
-4. **If scroll restore is desired**, use `useLayoutEffect` after the screen dependency changes, not inline in the callback
-
----
-
-## 5. Security Issues
-
-### 5.1 Cancel URL Bypass (Critical — see 1.1)
-
-### 5.2 console.log Leaks Internal Data
-**Files:**
-- `src/lib/analytics/web-vitals.ts:9` — logs metrics to browser console
-- `src/app/api/stripe/webhook/route.ts:57,74,98,125` — logs user IDs and payment status
-
-**Fix:** Remove or gate behind `NODE_ENV === 'development'`.
-
-### 5.3 dangerouslySetInnerHTML in Layout
-**File:** `src/app/layout.tsx:81`
-
-Used for the dark-mode FOUC-prevention script. Currently safe (hardcoded string), but fragile. Consider using `next/script` with `strategy="beforeInteractive"` instead.
+| # | Task | Notes |
+|---|------|-------|
+| 19 | **SMS reminders** (Twilio integration) | Hardest-to-ignore channel for ADHD users |
+| 20 | **Push notification action buttons** ("Cancel now", "Snooze") | Reduce friction from notification to action |
+| 21 | **FCM token refresh logic** | Prevent silent stale-token failures |
+| 22 | **Weekly digest email** | "Here's what's coming up this week" |
+| 23 | **Welcome back banner** | "2 subs renewed since last visit" |
+| 24 | **Integration / E2E tests** | Playwright for critical flows |
+| 25 | **Read-only subscription detail view** | View without edit mode |
 
 ---
 
-## 6. UX/UI Issues
+## What NOT to Build
 
-### 6.1 Currency Selector Doesn't Convert Prices
-Changing currency in Settings just swaps the symbol ($ → €) without converting values. A $10/mo subscription shows as €10/mo — misleading.
+These were in previous audits but don't serve the product:
 
-**Options:**
-- A) Implement real-time currency conversion (complex, needs API)
-- B) Store prices per-currency and clarify the setting is for **new** subscriptions only
-- C) Add a disclaimer: "Currency symbol only — prices are stored as entered"
-
-### 6.2 No Read-Only Subscription Detail View
-Users must enter edit mode to see full subscription details. Consider a detail view that shows info without edit affordances.
-
-### 6.3 Generic Error Messages
-`toast(t("toast.couldntAdd"), "error")` — doesn't tell users WHY (network error? validation? free tier limit?). Should differentiate error types.
-
-### 6.4 Silent Stripe Portal Failure (see 3.2)
-Button click → nothing happens. Should show error toast.
-
-### 6.5 Cancel Tracking Not Exposed
-`cancel_attempt_date` and `cancel_verified` are tracked in DB but never shown to users. Consider a "Cancellation pending — verify by [date]" status.
-
-### 6.6 SMS Toggle Shows "Coming Soon" Forever
-`email_reminders_enabled` works (even though backend doesn't use it), but SMS toggle shows "Coming soon" with no timeline. Consider removing it entirely until implemented.
-
----
-
-## 7. Code Quality
-
-### 7.1 Duplicated Price Calculation Logic (5 files)
-The weekly→monthly conversion (`* 4.33`) is copy-pasted in 5 locations. Should be a single utility:
-```tsx
-// src/lib/price-utils.ts
-export function toMonthlyPrice(price: number, cycle: BillingCycle): number {
-  switch (cycle) {
-    case "weekly": return price * (52 / 12)
-    case "yearly": return price / 12
-    case "monthly": return price
-  }
-}
-```
-
-### 7.2 Empty Catch Blocks
-- `src/app/layout.tsx:71` — theme detection script swallows all errors
-- `src/components/screens/Settings.tsx:774` — Stripe portal errors silently caught
-
-### 7.3 No Integration/E2E/Component Tests
-- 51 unit tests exist (date-utils, rate-limit, services, utils)
-- 0 integration tests (auth flow, API routes, database)
-- 0 E2E tests (no Playwright/Cypress)
-- 0 component tests (no React Testing Library)
-
----
-
-## 8. Missing Features
-
-| Feature | Status | Priority |
-|---------|--------|----------|
-| Email reminders (backend) | Not implemented — toggle is dead code | High |
-| Custom SMTP for auth emails | Not configured | High (blocks production scale) |
-| Webhook idempotency | Missing | High |
-| SMS reminders | UI says "Coming soon", no backend | Low — remove or implement |
-| MFA / 2FA | Not implemented | Medium (V1.1) |
-| Weekly summary digest | Not implemented | Low (V1.1) |
-| Audit logs | Not implemented | Low (V1.1) |
-| Family/multi-user sharing | Not implemented | Low (V2) |
-| Subscription drafts | Not implemented | Low (V1.1) |
-| Do Not Disturb hours | Not implemented | Low (V1.1) |
-| Uptime monitoring | Not configured | Medium |
-
----
-
-## 9. Infrastructure & Ops
-
-| Item | Status |
-|------|--------|
-| Staging environment | Not configured |
-| Production environment | Not configured |
-| Custom domain | Not acquired |
-| Custom SMTP | Not configured |
-| Uptime monitoring | Not set up |
-| Database backups | Script exists, not automated/scheduled |
-| Stripe Dashboard setup | Not done |
-
----
-
-## 10. Priority Action Plan
-
-### P0 — Fix Before Launch
-
-| # | Task | Effort |
-|---|------|--------|
-| 1 | Fix cancel URL XSS (`url.href` not original string) | 5 min |
-| 2 | Fix scroll-to-top: always reset on tab switch + add to popstate handler | 30 min |
-| 3 | Configure custom SMTP in Supabase (removes 3 email/hr limit) | 30 min (dashboard) |
-| 4 | Add Stripe webhook idempotency (event ID tracking) | 1-2 hrs |
-| 5 | Remove `console.log` from production paths or gate behind dev check | 15 min |
-| 6 | Add error feedback for Stripe portal failure in Settings | 10 min |
-| 7 | Either implement email reminders or remove the dead toggle | 2-4 hrs or 10 min |
-
-### P1 — Important for V1
-
-| # | Task | Effort |
-|---|------|--------|
-| 8 | Extract price calculation to shared utility (fix 4.33 → 52/12) | 30 min |
-| 9 | Add Stripe Dashboard products/prices/webhooks | 30 min (dashboard) |
-| 10 | Set up staging + production on Vercel | 1 hr (dashboard) |
-| 11 | Acquire custom domain | 10 min |
-| 12 | Add detailed error messages (not generic toasts) | 1 hr |
-| 13 | Clarify currency selector behavior | 30 min |
-
-### P2 — Nice to Have
-
-| # | Task | Effort |
-|---|------|--------|
-| 14 | Add integration tests for auth + Stripe flows | 4-8 hrs |
-| 15 | Add E2E tests (Playwright) | 4-8 hrs |
-| 16 | Set up uptime monitoring | 30 min |
-| 17 | Add read-only subscription detail view | 2 hrs |
-| 18 | Remove or implement SMS toggle | 10 min |
-| 19 | Expose cancel tracking status in UI | 1 hr |
-| 20 | Add `next/script` instead of dangerouslySetInnerHTML | 15 min |
+| Item | Why Skip It |
+|------|------------|
+| Full billing/account page | One-time $39 purchase. Stripe Portal handles everything. Don't add screens |
+| In-app payment history | Stripe Portal shows this. Don't duplicate |
+| In-app refund flow | Email support is fine for a small app |
+| MFA / 2FA | Adds login friction. ADHD users will forget their 2FA device |
+| Audit logs | Enterprise feature, not relevant |
+| Public pricing page | Nice-to-have but the upgrade modal already shows the comparison |
+| Subscription drafts | Over-engineering. Just let users save incomplete subs normally |
