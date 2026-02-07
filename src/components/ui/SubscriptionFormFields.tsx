@@ -4,7 +4,7 @@ import { useState } from "react"
 import { ChevronDown, Calendar } from "lucide-react"
 import { Card } from "./Card"
 import { calculateNextRenewalDate, formatLocalDate } from "@/lib/date-utils"
-import { CURRENCY_SYMBOL, formatCurrency } from "@/lib/utils"
+import { useI18n, CURRENCY_SYMBOLS, type CurrencyCode } from "@/lib/i18n"
 import type { BillingCycle } from "@/types/database"
 
 export interface SubscriptionFormData {
@@ -32,6 +32,9 @@ export function SubscriptionFormFields({
   autoCalculateRenewalOnCycleChange = false,
   pricingHints,
 }: SubscriptionFormFieldsProps) {
+  const { t, formatCurrency, formatDate, currency } = useI18n()
+  const currencySymbol = CURRENCY_SYMBOLS[currency as CurrencyCode] ?? currency
+
   const today = formatLocalDate(new Date())
   const [priceTouched, setPriceTouched] = useState(false)
   const [dateTouched, setDateTouched] = useState(false)
@@ -43,15 +46,15 @@ export function SubscriptionFormFields({
   const priceError =
     priceTouched && !readOnly
       ? value.price === ""
-        ? "Enter a price"
+        ? t("subscriptionForm.enterPrice")
         : isNaN(priceNum) || priceNum <= 0
-          ? "Price must be greater than 0"
+          ? t("subscriptionForm.pricePositive")
           : null
       : null
 
   const dateError =
     dateTouched && !readOnly && value.renewalDate === ""
-      ? "Select a renewal date"
+      ? t("subscriptionForm.selectDate")
       : null
 
   const handlePriceChange = (newPrice: string) => {
@@ -88,11 +91,7 @@ export function SubscriptionFormFields({
   }
 
   // Format date for read-only display
-  const formattedDate = new Date(value.renewalDate + "T00:00:00").toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })
+  const formattedDate = formatDate(new Date(value.renewalDate + "T00:00:00"), "medium")
 
   return (
     <Card padding="none" className="overflow-hidden">
@@ -101,7 +100,7 @@ export function SubscriptionFormFields({
         <label htmlFor="price" className="flex cursor-pointer items-center justify-between px-[18px] py-4">
           <span className="text-[15px] font-medium text-text-primary">{resolvedPriceLabel}</span>
           <div className="flex items-center gap-1">
-            <span className={`text-[15px] font-semibold ${readOnly ? "text-text-muted" : "text-text-primary"}`}>{CURRENCY_SYMBOL}</span>
+            <span className={`text-[15px] font-semibold ${readOnly ? "text-text-muted" : "text-text-primary"}`}>{currencySymbol}</span>
             {readOnly ? (
               <span className="text-[15px] font-semibold text-text-muted">{value.price}</span>
             ) : (
@@ -137,7 +136,7 @@ export function SubscriptionFormFields({
 
       {/* Billing Cycle Row */}
       <label htmlFor="billingCycle" className="flex cursor-pointer items-center justify-between px-[18px] py-4">
-        <span className="text-[15px] font-medium text-text-primary">Billing cycle</span>
+        <span className="text-[15px] font-medium text-text-primary">{t("subscriptionForm.billingCycle")}</span>
         {readOnly ? (
           <span className="text-[15px] font-semibold capitalize text-text-muted">
             {value.billingCycle}
@@ -152,9 +151,9 @@ export function SubscriptionFormFields({
               onChange={(e) => handleCycleChange(e.target.value as BillingCycle)}
               className="min-w-24 appearance-none bg-transparent pr-7 text-right text-[15px] font-semibold capitalize text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
             >
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-              <option value="weekly">Weekly</option>
+              <option value="monthly">{t("subscriptionForm.monthly")}</option>
+              <option value="yearly">{t("subscriptionForm.yearly")}</option>
+              <option value="weekly">{t("subscriptionForm.weekly")}</option>
             </select>
             <ChevronDown className="pointer-events-none absolute right-0 h-4 w-4 text-text-muted" />
           </div>

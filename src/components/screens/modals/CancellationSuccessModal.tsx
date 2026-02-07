@@ -5,7 +5,7 @@ import { PartyPopper } from "lucide-react"
 import { useFocusTrap } from "@/hooks/useFocusTrap"
 import { Button, Confetti } from "@/components/ui"
 import { DEFAULT_CONFETTI_DURATION_MS, type ConfettiBurst } from "@/components/ui/Confetti"
-import { formatCurrency } from "@/lib/utils"
+import { useI18n } from "@/lib/i18n"
 import type { Subscription } from "@/types/subscription"
 
 interface CancellationSuccessModalProps {
@@ -19,6 +19,7 @@ export function CancellationSuccessModal({
   monthlySavings,
   onClose,
 }: CancellationSuccessModalProps) {
+  const { t, formatCurrency, formatDate } = useI18n()
   const yearlySavings = monthlySavings * 12
   const dialogRef = useRef<HTMLDivElement>(null)
   useFocusTrap(dialogRef, onClose)
@@ -87,34 +88,34 @@ export function CancellationSuccessModal({
           </div>
 
           {/* Title */}
-          <h2 id="cancellation-success-title" className="text-xl font-bold text-primary">You did it!</h2>
+          <h2 id="cancellation-success-title" className="text-xl font-bold text-primary">{t("cancelFlow.successTitle")}</h2>
 
           {/* Subtitle */}
           <p className="text-[15px] font-medium text-text-primary">
-            {formatCurrency(monthlySavings)}/month saved
+            {t("cancelFlow.monthlySaved", { amount: formatCurrency(monthlySavings, { currency: subscription.currency }) })}
           </p>
 
           {/* Description */}
           <p className="text-center text-sm text-text-secondary">
-            {subscription.name} has been marked as canceled. Your access continues until {subscription.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}.
+            {t("cancelFlow.accessContinues", { name: subscription.name, date: formatDate(subscription.renewalDate) })}
           </p>
 
           {/* Savings Card */}
           <div className="flex w-full flex-col items-center gap-1 rounded-xl bg-background p-4">
-            <span className="text-sm text-text-tertiary">You&apos;ll save this year</span>
+            <span className="text-sm text-text-tertiary">{t("cancelFlow.youllSaveYear")}</span>
             <span className="text-3xl font-bold text-primary">
-              {formatCurrency(yearlySavings)}
+              {formatCurrency(yearlySavings, { currency: subscription.currency })}
             </span>
           </div>
 
           {/* CTA */}
           <Button variant="primary" onClick={onClose} className="w-full">
-            Done
+            {t("common.done")}
           </Button>
 
           {showDebugConfetti && (
             <Button variant="ghost" size="sm" onClick={triggerConfetti} className="w-full">
-              Debug confetti
+              {t("cancelFlow.debugConfetti")}
             </Button>
           )}
         </div>

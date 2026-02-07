@@ -7,6 +7,7 @@ import { Button, SubscriptionFormFields, ServiceIcon } from "@/components/ui"
 import type { SubscriptionFormData } from "@/components/ui"
 import { CancelRedirectModal, ConfirmCancellationModal, CancellationSuccessModal } from "@/components/screens/modals"
 import { daysUntilRenewal, formatLocalDate, parseLocalDate } from "@/lib/date-utils"
+import { useI18n } from "@/lib/i18n"
 import type { Subscription } from "@/types/subscription"
 
 interface SubscriptionManagementProps {
@@ -32,6 +33,7 @@ export function SubscriptionManagement({
   onCancelNotYet,
   onCancelComplete,
 }: SubscriptionManagementProps) {
+  const { t } = useI18n()
   const originalPrice = subscription.price.toFixed(2)
   const originalCycle = subscription.billingCycle
   const originalDate = formatLocalDate(subscription.renewalDate)
@@ -97,7 +99,7 @@ export function SubscriptionManagement({
             <div className="flex items-center gap-2 rounded-xl bg-divider px-4 py-3">
               <XCircle className="h-[18px] w-[18px] text-text-muted" aria-hidden="true" />
               <span className="text-sm font-semibold text-text-muted">
-                Cancelled
+                {t("manage.statusCancelled")}
               </span>
             </div>
           )}
@@ -105,7 +107,7 @@ export function SubscriptionManagement({
             <div className="flex items-center gap-2 rounded-xl bg-accent-light px-4 py-3">
               <Flame className="h-[18px] w-[18px] text-accent" aria-hidden="true" />
               <span className="text-sm font-semibold text-accent">
-                {daysUntil <= 0 ? "Renews today" : daysUntil === 1 ? "Renews tomorrow" : `Renews in ${daysUntil} days`}
+                {daysUntil <= 0 ? t("manage.renewsToday") : daysUntil === 1 ? t("manage.renewsTomorrow") : t("manage.renewsInDays", { days: daysUntil })}
               </span>
             </div>
           )}
@@ -114,8 +116,8 @@ export function SubscriptionManagement({
           <SubscriptionFormFields
             value={formData}
             onChange={setFormData}
-            priceLabel="Monthly price"
-            renewalLabel={isCancelled ? "Last renewal" : "Next renewal"}
+            priceLabel={t("addSubscription.monthlyPrice")}
+            renewalLabel={isCancelled ? t("subscriptionForm.lastRenewal") : t("subscriptionForm.nextRenewal")}
             readOnly={isCancelled}
             autoCalculateRenewalOnCycleChange
           />
@@ -132,7 +134,7 @@ export function SubscriptionManagement({
               disabled={!isValidPrice}
               className="w-full"
             >
-              Save changes
+              {t("manage.saveChanges")}
             </Button>
           )}
         </div>
@@ -148,7 +150,7 @@ export function SubscriptionManagement({
                   onClick={onRestore}
                   className="w-full"
                 >
-                  Restore subscription
+                  {t("manage.restoreSubscription")}
                 </Button>
               )}
               {!isCancelled && (
@@ -163,7 +165,7 @@ export function SubscriptionManagement({
                   }}
                   className="w-full"
                 >
-                  Cancel subscription
+                  {t("manage.cancelSubscription")}
                 </Button>
               )}
               <button
@@ -183,7 +185,7 @@ export function SubscriptionManagement({
               >
                 <Trash2 className="h-4 w-4" aria-hidden="true" />
                 <span className="text-sm">
-                  {confirmingDelete ? "Tap again to confirm" : "Remove from list"}
+                  {confirmingDelete ? t("manage.tapToConfirm") : t("manage.removeFromList")}
                 </span>
               </button>
             </div>

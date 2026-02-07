@@ -5,6 +5,7 @@ import { Flame, Check, Info, HelpCircle, Bell, Trash2, Mail } from "lucide-react
 import { formatDistanceToNow } from "date-fns"
 import { DetailShell } from "@/components/layout"
 import { Card, Button } from "@/components/ui"
+import { useI18n } from "@/lib/i18n"
 import type { Notification } from "@/types/subscription"
 
 interface NotificationsProps {
@@ -56,6 +57,7 @@ function NotificationItem({
   onMarkAsUnread,
   isRead,
 }: NotificationItemProps) {
+  const { t } = useI18n()
   const isCancelFollowup = notification.type === "cancel_followup"
   const subscriptionId = notification.subscriptionId
 
@@ -146,14 +148,14 @@ function NotificationItem({
           <>
             <button
               onClick={() => onMarkAsUnread(notification.id)}
-              aria-label="Mark as unread"
+              aria-label={t("notifications.markAsUnread")}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15"
             >
               <Mail className="h-[18px] w-[18px] text-primary" />
             </button>
             <button
               onClick={() => onDelete(notification.id)}
-              aria-label="Delete notification"
+              aria-label={t("notifications.deleteNotification")}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15"
             >
               <Trash2 className="h-[18px] w-[18px] text-accent" />
@@ -162,7 +164,7 @@ function NotificationItem({
         ) : (
           <button
             onClick={() => onDelete?.(notification.id)}
-            aria-label="Delete notification"
+            aria-label={t("notifications.deleteNotification")}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15"
           >
             <Trash2 className="h-[18px] w-[18px] text-accent" />
@@ -214,14 +216,14 @@ function NotificationItem({
                     size="sm"
                     onClick={handleVerify}
                   >
-                    Yes, I cancelled
+                    {t("notifications.yesCancelled")}
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleRemind}
                   >
-                    Remind me again
+                    {t("notifications.remindAgain")}
                   </Button>
                 </div>
               )}
@@ -250,6 +252,7 @@ export function Notifications({
   loadingMore,
   onLoadMore,
 }: NotificationsProps) {
+  const { t } = useI18n()
   const unread = notifications.filter((n) => !n.read)
   const read = notifications.filter((n) => n.read)
 
@@ -274,7 +277,7 @@ export function Notifications({
 
   return (
     <DetailShell
-      title="Notifications"
+      title={t("notifications.title")}
       onBack={onBack}
       headerRight={(
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
@@ -288,7 +291,7 @@ export function Notifications({
             className="flex items-center gap-1.5 rounded-xl bg-accent/10 px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             <Trash2 className="h-4 w-4 text-accent" />
-            <span className="text-sm font-semibold text-accent">Clear all</span>
+            <span className="text-sm font-semibold text-accent">{t("notifications.clearAll")}</span>
           </button>
         ) : undefined
       }
@@ -299,7 +302,7 @@ export function Notifications({
         {unread.length > 0 && (
           <div className="flex flex-col gap-3">
             <span className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary">
-              New ({unread.length})
+              {t("notifications.new")} ({unread.length})
             </span>
             <Card padding="none" className="overflow-hidden">
               {unread.map((notification, index) => (
@@ -324,7 +327,7 @@ export function Notifications({
         {read.length > 0 && (
           <div className="flex flex-col gap-3">
             <span className="text-[13px] font-semibold uppercase tracking-wide text-text-secondary">
-              Earlier
+              {t("notifications.earlier")}
             </span>
             <Card padding="none" className="overflow-hidden">
               {read.map((notification, index) => (
@@ -359,9 +362,9 @@ export function Notifications({
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
               <Bell className="h-8 w-8 text-primary" />
             </div>
-            <span className="text-lg font-semibold text-text-primary">All caught up!</span>
+            <span className="text-lg font-semibold text-text-primary">{t("notifications.allCaughtUp")}</span>
             <span className="text-sm text-text-tertiary text-center max-w-[240px]">
-              No notifications right now. We&apos;ll nudge you before any renewals.
+              {t("notifications.allCaughtUpHint")}
             </span>
           </div>
         )}

@@ -5,6 +5,7 @@ import { createClient, isSupabaseConfigured } from "@/lib/supabase/client"
 import { Button } from "@/components/ui"
 import { Mail, Lock, Eye, EyeOff } from "lucide-react"
 import { trackLogin } from "@/lib/analytics/events"
+import { useI18n } from "@/lib/i18n"
 
 interface LoginFormProps {
   onSwitchToSignup: () => void
@@ -17,6 +18,7 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { t } = useI18n()
 
   const supabase = createClient()
 
@@ -42,7 +44,7 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
 
   const handleGoogleLogin = async () => {
     if (!isSupabaseConfigured()) {
-      setError("Authentication is not configured. Please contact support.")
+      setError(t("auth.authNotConfigured"))
       return
     }
 
@@ -93,12 +95,12 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
           />
         </svg>
-        Continue with Google
+        {t("auth.continueWithGoogle")}
       </Button>
 
       <div className="flex items-center gap-4">
         <div className="h-px flex-1 bg-divider" />
-        <span className="text-sm text-text-tertiary">or</span>
+        <span className="text-sm text-text-tertiary">{t("common.or")}</span>
         <div className="h-px flex-1 bg-divider" />
       </div>
 
@@ -112,7 +114,7 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
 
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-medium text-text-secondary">
-            Email
+            {t("auth.emailLabel")}
           </label>
           <div className="relative">
             <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-text-tertiary" />
@@ -123,7 +125,7 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t("auth.emailPlaceholder")}
               required
               className="w-full rounded-xl border border-divider bg-surface py-4 pl-12 pr-4 text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
             />
@@ -132,7 +134,7 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
 
         <div className="space-y-2">
           <label htmlFor="password" className="text-sm font-medium text-text-secondary">
-            Password
+            {t("auth.passwordLabel")}
           </label>
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-text-tertiary" />
@@ -143,7 +145,7 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder={t("auth.passwordPlaceholder")}
               required
               className="w-full rounded-xl border border-divider bg-surface py-4 pl-12 pr-12 text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
             />
@@ -163,18 +165,18 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
           onClick={onForgotPassword}
           className="text-sm text-primary hover:underline"
         >
-          Forgot password?
+          {t("auth.forgotPassword")}
         </button>
 
         <Button type="submit" size="md" className="w-full" disabled={loading}>
-          {loading ? "Signing in…" : "Sign in"}
+          {loading ? t("auth.signingIn") : t("auth.signIn")}
         </Button>
       </form>
 
       <p className="text-center text-sm text-text-secondary">
-        Don&apos;t have an account?{" "}
+        {t("auth.noAccount")}{" "}
         <button onClick={onSwitchToSignup} className="text-primary hover:underline">
-          Sign up
+          {t("auth.signUp")}
         </button>
       </p>
     </div>

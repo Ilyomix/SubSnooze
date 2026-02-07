@@ -9,10 +9,11 @@ function escapeCSV(value: string): string {
 }
 
 export function subscriptionsToCSV(subscriptions: Subscription[]): string {
-  const headers = ["Name", "Price", "Billing Cycle", "Renewal Date", "Status"]
+  const headers = ["Name", "Price", "Currency", "Billing Cycle", "Renewal Date", "Status"]
   const rows = subscriptions.map((sub) => [
     escapeCSV(sub.name),
     sub.price.toFixed(2),
+    sub.currency,
     sub.billingCycle,
     formatLocalDate(sub.renewalDate),
     sub.status === "renewing_soon" ? "active" : sub.status,

@@ -5,6 +5,7 @@ import { useFocusTrap } from "@/hooks/useFocusTrap"
 import { Star, Check, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui"
 import { PRICING } from "@/lib/stripe/pricing"
+import { useI18n } from "@/lib/i18n"
 
 interface UpgradeModalProps {
   onUpgrade: () => void
@@ -16,6 +17,7 @@ export function UpgradeModal({ onClose, isPremium }: UpgradeModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
+  const { t } = useI18n()
   useFocusTrap(dialogRef, onClose)
 
   // If already premium, show confirmation
@@ -32,12 +34,12 @@ export function UpgradeModal({ onClose, isPremium }: UpgradeModalProps) {
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
             <Check className="h-7 w-7 text-primary" />
           </div>
-          <h2 id="upgrade-modal-title" className="text-xl font-bold text-text-primary">You&apos;re on Pro!</h2>
+          <h2 id="upgrade-modal-title" className="text-xl font-bold text-text-primary">{t("upgrade.alreadyPro")}</h2>
           <p className="text-center text-[15px] text-text-secondary">
-            You have lifetime access to all Pro features. Thank you for supporting SubSnooze!
+            {t("upgrade.alreadyProDescription")}
           </p>
           <Button variant="primary" onClick={onClose} className="w-full">
-            Nice!
+            {t("upgrade.nice")}
           </Button>
         </div>
       </div>
@@ -63,7 +65,7 @@ export function UpgradeModal({ onClose, isPremium }: UpgradeModalProps) {
         window.location.href = data.url
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Try again.")
+      setError(err instanceof Error ? err.message : t("upgrade.genericError"))
       setLoading(false)
     }
   }
@@ -83,7 +85,7 @@ export function UpgradeModal({ onClose, isPremium }: UpgradeModalProps) {
         </div>
 
         {/* Title */}
-        <h2 id="upgrade-modal-title" className="text-xl font-bold text-text-primary">Unlock SubSnooze Pro</h2>
+        <h2 id="upgrade-modal-title" className="text-xl font-bold text-text-primary">{t("upgrade.title")}</h2>
 
         {/* Features */}
         <div className="flex flex-col gap-2 self-start">
@@ -97,8 +99,8 @@ export function UpgradeModal({ onClose, isPremium }: UpgradeModalProps) {
 
         {/* Pricing */}
         <div className="flex flex-col items-center gap-1">
-          <span className="text-2xl font-bold text-primary">{PRICING.PRO_PRICE_DISPLAY} lifetime</span>
-          <span className="text-sm text-text-tertiary">(one-time, forever)</span>
+          <span className="text-2xl font-bold text-primary">{PRICING.PRO_PRICE_DISPLAY} {t("upgrade.lifetime")}</span>
+          <span className="text-sm text-text-tertiary">{t("upgrade.oneTime")}</span>
         </div>
 
         {/* Error */}
@@ -119,10 +121,10 @@ export function UpgradeModal({ onClose, isPremium }: UpgradeModalProps) {
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Redirecting…
+                {t("upgrade.redirecting")}
               </span>
             ) : (
-              `Get Pro — ${PRICING.PRO_PRICE_DISPLAY}`
+              t("upgrade.getPro", { price: PRICING.PRO_PRICE_DISPLAY })
             )}
           </Button>
           <button
@@ -130,7 +132,7 @@ export function UpgradeModal({ onClose, isPremium }: UpgradeModalProps) {
             disabled={loading}
             className="text-sm text-text-tertiary hover:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded disabled:opacity-50"
           >
-            No thanks, stay on free
+            {t("upgrade.noThanks")}
           </button>
         </div>
       </div>

@@ -117,6 +117,7 @@ export function useSubscriptions() {
       logo: data.logo,
       logoColor: data.logo_color,
       price: data.price,
+      currency: (data as Record<string, unknown>).currency as string ?? "USD",
       billingCycle: data.billing_cycle,
       renewalDate: parseLocalDate(data.renewal_date),
       status: "good",

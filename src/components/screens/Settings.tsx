@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, type ReactNode } from "react"
-import { Star, ChevronRight, LogOut, Check, BellRing, Trash2, AlertTriangle, Key, Download, Eye, EyeOff, Info, Phone, Sun, Moon, Monitor, HelpCircle, Sparkles, Mail, Bell, MessageSquare, CreditCard } from "lucide-react"
+import { Star, ChevronRight, LogOut, Check, BellRing, Trash2, AlertTriangle, Key, Download, Eye, EyeOff, Info, Sun, Moon, Monitor, HelpCircle, Sparkles, Mail, Bell, MessageSquare, CreditCard, Globe } from "lucide-react"
 import { AppShell } from "@/components/layout"
 import { Card } from "@/components/ui"
 import { useUser } from "@/hooks/useUser"
@@ -11,35 +11,9 @@ import { createClient } from "@/lib/supabase/client"
 import { subscriptionsToCSV, downloadCSV } from "@/lib/export-csv"
 import { useDarkMode } from "@/hooks/useDarkMode"
 import { trackExportCSV, trackUpgradeClick } from "@/lib/analytics/events"
+import { useI18n, SUPPORTED_LOCALES, SUPPORTED_CURRENCIES, LOCALE_LABELS, CURRENCY_LABELS, type Locale, type CurrencyCode } from "@/lib/i18n"
 import type { Database, ReminderPreset } from "@/types/database"
 import type { SupabaseClient } from "@supabase/supabase-js"
-
-// Preset configuration
-const PRESETS: {
-  id: ReminderPreset
-  name: string
-  subtitle: string
-  days: number[]
-}[] = [
-  {
-    id: "aggressive",
-    name: "Aggressive",
-    subtitle: "Multiple nudges to stay on top of things",
-    days: [7, 3, 1],
-  },
-  {
-    id: "relaxed",
-    name: "Relaxed",
-    subtitle: "Early heads up with a final reminder",
-    days: [14, 3],
-  },
-  {
-    id: "minimal",
-    name: "Minimal",
-    subtitle: "One reminder, no fuss",
-    days: [3],
-  },
-]
 
 // Visual dots showing reminder count - simple and clear
 function ReminderDots({ count, isSelected }: { count: number; isSelected: boolean }) {
@@ -57,25 +31,21 @@ function ReminderDots({ count, isSelected }: { count: number; isSelected: boolea
   )
 }
 
-// Format days into readable text
-function formatDays(days: number[]): string {
-  if (days.length === 1) return `${days[0]} days before`
-  const sorted = [...days].sort((a, b) => b - a)
-  const last = sorted.pop()
-  return `${sorted.join(", ")} & ${last} days before`
-}
-
 // Preset option component
 function PresetOption({
   preset,
   isSelected,
   onSelect,
   disabled,
+  defaultLabel,
+  formatDays,
 }: {
-  preset: typeof PRESETS[0]
+  preset: { id: ReminderPreset; name: string; subtitle: string; days: number[] }
   isSelected: boolean
   onSelect: () => void
   disabled?: boolean
+  defaultLabel: string
+  formatDays: (days: number[]) => string
 }) {
   return (
     <button
@@ -95,7 +65,7 @@ function PresetOption({
             </span>
             {preset.id === "aggressive" && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                Default
+                {defaultLabel}
               </span>
             )}
           </div>
@@ -186,6 +156,7 @@ function ToggleRow({
 }
 
 export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClick, notificationCount, onAboutClick, onFAQClick, onChangelogClick, isPremium }: SettingsProps) {
+  const { t, locale, currency, setLocale, setCurrency } = useI18n()
   const {
     id: userId,
     email,
@@ -195,6 +166,8 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
     signOut,
     refreshProfile,
     updateReminderPreset,
+    updateLocale,
+    updateCurrency,
   } = useUser()
   const { subscriptions } = useSubscriptions()
   const { isEnabled: pushEnabled, toggleNotifications, loading: pushLoading, isSupported } = usePushNotifications()
@@ -228,11 +201,59 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
 
   const supabase: SupabaseClient<Database> = createClient()
 
+  // Build presets with translated labels
+  const presets: { id: ReminderPreset; name: string; subtitle: string; days: number[] }[] = [
+    {
+      id: "aggressive",
+      name: t("settings.aggressive"),
+      subtitle: t("settings.aggressiveHint"),
+      days: [7, 3, 1],
+    },
+    {
+      id: "relaxed",
+      name: t("settings.relaxed"),
+      subtitle: t("settings.relaxedHint"),
+      days: [14, 3],
+    },
+    {
+      id: "minimal",
+      name: t("settings.minimal"),
+      subtitle: t("settings.minimalHint"),
+      days: [3],
+    },
+  ]
+
+  // Format days into readable text
+  function formatDays(days: number[]): string {
+    if (days.length === 1) return t("settings.daysBefore", { days: days[0] })
+    const sorted = [...days].sort((a, b) => b - a)
+    const last = sorted.pop()!
+    return t("settings.daysBeforeMultiple", { first: sorted.join(", "), last })
+  }
+
+  const handleLocaleChange = async (newLocale: Locale) => {
+    setLocale(newLocale)
+    try {
+      await updateLocale(newLocale)
+    } catch {
+      // localStorage is already updated, DB sync will happen next time
+    }
+  }
+
+  const handleCurrencyChange = async (newCurrency: CurrencyCode) => {
+    setCurrency(newCurrency)
+    try {
+      await updateCurrency(newCurrency)
+    } catch {
+      // localStorage is already updated, DB sync will happen next time
+    }
+  }
+
   const handlePhoneSave = async () => {
     setPhoneError(null)
     const cleaned = phoneInput.replace(/\s+/g, "").trim()
     if (cleaned && !/^\+?[0-9]{7,15}$/.test(cleaned)) {
-      setPhoneError("Enter a valid phone number (e.g. +33612345678)")
+      setPhoneError(t("settings.phoneError"))
       return
     }
     setPhoneSaving(true)
@@ -261,11 +282,11 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
   const handlePasswordChange = async () => {
     setPasswordError(null)
     if (newPassword.length < 8) {
-      setPasswordError("Password must be at least 8 characters")
+      setPasswordError(t("settings.passwordMinLength"))
       return
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError("Passwords don't match")
+      setPasswordError(t("settings.passwordsMismatch"))
       return
     }
     setPasswordSaving(true)
@@ -308,7 +329,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
     setSelectedPreset(preset) // Optimistic update
     try {
       await updateReminderPreset(preset)
-    } catch (error) {
+    } catch {
       setSelectedPreset(reminderPreset) // Rollback on error
     } finally {
       setSavingPreset(false)
@@ -346,24 +367,26 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
   return (
     <AppShell activeTab={activeTab} onTabChange={onTabChange} onNotificationClick={onNotificationClick} notificationCount={notificationCount}>
       <div className="flex flex-col gap-6 px-6 pt-4">
-        <h1 className="text-2xl font-semibold text-text-primary">Settings</h1>
+        <h1 className="text-2xl font-semibold text-text-primary">{t("settings.title")}</h1>
 
         {/* Reminder Schedule */}
         <div className="flex flex-col gap-3">
           <h2 className="text-[13px] font-medium text-text-secondary">
-            Reminder Schedule
+            {t("settings.reminderSchedule")}
           </h2>
           <p className="text-xs text-text-tertiary -mt-1">
-            Choose when to get reminded before renewals
+            {t("settings.reminderScheduleHint")}
           </p>
           <div className="flex flex-col gap-2">
-            {PRESETS.map((preset) => (
+            {presets.map((preset) => (
               <PresetOption
                 key={preset.id}
                 preset={preset}
                 isSelected={selectedPreset === preset.id}
                 onSelect={() => handlePresetChange(preset.id)}
                 disabled={savingPreset}
+                defaultLabel={t("settings.default")}
+                formatDays={formatDays}
               />
             ))}
           </div>
@@ -372,15 +395,15 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
         {/* Notification Channels */}
         <div className="flex flex-col gap-3">
           <h2 className="text-[13px] font-medium text-text-secondary">
-            How to Notify You
+            {t("settings.howToNotify")}
           </h2>
           <Card padding="none" className="overflow-hidden">
             <ToggleRow
               icon={<Mail className="h-4 w-4" />}
               iconBgClassName="bg-sky-500/10"
               iconClassName="text-sky-600"
-              label="Email reminders"
-              helper={email ? `Sent to ${email}` : "Not configured"}
+              label={t("settings.emailReminders")}
+              helper={email ? t("settings.sentTo", { email }) : t("settings.notConfigured")}
               enabled={emailEnabled}
               onToggle={handleEmailToggle}
               loading={saving}
@@ -391,8 +414,8 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                 icon={<Bell className="h-4 w-4" />}
                 iconBgClassName="bg-violet-500/10"
                 iconClassName="text-violet-600"
-                label="Push notifications"
-                helper="Appear on your device"
+                label={t("settings.pushNotifications")}
+                helper={t("settings.pushOnDevice")}
                 enabled={pushEnabled}
                 onToggle={handlePushToggle}
                 loading={pushLoading}
@@ -404,8 +427,8 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                     <Bell className="h-4 w-4 text-text-muted" />
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <span className="text-[15px] font-medium text-text-primary">Push notifications</span>
-                    <span className="text-xs text-text-tertiary">Not supported in this browser</span>
+                    <span className="text-[15px] font-medium text-text-primary">{t("settings.pushNotifications")}</span>
+                    <span className="text-xs text-text-tertiary">{t("settings.pushNotSupported")}</span>
                   </div>
                 </div>
               </div>
@@ -417,8 +440,8 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                   <MessageSquare className="h-4 w-4 text-text-muted" />
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[15px] font-medium text-text-primary">SMS reminders</span>
-                  <span className="text-xs text-text-tertiary">Coming soon</span>
+                  <span className="text-[15px] font-medium text-text-primary">{t("settings.smsReminders")}</span>
+                  <span className="text-xs text-text-tertiary">{t("settings.comingSoon")}</span>
                 </div>
               </div>
               <div className="h-7 w-12 rounded-full bg-divider p-1 cursor-not-allowed">
@@ -431,7 +454,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
         {/* Appearance */}
         <div className="flex flex-col gap-3">
           <h2 className="text-[13px] font-medium text-text-secondary">
-            Appearance
+            {t("settings.appearance")}
           </h2>
           <Card padding="none" className="overflow-hidden">
             <div className="flex items-center gap-1 p-1.5">
@@ -442,7 +465,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                 }`}
               >
                 <Sun className="h-4 w-4" />
-                Light
+                {t("settings.light")}
               </button>
               <button
                 onClick={setDark}
@@ -451,7 +474,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                 }`}
               >
                 <Moon className="h-4 w-4" />
-                Dark
+                {t("settings.dark")}
               </button>
               <button
                 onClick={setSystem}
@@ -460,8 +483,66 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                 }`}
               >
                 <Monitor className="h-4 w-4" />
-                Auto
+                {t("settings.auto")}
               </button>
+            </div>
+          </Card>
+        </div>
+
+        {/* Language & Currency */}
+        <div className="flex flex-col gap-3">
+          <h2 className="text-[13px] font-medium text-text-secondary">
+            {t("settings.language")}
+          </h2>
+          <Card padding="none" className="overflow-hidden">
+            {/* Language selector */}
+            <div className="flex items-center justify-between px-[18px] py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/10">
+                  <Globe className="h-4 w-4 text-sky-600" />
+                </div>
+                <span className="text-[15px] font-medium text-text-primary">{t("settings.languageLabel")}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {SUPPORTED_LOCALES.map((loc) => (
+                  <button
+                    key={loc}
+                    onClick={() => handleLocaleChange(loc)}
+                    className={`rounded-lg px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                      locale === loc
+                        ? "bg-primary/10 text-primary"
+                        : "text-text-secondary hover:text-text-primary hover:bg-background/50"
+                    }`}
+                  >
+                    {LOCALE_LABELS[loc]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="h-px bg-divider" />
+            {/* Currency selector */}
+            <div className="px-[18px] py-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                </div>
+                <span className="text-[15px] font-medium text-text-primary">{t("settings.currencyLabel")}</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {SUPPORTED_CURRENCIES.map((cur) => (
+                  <button
+                    key={cur}
+                    onClick={() => handleCurrencyChange(cur)}
+                    className={`rounded-lg px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                      currency === cur
+                        ? "bg-primary/10 text-primary"
+                        : "text-text-secondary hover:text-text-primary hover:bg-background/50"
+                    }`}
+                  >
+                    {CURRENCY_LABELS[cur]}
+                  </button>
+                ))}
+              </div>
             </div>
           </Card>
         </div>
@@ -469,12 +550,12 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
         {/* Account */}
         <div className="flex flex-col gap-3">
           <h2 className="text-[13px] font-medium text-text-secondary">
-            Account
+            {t("settings.account")}
           </h2>
           <Card padding="none" className="overflow-hidden">
             <div className="flex flex-col gap-1 px-[18px] py-4">
-              <label className="text-xs text-text-tertiary">Email</label>
-              <span className="text-[15px] text-text-primary">{email || "—"}</span>
+              <label className="text-xs text-text-tertiary">{t("settings.email")}</label>
+              <span className="text-[15px] text-text-primary">{email || "\u2014"}</span>
             </div>
             <div className="h-px bg-divider" />
             {!showPhoneForm ? (
@@ -488,8 +569,8 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                 className="flex w-full items-center justify-between px-[18px] py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               >
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs text-text-tertiary">Phone</label>
-                  <span className="text-[15px] text-text-primary">{phoneNumber || "Not set"}</span>
+                  <label className="text-xs text-text-tertiary">{t("settings.phone")}</label>
+                  <span className="text-[15px] text-text-primary">{phoneNumber || t("settings.phoneNotSet")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <ChevronRight className="h-4 w-4 text-text-muted" />
@@ -497,13 +578,13 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
               </button>
             ) : (
               <div className="px-[18px] py-4 space-y-3">
-                <label htmlFor="phone-input" className="text-xs text-text-tertiary">Phone number</label>
+                <label htmlFor="phone-input" className="text-xs text-text-tertiary">{t("settings.phone")}</label>
                 <input
                   id="phone-input"
                   type="tel"
                   value={phoneInput}
                   onChange={(e) => setPhoneInput(e.target.value)}
-                  placeholder="+33 6 12 34 56 78"
+                  placeholder={t("settings.phonePlaceholder")}
                   autoComplete="tel"
                   className="w-full rounded-xl border border-divider bg-surface py-3 px-4 text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                 />
@@ -511,7 +592,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                   <p className="text-xs text-accent">{phoneError}</p>
                 )}
                 {phoneSuccess && (
-                  <p className="text-xs text-primary">Phone number updated!</p>
+                  <p className="text-xs text-primary">{t("settings.phoneUpdated")}</p>
                 )}
                 <div className="flex gap-2">
                   <button
@@ -521,7 +602,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                     }}
                     className="flex-1 rounded-xl border border-divider py-2.5 text-sm font-medium text-text-primary hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                   <button
                     onClick={handlePhoneSave}
@@ -530,7 +611,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                       !phoneSaving ? "bg-primary hover:bg-primary/90" : "bg-primary/40 cursor-not-allowed"
                     }`}
                   >
-                    {phoneSaving ? "Saving..." : "Save"}
+                    {phoneSaving ? t("common.saving") : t("common.save")}
                   </button>
                 </div>
               </div>
@@ -541,7 +622,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
         {/* Change Password */}
         <div className="flex flex-col gap-3">
           <h2 className="text-[13px] font-medium text-text-secondary">
-            Security
+            {t("settings.security")}
           </h2>
           {!showPasswordForm ? (
             <Card padding="none" className="overflow-hidden">
@@ -554,7 +635,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                     <Key className="h-4 w-4 text-violet-600" />
                   </div>
                   <span className="text-[15px] font-medium text-text-primary">
-                    Change password
+                    {t("settings.changePassword")}
                   </span>
                 </div>
                 <ChevronRight className="h-5 w-5 text-text-muted" />
@@ -565,7 +646,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <label htmlFor="new-password" className="text-sm text-text-secondary">
-                    New password
+                    {t("settings.newPassword")}
                   </label>
                   <div className="relative">
                     <input
@@ -573,7 +654,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                       type={showPassword ? "text" : "password"}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Min. 8 characters"
+                      placeholder={t("settings.minChars")}
                       autoComplete="new-password"
                       className="w-full rounded-xl border border-divider bg-surface py-3 px-4 pr-12 text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                     />
@@ -589,14 +670,14 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="confirm-password" className="text-sm text-text-secondary">
-                    Confirm password
+                    {t("settings.confirmPassword")}
                   </label>
                   <input
                     id="confirm-password"
                     type={showPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Repeat password"
+                    placeholder={t("settings.repeatPassword")}
                     autoComplete="new-password"
                     className="w-full rounded-xl border border-divider bg-surface py-3 px-4 text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
                   />
@@ -611,7 +692,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
 
               {passwordSuccess && (
                 <div className="rounded-lg bg-primary/10 p-3 text-sm text-primary">
-                  Password updated successfully!
+                  {t("settings.passwordUpdated")}
                 </div>
               )}
 
@@ -625,7 +706,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                   }}
                   className="flex-1 rounded-xl border border-divider py-3 text-[15px] font-medium text-text-primary hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   onClick={handlePasswordChange}
@@ -636,7 +717,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                       : "bg-primary/40 cursor-not-allowed"
                   }`}
                 >
-                  {passwordSaving ? "Saving..." : "Update password"}
+                  {passwordSaving ? t("common.saving") : t("settings.updatePassword")}
                 </button>
               </div>
             </Card>
@@ -646,7 +727,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
         {/* Your Data */}
         <div className="flex flex-col gap-3">
           <h2 className="text-[13px] font-medium text-text-secondary">
-            Your Data
+            {t("settings.yourData")}
           </h2>
           <Card padding="none" className="overflow-hidden">
             <button
@@ -660,9 +741,9 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                 </div>
                 <div className="flex flex-col items-start">
                   <span className="text-[15px] font-medium text-text-primary">
-                    Export subscriptions
+                    {t("settings.exportSubscriptions")}
                   </span>
-                  <span className="text-xs text-text-tertiary">Download as CSV file</span>
+                  <span className="text-xs text-text-tertiary">{t("settings.downloadCSV")}</span>
                 </div>
               </div>
               <ChevronRight className="h-5 w-5 text-text-muted" />
@@ -679,8 +760,8 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                   <Star className="h-4 w-4 text-primary" fill="currentColor" />
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[15px] font-medium text-primary">SubSnooze Pro</span>
-                  <span className="text-xs text-text-tertiary">Lifetime access — all features unlocked</span>
+                  <span className="text-[15px] font-medium text-primary">{t("settings.subSnoozePro")}</span>
+                  <span className="text-xs text-text-tertiary">{t("settings.lifetimeAccess")}</span>
                 </div>
               </div>
               <div className="h-px bg-divider" />
@@ -701,7 +782,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                     <CreditCard className="h-4 w-4 text-sky-600" />
                   </div>
                   <span className="text-[15px] font-medium text-text-primary">
-                    Manage billing
+                    {t("settings.manageBilling")}
                   </span>
                 </div>
                 <ChevronRight className="h-5 w-5 text-text-muted" />
@@ -717,7 +798,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                   <Star className="h-4 w-4 text-primary" fill="currentColor" />
                 </div>
                 <span className="text-[15px] font-medium text-text-primary">
-                  Upgrade to Pro
+                  {t("settings.upgradeToPro")}
                 </span>
               </div>
               <ChevronRight className="h-5 w-5 text-text-muted" />
@@ -737,7 +818,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-500/10">
                     <HelpCircle className="h-4 w-4 text-violet-600" />
                   </div>
-                  <span className="text-[15px] font-medium text-text-primary">FAQ</span>
+                  <span className="text-[15px] font-medium text-text-primary">{t("settings.faq")}</span>
                 </div>
                 <ChevronRight className="h-5 w-5 text-text-muted" />
               </button>
@@ -754,7 +835,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/10">
                     <Sparkles className="h-4 w-4 text-amber-600" />
                   </div>
-                  <span className="text-[15px] font-medium text-text-primary">What&apos;s New</span>
+                  <span className="text-[15px] font-medium text-text-primary">{t("settings.whatsNew")}</span>
                 </div>
                 <ChevronRight className="h-5 w-5 text-text-muted" />
               </button>
@@ -770,7 +851,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/10">
                   <Info className="h-4 w-4 text-sky-600" />
                 </div>
-                <span className="text-[15px] font-medium text-text-primary">About & Support</span>
+                <span className="text-[15px] font-medium text-text-primary">{t("settings.aboutSupport")}</span>
               </div>
               <ChevronRight className="h-5 w-5 text-text-muted" />
             </button>
@@ -800,9 +881,9 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                 </div>
                 <div className="flex flex-col items-start">
                   <span className="text-[15px] font-medium text-text-primary">
-                    {testingSent ? "Sent!" : "Send test notification"}
+                    {testingSent ? t("settings.sent") : t("settings.sendTestNotification")}
                   </span>
-                  <span className="text-xs text-text-tertiary">Dev only — creates a random notification</span>
+                  <span className="text-xs text-text-tertiary">{t("settings.testNotificationHint")}</span>
                 </div>
               </div>
             </button>
@@ -820,7 +901,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                 <LogOut className="h-4 w-4 text-accent" />
               </div>
               <span className="text-[15px] font-medium text-accent">
-                Sign Out
+                {t("settings.signOut")}
               </span>
             </div>
           </button>
@@ -829,7 +910,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
         {/* Delete Account */}
         <div className="flex flex-col gap-3">
           <h2 className="text-[13px] font-medium text-text-secondary">
-            Danger Zone
+            {t("settings.dangerZone")}
           </h2>
           {!showDeleteConfirm ? (
             <Card padding="none" className="overflow-hidden">
@@ -843,9 +924,9 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                   </div>
                   <div className="flex flex-col items-start">
                     <span className="text-[15px] font-medium text-accent">
-                      Delete my account
+                      {t("settings.deleteAccount")}
                     </span>
-                    <span className="text-xs text-text-tertiary">Permanently remove all your data</span>
+                    <span className="text-xs text-text-tertiary">{t("settings.deleteAccountHint")}</span>
                   </div>
                 </div>
               </button>
@@ -856,17 +937,17 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
                 <div className="space-y-1">
                   <p className="text-[15px] font-medium text-text-primary">
-                    This action is permanent
+                    {t("settings.deleteWarningTitle")}
                   </p>
                   <p className="text-sm text-text-secondary">
-                    All your subscriptions, notifications, and account data will be permanently deleted. This cannot be undone.
+                    {t("settings.deleteWarningDescription")}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label htmlFor="delete-confirm" className="text-sm text-text-secondary">
-                  Type <strong>DELETE</strong> to confirm
+                  {t("settings.typeDelete")}
                 </label>
                 <input
                   id="delete-confirm"
@@ -894,7 +975,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                   }}
                   className="flex-1 rounded-xl border border-divider py-3 text-[15px] font-medium text-text-primary hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   onClick={async () => {
@@ -906,7 +987,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                       await signOut()
                     } catch (err) {
                       console.error("Failed to delete account:", err)
-                      setDeleteError("Something went wrong. Please try again or contact support.")
+                      setDeleteError(t("settings.deleteError"))
                       setDeleting(false)
                     }
                   }}
@@ -917,7 +998,7 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                       : "bg-accent/40 cursor-not-allowed"
                   }`}
                 >
-                  {deleting ? "Deleting..." : "Delete forever"}
+                  {deleting ? t("settings.deleting") : t("settings.deleteForever")}
                 </button>
               </div>
             </Card>
