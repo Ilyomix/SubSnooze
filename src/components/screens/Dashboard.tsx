@@ -5,7 +5,7 @@ import { Plus, XCircle, PiggyBank, CreditCard, ChevronDown, ChevronUp } from "lu
 import NumberFlow from "@number-flow/react"
 import { AppShell } from "@/components/layout"
 import { Card, Button, SectionHeader, SubscriptionRow, ErrorState } from "@/components/ui"
-import { CURRENCY_CODE } from "@/lib/utils"
+import { useI18n } from "@/lib/i18n"
 import type { Subscription } from "@/types/subscription"
 
 const ALL_GOOD_PREVIEW_LIMIT = 3
@@ -39,6 +39,7 @@ export function Dashboard({
   error,
   onRetry,
 }: DashboardProps) {
+  const { t, currency } = useI18n()
   const [showAllGood, setShowAllGood] = useState(false)
 
   // Cached display values for smooth NumberFlow animations
@@ -95,7 +96,7 @@ export function Dashboard({
       <div className="flex flex-col gap-6 px-6 pt-4 pb-40">
         {/* Greeting */}
         <h1 className="text-2xl font-semibold text-text-primary">
-          Hi, {userName}
+          {t("dashboard.greeting", { name: userName })}
         </h1>
 
         {/* Summary Cards */}
@@ -106,12 +107,12 @@ export function Dashboard({
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 sm:h-9 sm:w-9 sm:rounded-xl">
                 <CreditCard className="h-4 w-4 text-white sm:h-5 sm:w-5" aria-hidden="true" />
               </div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-white/50">Monthly</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-white/50">{t("dashboard.monthlyLabel")}</span>
             </div>
             <div className="flex flex-col gap-1">
               <NumberFlow
                 value={displayMonthly}
-                format={{ style: "currency", currency: CURRENCY_CODE, maximumFractionDigits: 0 }}
+                format={{ style: "currency", currency, maximumFractionDigits: 0 }}
                 transformTiming={{ duration: 750, easing: "ease-out" }}
                 spinTiming={{ duration: 750, easing: "ease-out" }}
                 className="text-2xl font-bold tabular-nums text-white sm:text-3xl"
@@ -122,7 +123,7 @@ export function Dashboard({
                   transformTiming={{ duration: 750, easing: "ease-out" }}
                   spinTiming={{ duration: 750, easing: "ease-out" }}
                   className="tabular-nums"
-                />{" "}active {activeCount === 1 ? "subscription" : "subscriptions"}
+                />{" "}{t("dashboard.activeSubscriptions", { count: activeCount })}
               </span>
             </div>
           </div>
@@ -133,20 +134,20 @@ export function Dashboard({
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 sm:h-9 sm:w-9 sm:rounded-xl">
                 <PiggyBank className="h-4 w-4 text-white sm:h-5 sm:w-5" aria-hidden="true" />
               </div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-white/60">Saved</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-white/60">{t("dashboard.savedLabel")}</span>
             </div>
             <div className="flex flex-col gap-1">
               <NumberFlow
                 value={displaySaved}
-                format={{ style: "currency", currency: CURRENCY_CODE, maximumFractionDigits: 0 }}
+                format={{ style: "currency", currency, maximumFractionDigits: 0 }}
                 transformTiming={{ duration: 750, easing: "ease-out" }}
                 spinTiming={{ duration: 750, easing: "ease-out" }}
                 className="text-2xl font-bold tabular-nums text-white sm:text-3xl"
               />
               <span className="text-[11px] font-medium text-white/60 sm:text-xs">
                 {cancelled.length > 0
-                  ? `${cancelled.length} cancelled — nice work`
-                  : "Cancel unused subs to save"}
+                  ? t("dashboard.cancelledNiceWork", { count: cancelled.length })
+                  : t("dashboard.cancelToSave")}
               </span>
             </div>
           </div>
@@ -164,9 +165,9 @@ export function Dashboard({
               <CreditCard className="h-8 w-8 text-primary" aria-hidden="true" />
             </div>
             <div className="flex flex-col items-center gap-1">
-              <span className="text-lg font-semibold text-text-primary">No subscriptions yet</span>
+              <span className="text-lg font-semibold text-text-primary">{t("dashboard.noSubscriptions")}</span>
               <span className="text-sm text-text-tertiary text-center max-w-[260px]">
-                Add your first subscription and we&apos;ll help you stay on top of renewals.
+                {t("dashboard.noSubscriptionsHint")}
               </span>
             </div>
             <Button
@@ -174,7 +175,7 @@ export function Dashboard({
               icon={<Plus className="h-[18px] w-[18px]" />}
               onClick={onAddSubscription}
             >
-              Add subscription
+              {t("dashboard.addSubscription")}
             </Button>
           </div>
         )}
@@ -182,7 +183,7 @@ export function Dashboard({
         {/* Renewing Soon Section — always fully expanded, sorted by urgency */}
         {renewingSoon.length > 0 && (
           <div className="flex flex-col gap-3">
-            <SectionHeader title="COMING UP" count={renewingSoon.length} variant="warning" />
+            <SectionHeader title={t("dashboard.comingUp")} count={renewingSoon.length} variant="warning" />
             <div className="flex">
               <div className="w-1 bg-accent" aria-hidden="true" />
               <Card padding="none" className="flex-1 overflow-hidden rounded-l-none">
@@ -203,7 +204,7 @@ export function Dashboard({
         {/* All Good Section — collapsed to 3 with "Show all" */}
         {allGood.length > 0 && (
           <div className="flex flex-col gap-3">
-            <SectionHeader title="ALL GOOD" count={allGood.length} variant="success" />
+            <SectionHeader title={t("dashboard.allGood")} count={allGood.length} variant="success" />
             <div className="flex">
               <div className="w-1 bg-primary" aria-hidden="true" />
               <Card padding="none" className="flex-1 overflow-hidden rounded-l-none">
@@ -224,9 +225,9 @@ export function Dashboard({
                       className="flex w-full items-center justify-center gap-1.5 py-3 text-sm font-medium text-primary hover:bg-background/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
                     >
                       {showAllGood ? (
-                        <>Show less <ChevronUp className="h-4 w-4" aria-hidden="true" /></>
+                        <>{t("dashboard.showLess")} <ChevronUp className="h-4 w-4" aria-hidden="true" /></>
                       ) : (
-                        <>Show all {allGood.length} <ChevronDown className="h-4 w-4" aria-hidden="true" /></>
+                        <>{t("dashboard.showAll", { count: allGood.length })} <ChevronDown className="h-4 w-4" aria-hidden="true" /></>
                       )}
                     </button>
                   </>
@@ -242,7 +243,7 @@ export function Dashboard({
             <div className="flex items-center gap-2">
               <XCircle className="h-4 w-4 text-text-muted" aria-hidden="true" />
               <h2 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-                Cancelled ({cancelled.length})
+                {t("dashboard.cancelled")} ({cancelled.length})
               </h2>
             </div>
             <Card padding="none" className="overflow-hidden">
@@ -269,7 +270,7 @@ export function Dashboard({
             onClick={onAddSubscription}
             className="w-full"
           >
-            Add subscription
+            {t("dashboard.addSubscription")}
           </Button>
         </div>
       </div>

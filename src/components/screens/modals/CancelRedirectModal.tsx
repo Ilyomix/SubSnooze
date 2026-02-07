@@ -5,7 +5,7 @@ import { useFocusTrap } from "@/hooks/useFocusTrap"
 import { ExternalLink, PiggyBank, Calendar, Clock } from "lucide-react"
 import { Button } from "@/components/ui"
 import { ServiceIcon } from "@/components/ui"
-import { formatCurrency } from "@/lib/utils"
+import { useI18n } from "@/lib/i18n"
 import type { Subscription } from "@/types/subscription"
 
 interface ActionModalProps {
@@ -104,6 +104,12 @@ export function CancelRedirectModal({
   onClose,
 }: CancelRedirectModalProps) {
   const [remindMe, setRemindMe] = useState(false)
+  const { t, formatCurrency, formatDate } = useI18n()
+
+  const monthlyCost =
+    subscription.billingCycle === "yearly" ? subscription.price / 12
+    : subscription.billingCycle === "weekly" ? subscription.price * 4.33
+    : subscription.price
 
   return (
     <ActionModal
@@ -115,36 +121,32 @@ export function CancelRedirectModal({
           size={56}
         />
       )}
-      title={`Cancel ${subscription.name}`}
-      description={`To cancel your ${subscription.name} subscription, you’ll be taken to ${subscription.name}’s website.`}
+      title={t("cancelFlow.cancelTitle", { name: subscription.name })}
+      description={t("cancelFlow.cancelDescription", { name: subscription.name })}
       content={(
         <div className="flex w-full flex-col gap-2 rounded-xl bg-background p-4">
           <div className="flex items-center gap-3">
             <PiggyBank className="h-5 w-5 text-primary" aria-hidden="true" />
             <span className="text-sm text-text-primary">
-              You’ll save <span className="font-semibold tabular-nums">{formatCurrency(
-                subscription.billingCycle === "yearly" ? subscription.price / 12
-                : subscription.billingCycle === "weekly" ? subscription.price * 4.33
-                : subscription.price
-              )}/month</span>
+              {t("cancelFlow.youllSave", { amount: formatCurrency(monthlyCost, { currency: subscription.currency }) })}
             </span>
           </div>
           <div className="flex items-center gap-3">
             <Calendar className="h-5 w-5 text-text-tertiary" aria-hidden="true" />
             <span className="text-sm text-text-primary">
-              Access until {subscription.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+              {t("cancelFlow.accessUntil", { date: formatDate(subscription.renewalDate) })}
             </span>
           </div>
         </div>
       )}
       primaryAction={{
-        label: `Go to ${subscription.name}`,
+        label: t("cancelFlow.goTo", { name: subscription.name }),
         icon: <ExternalLink className="h-[18px] w-[18px]" aria-hidden="true" />,
         variant: "danger",
         onClick: () => onProceed(remindMe),
       }}
       secondaryAction={{
-        label: "Decide later — remind me",
+        label: t("cancelFlow.decideLater"),
         icon: <Clock className="h-4 w-4 text-text-tertiary" aria-hidden="true" />,
         onClick: () => {
           setRemindMe(true)

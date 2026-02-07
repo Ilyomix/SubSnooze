@@ -15,6 +15,7 @@ export interface Subscription {
   logo: string
   logoColor: string
   price: number
+  currency: string
   billingCycle: BillingCycle
   renewalDate: Date
   status: SubscriptionStatus
@@ -68,6 +69,7 @@ export function dbToSubscription(db: DbSubscription): Subscription {
     logo: db.logo,
     logoColor: db.logo_color,
     price: db.price,
+    currency: db.currency,
     billingCycle: db.billing_cycle,
     renewalDate,
     status,
@@ -94,6 +96,7 @@ export function subscriptionToDb(
     logo: sub.logo,
     logo_color: sub.logoColor,
     price: sub.price,
+    currency: sub.currency,
     billing_cycle: sub.billingCycle,
     renewal_date: formatLocalDate(sub.renewalDate),
     status: sub.status === "cancelled" ? "cancelled" : "active",

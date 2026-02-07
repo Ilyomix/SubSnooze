@@ -87,6 +87,8 @@ export interface Database {
           premium_expires_at: string | null
           stripe_customer_id: string | null
           stripe_payment_id: string | null
+          locale: string
+          preferred_currency: string
           created_at: string
           updated_at: string
         }
@@ -105,6 +107,8 @@ export interface Database {
           premium_expires_at?: string | null
           stripe_customer_id?: string | null
           stripe_payment_id?: string | null
+          locale?: string
+          preferred_currency?: string
           created_at?: string
           updated_at?: string
         }
@@ -123,6 +127,8 @@ export interface Database {
           premium_expires_at?: string | null
           stripe_customer_id?: string | null
           stripe_payment_id?: string | null
+          locale?: string
+          preferred_currency?: string
           created_at?: string
           updated_at?: string
         }
@@ -136,6 +142,7 @@ export interface Database {
           logo: string
           logo_color: string
           price: number
+          currency: string
           billing_cycle: "weekly" | "monthly" | "yearly"
           renewal_date: string
           status: "active" | "renewing_soon" | "cancelled" | "expired"
@@ -158,6 +165,7 @@ export interface Database {
           logo: string
           logo_color: string
           price: number
+          currency?: string
           billing_cycle: "weekly" | "monthly" | "yearly"
           renewal_date: string
           status?: "active" | "renewing_soon" | "cancelled" | "expired"
@@ -180,6 +188,7 @@ export interface Database {
           logo?: string
           logo_color?: string
           price?: number
+          currency?: string
           billing_cycle?: "weekly" | "monthly" | "yearly"
           renewal_date?: string
           status?: "active" | "renewing_soon" | "cancelled" | "expired"

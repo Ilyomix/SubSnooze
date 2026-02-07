@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/useToast"
 import { useServiceWorker } from "@/hooks/useServiceWorker"
 import { useScrollRestore } from "@/hooks/useScrollRestore"
 import { usePullToRefresh } from "@/hooks/usePullToRefresh"
+import { useI18n } from "@/lib/i18n"
 import type { Subscription } from "@/types/subscription"
 import type { BillingCycle } from "@/types/database"
 import { formatLocalDate } from "@/lib/date-utils"
@@ -45,6 +46,7 @@ type Screen =
 type Modal = "upgrade" | null
 
 export default function Home() {
+  const { t, currency } = useI18n()
   const { firstName, isPremium, loading: userLoading, isAuthenticated, refreshProfile } = useUser()
   const {
     subscriptions,
@@ -231,13 +233,13 @@ export default function Home() {
     const params = new URLSearchParams(window.location.search)
     const upgrade = params.get("upgrade")
     if (upgrade === "success") {
-      toast("Welcome to Pro! All features unlocked.", "success")
+      toast(t("toast.welcomePro"), "success")
       refreshProfile()
       trackUpgradeComplete()
       // Clean URL
       window.history.replaceState({}, "", window.location.pathname)
     } else if (upgrade === "cancelled") {
-      toast("Upgrade cancelled — no worries, decide later!", "info")
+      toast(t("toast.upgradeCancelled"), "info")
       window.history.replaceState({}, "", window.location.pathname)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -329,12 +331,12 @@ export default function Home() {
         renewal_date: formatLocalDate(data.renewalDate),
         cancel_url: data.cancelUrl,
       })
-      toast("Subscription added")
+      toast(t("toast.subscriptionAdded"))
       trackAddSubscription({ name: data.name, billingCycle: data.billingCycle, price: data.price })
       return true
     } catch (error) {
       console.error("Failed to add subscription:", error)
-      toast("Couldn't add subscription. Try again.", "error")
+      toast(t("toast.couldntAdd"), "error")
       return false
     }
   }
@@ -465,23 +467,23 @@ export default function Home() {
           onRestore={async () => {
             try {
               await restoreSubscription(selectedSub.id)
-              toast("Subscription restored")
+              toast(t("toast.subscriptionRestored"))
               trackRestoreSubscription(selectedSub.name)
               returnToPrevious()
             } catch (error) {
               console.error("Failed to restore subscription:", error)
-              toast("Couldn\u2019t restore. Try again.", "error")
+              toast(t("toast.couldntRestore"), "error")
             }
           }}
           onDelete={async () => {
             try {
               await deleteSubscription(selectedSub.id)
-              toast("Removed from list")
+              toast(t("toast.removedFromList"))
               trackDeleteSubscription(selectedSub.name)
               returnToPrevious()
             } catch (error) {
               console.error("Failed to delete subscription:", error)
-              toast("Couldn\u2019t remove. Try again.", "error")
+              toast(t("toast.couldntRemove"), "error")
             }
           }}
           onSave={async (data) => {
@@ -491,11 +493,11 @@ export default function Home() {
                 billingCycle: data.billingCycle as BillingCycle,
                 renewalDate: data.renewalDate,
               })
-              toast("Changes saved")
+              toast(t("toast.changesSaved"))
               returnToPrevious()
             } catch (error) {
               console.error("Failed to update subscription:", error)
-              toast("Couldn\u2019t save changes. Try again.", "error")
+              toast(t("toast.couldntSave"), "error")
             }
           }}
           onCancelProceed={async () => {
@@ -503,7 +505,7 @@ export default function Home() {
               await recordCancelAttempt(selectedSub.id)
             } catch (error) {
               console.error("Failed to record cancel attempt:", error)
-              toast("Something went wrong. Try again.", "error")
+              toast(t("toast.somethingWentWrong"), "error")
             }
           }}
           onCancelConfirm={async () => {
@@ -513,7 +515,7 @@ export default function Home() {
               trackCancelSubscription({ name: selectedSub.name, monthlyPrice })
             } catch (error) {
               console.error("Failed to verify cancellation:", error)
-              toast("Couldn\u2019t confirm cancellation. Try again.", "error")
+              toast(t("toast.couldntConfirmCancel"), "error")
             }
           }}
           onCancelNotYet={async () => {
@@ -521,7 +523,7 @@ export default function Home() {
               await resetCancelAttempt(selectedSub.id)
             } catch (error) {
               console.error("Failed to reset cancel attempt:", error)
-              toast("Something went wrong.", "error")
+              toast(t("toast.somethingWentWrong"), "error")
             }
           }}
           onCancelComplete={() => {

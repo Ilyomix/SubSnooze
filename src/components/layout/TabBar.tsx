@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils"
 import { hapticLight } from "@/lib/haptics"
 import { House, List, Settings } from "lucide-react"
 import { type ReactNode } from "react"
+import { useI18n } from "@/lib/i18n"
 
 type TabId = "home" | "subs" | "settings"
 
@@ -38,23 +39,24 @@ function TabItem({ icon, label, isActive, onClick }: TabItemProps) {
 }
 
 export function TabBar({ activeTab, onTabChange }: TabBarProps) {
+  const { t } = useI18n()
   return (
     <div className="fixed bottom-0 left-0 right-0 flex items-start justify-around bg-surface px-6 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]" style={{ minHeight: "calc(50px + max(16px, env(safe-area-inset-bottom)))" }}>
       <TabItem
         icon={<House className="h-[22px] w-[22px]" />}
-        label="Home"
+        label={t("tabs.home")}
         isActive={activeTab === "home"}
         onClick={() => onTabChange("home")}
       />
       <TabItem
         icon={<List className="h-[22px] w-[22px]" />}
-        label="Subs"
+        label={t("tabs.subscriptions")}
         isActive={activeTab === "subs"}
         onClick={() => onTabChange("subs")}
       />
       <TabItem
         icon={<Settings className="h-[22px] w-[22px]" />}
-        label="Settings"
+        label={t("tabs.settings")}
         isActive={activeTab === "settings"}
         onClick={() => onTabChange("settings")}
       />

@@ -39,6 +39,8 @@ export function useUser() {
     phoneNumber: profile?.phone_number ?? null,
     fcmToken: profile?.fcm_token ?? null,
     reminderPreset: (profile?.reminder_preset ?? "aggressive") as ReminderPreset,
+    locale: profile?.locale ?? "en",
+    preferredCurrency: profile?.preferred_currency ?? "USD",
 
     // State
     isAuthenticated: !!authUser,
@@ -47,6 +49,36 @@ export function useUser() {
     // Actions
     signOut,
     refreshProfile,
+
+    // Update locale preference
+    updateLocale: async (locale: string) => {
+      if (!authUser) return
+      const { error } = await supabase
+        .from("users")
+        .update({ locale })
+        .eq("id", authUser.id)
+
+      if (error) {
+        console.error("Failed to update locale:", error)
+        throw error
+      }
+      await refreshProfile()
+    },
+
+    // Update currency preference
+    updateCurrency: async (currency: string) => {
+      if (!authUser) return
+      const { error } = await supabase
+        .from("users")
+        .update({ preferred_currency: currency })
+        .eq("id", authUser.id)
+
+      if (error) {
+        console.error("Failed to update currency:", error)
+        throw error
+      }
+      await refreshProfile()
+    },
 
     // Update reminder preset
     updateReminderPreset: async (preset: ReminderPreset) => {

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next"
 import { Outfit, Inter } from "next/font/google"
 import { AuthProvider } from "@/contexts/AuthContext"
 import { ToastProvider } from "@/hooks/useToast"
+import { I18nProvider } from "@/lib/i18n"
 import { CookieBanner } from "@/components/ui/CookieBanner"
 import { AnalyticsProvider } from "@/lib/analytics/provider"
 import "@/styles/globals.css"
@@ -81,12 +82,14 @@ export default function RootLayout({
       </head>
       <body className="font-sans">
         <AnalyticsProvider>
-          <AuthProvider>
-            <ToastProvider>
-              {children}
-              <CookieBanner />
-            </ToastProvider>
-          </AuthProvider>
+          <I18nProvider>
+            <AuthProvider>
+              <ToastProvider>
+                {children}
+                <CookieBanner />
+              </ToastProvider>
+            </AuthProvider>
+          </I18nProvider>
         </AnalyticsProvider>
       </body>
     </html>

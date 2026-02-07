@@ -3,40 +3,43 @@
 import { useState } from "react"
 import { Bell, CreditCard, ArrowRight, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui"
+import { useI18n } from "@/lib/i18n"
 
 interface OnboardingProps {
   onComplete: () => void
   onRequestNotifications: () => void
 }
 
-const STEPS = [
-  {
-    icon: Sparkles,
-    iconBg: "bg-primary/10",
-    iconColor: "text-primary",
-    title: "Welcome to SubSnooze",
-    description: "Track your subscriptions, get timely reminders, and never pay for something you forgot to cancel.",
-  },
-  {
-    icon: CreditCard,
-    iconBg: "bg-primary/10",
-    iconColor: "text-primary",
-    title: "Add your subscriptions",
-    description: "Start by adding a subscription you want to track. We\u2019ll remind you before it renews so you can decide what to keep.",
-  },
-  {
-    icon: Bell,
-    iconBg: "bg-accent/10",
-    iconColor: "text-accent",
-    title: "Stay in the loop",
-    description: "Enable notifications so we can nudge you before renewals. We\u2019ll never spam \u2014 only helpful, timely reminders.",
-  },
-] as const
-
 export function Onboarding({ onComplete, onRequestNotifications }: OnboardingProps) {
+  const { t } = useI18n()
   const [step, setStep] = useState(0)
-  const current = STEPS[step]
-  const isLast = step === STEPS.length - 1
+
+  const steps = [
+    {
+      icon: Sparkles,
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
+      title: t("onboarding.welcomeTitle"),
+      description: t("onboarding.welcomeDescription"),
+    },
+    {
+      icon: CreditCard,
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
+      title: t("onboarding.addTitle"),
+      description: t("onboarding.addDescription"),
+    },
+    {
+      icon: Bell,
+      iconBg: "bg-accent/10",
+      iconColor: "text-accent",
+      title: t("onboarding.notifyTitle"),
+      description: t("onboarding.notifyDescription"),
+    },
+  ]
+
+  const current = steps[step]
+  const isLast = step === steps.length - 1
 
   const handleNext = () => {
     if (isLast) {
@@ -59,7 +62,7 @@ export function Onboarding({ onComplete, onRequestNotifications }: OnboardingPro
           onClick={handleSkip}
           className="rounded-lg px-3 py-2 text-sm font-medium text-text-tertiary hover:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
-          Skip
+          {t("common.skip")}
         </button>
       </div>
 
@@ -83,7 +86,7 @@ export function Onboarding({ onComplete, onRequestNotifications }: OnboardingPro
       <div className="flex flex-col gap-4 px-6 pb-[max(2rem,env(safe-area-inset-bottom))]">
         {/* Progress dots */}
         <div className="flex items-center justify-center gap-2">
-          {STEPS.map((_, i) => (
+          {steps.map((_, i) => (
             <div
               key={i}
               className={`h-2 rounded-full motion-safe:transition-all motion-safe:duration-300 ${
@@ -100,7 +103,7 @@ export function Onboarding({ onComplete, onRequestNotifications }: OnboardingPro
           onClick={handleNext}
           className="w-full"
         >
-          {isLast ? "Enable notifications & start" : "Continue"}
+          {isLast ? t("onboarding.enableAndStart") : t("common.continue")}
         </Button>
 
         {isLast && (
@@ -108,7 +111,7 @@ export function Onboarding({ onComplete, onRequestNotifications }: OnboardingPro
             onClick={handleSkip}
             className="text-center text-sm text-text-tertiary hover:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
           >
-            Maybe later
+            {t("onboarding.maybeLater")}
           </button>
         )}
       </div>

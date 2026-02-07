@@ -6,6 +6,7 @@ import { createClient, isSupabaseConfigured } from "@/lib/supabase/client"
 import { Button } from "@/components/ui"
 import { Mail, Lock, Eye, EyeOff, User } from "lucide-react"
 import { trackSignup } from "@/lib/analytics/events"
+import { useI18n } from "@/lib/i18n"
 
 interface SignupFormProps {
   onSwitchToLogin: () => void
@@ -21,6 +22,7 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { t } = useI18n()
 
   const supabase = createClient()
 
@@ -29,17 +31,17 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
     setError(null)
 
     if (password !== confirmPassword) {
-      setError("Passwords don't match")
+      setError(t("settings.passwordsMismatch"))
       return
     }
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters")
+      setError(t("settings.passwordMinLength"))
       return
     }
 
     if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
-      setError("Password needs uppercase, lowercase, and a number")
+      setError(t("auth.passwordRequirements"))
       return
     }
 
@@ -67,7 +69,7 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
 
   const handleGoogleSignup = async () => {
     if (!isSupabaseConfigured()) {
-      setError("Authentication is not configured. Please contact support.")
+      setError(t("auth.authNotConfigured"))
       return
     }
 
@@ -118,12 +120,12 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
           />
         </svg>
-        Continue with Google
+        {t("auth.continueWithGoogle")}
       </Button>
 
       <div className="flex items-center gap-4">
         <div className="h-px flex-1 bg-divider" />
-        <span className="text-sm text-text-tertiary">or</span>
+        <span className="text-sm text-text-tertiary">{t("common.or")}</span>
         <div className="h-px flex-1 bg-divider" />
       </div>
 
@@ -137,7 +139,7 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
 
         <div className="space-y-2">
           <label htmlFor="name" className="text-sm font-medium text-text-secondary">
-            Name
+            {t("auth.nameLabel")}
           </label>
           <div className="relative">
             <User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-text-tertiary" />
@@ -148,7 +150,7 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
               autoComplete="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Your name"
+              placeholder={t("auth.namePlaceholder")}
               required
               className="w-full rounded-xl border border-divider bg-surface py-4 pl-12 pr-4 text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
             />
@@ -157,7 +159,7 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
 
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-medium text-text-secondary">
-            Email
+            {t("auth.emailLabel")}
           </label>
           <div className="relative">
             <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-text-tertiary" />
@@ -168,7 +170,7 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
               autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t("auth.emailPlaceholder")}
               required
               className="w-full rounded-xl border border-divider bg-surface py-4 pl-12 pr-4 text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
             />
@@ -177,7 +179,7 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
 
         <div className="space-y-2">
           <label htmlFor="password" className="text-sm font-medium text-text-secondary">
-            Password
+            {t("auth.passwordLabel")}
           </label>
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-text-tertiary" />
@@ -188,7 +190,7 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Min. 8 chars, upper + lower + number"
+              placeholder={t("auth.newPasswordPlaceholder")}
               required
               minLength={8}
               className="w-full rounded-xl border border-divider bg-surface py-4 pl-12 pr-12 text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
@@ -206,7 +208,7 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
 
         <div className="space-y-2">
           <label htmlFor="confirmPassword" className="text-sm font-medium text-text-secondary">
-            Confirm Password
+            {t("auth.confirmPasswordLabel")}
           </label>
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-text-tertiary" />
@@ -217,7 +219,7 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
               autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm your password"
+              placeholder={t("auth.confirmPasswordPlaceholder")}
               required
               className="w-full rounded-xl border border-divider bg-surface py-4 pl-12 pr-4 text-text-primary placeholder:text-text-tertiary focus-visible:outline-none focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary"
             />
@@ -232,22 +234,22 @@ export function SignupForm({ onSwitchToLogin, onSuccess }: SignupFormProps) {
             className="mt-0.5 h-4 w-4 rounded border-divider text-primary accent-primary focus:ring-primary"
           />
           <span className="text-sm text-text-secondary">
-            I agree to the{" "}
-            <Link href="/terms" className="text-primary hover:underline" target="_blank">Terms of Service</Link>
-            {" "}and{" "}
-            <Link href="/privacy" className="text-primary hover:underline" target="_blank">Privacy Policy</Link>
+            {t("auth.acceptTerms")}{" "}
+            <Link href="/terms" className="text-primary hover:underline" target="_blank">{t("auth.termsOfService")}</Link>
+            {" "}{t("auth.and")}{" "}
+            <Link href="/privacy" className="text-primary hover:underline" target="_blank">{t("auth.privacyPolicy")}</Link>
           </span>
         </label>
 
         <Button type="submit" size="md" className="w-full" disabled={loading || !acceptedTerms}>
-          {loading ? "Creating account…" : "Create account"}
+          {loading ? t("auth.creatingAccount") : t("auth.createAccount")}
         </Button>
       </form>
 
       <p className="text-center text-sm text-text-secondary">
-        Already have an account?{" "}
+        {t("auth.hasAccount")}{" "}
         <button onClick={onSwitchToLogin} className="text-primary hover:underline">
-          Sign in
+          {t("auth.signIn")}
         </button>
       </p>
     </div>

@@ -7,7 +7,8 @@ import { Card, Badge, ServiceIcon, ErrorState } from "@/components/ui"
 import type { Subscription } from "@/types/subscription"
 import type { BillingCycle } from "@/types/database"
 import { daysUntilRenewal } from "@/lib/date-utils"
-import { cn, formatCurrency } from "@/lib/utils"
+import { cn } from "@/lib/utils"
+import { useI18n } from "@/lib/i18n"
 
 type PriceView = "monthly" | "yearly"
 type SortBy = "name" | "price" | "date"
@@ -49,6 +50,7 @@ function SubscriptionItem({
   onClick: () => void
   priceView: PriceView
 }) {
+  const { t, formatCurrency, formatDate } = useI18n()
   const daysUntil = daysUntilRenewal(sub.renewalDate)
   const isRenewingSoon = sub.status === "renewing_soon"
   const isCancelled = sub.status === "cancelled"
@@ -82,8 +84,8 @@ function SubscriptionItem({
           </span>
           <span className="text-sm text-text-tertiary truncate">
             {isCancelled
-              ? `Cancelled \u00B7 Was due ${sub.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
-              : `Next renewal \u00B7 ${sub.renewalDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+              ? t("allSubscriptions.cancelledWasDue", { date: formatDate(sub.renewalDate, "short") })
+              : t("allSubscriptions.nextRenewal", { date: formatDate(sub.renewalDate, "short") })
             }
           </span>
         </div>
@@ -93,7 +95,7 @@ function SubscriptionItem({
       <div className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2">
         {!isCancelled && isRenewingSoon && (
           <Badge variant="warning">
-            {daysUntil <= 0 ? "Renews today" : daysUntil === 1 ? "Renews tomorrow" : `Renews in ${daysUntil} days`}
+            {daysUntil <= 0 ? t("allSubscriptions.renewsToday") : daysUntil === 1 ? t("allSubscriptions.renewsTomorrow") : t("allSubscriptions.renewsInDays", { days: daysUntil })}
           </Badge>
         )}
         <div className="flex items-center gap-2">
@@ -101,7 +103,7 @@ function SubscriptionItem({
             "text-sm font-semibold tabular-nums text-text-primary",
             isCancelled && "line-through"
           )}>
-            {formatCurrency(displayPrice(sub.price, sub.billingCycle, priceView))}/{priceView === "yearly" ? "yr" : "mo"}
+            {formatCurrency(displayPrice(sub.price, sub.billingCycle, priceView))}/{priceView === "yearly" ? t("allSubscriptions.yr") : t("allSubscriptions.mo")}
           </span>
           <ChevronRight className="h-[18px] w-[18px] text-text-muted" aria-hidden="true" />
         </div>
@@ -122,13 +124,14 @@ export function AllSubscriptions({
   error,
   onRetry,
 }: AllSubscriptionsProps) {
+  const { t, formatCurrency, formatDate } = useI18n()
   const [searchTerm, setSearchTerm] = useState("")
   const [priceView, setPriceView] = useState<PriceView>(getInitialPriceView)
   const [sortBy, setSortBy] = useState<SortBy>("date")
 
-  const sortLabel = sortBy === "date" ? "Due soon" : sortBy === "price" ? "Highest cost" : "A–Z"
+  const sortLabel = sortBy === "date" ? t("allSubscriptions.sortDueSoon") : sortBy === "price" ? t("allSubscriptions.sortHighestCost") : t("allSubscriptions.sortAZ")
   const nextSortBy: SortBy = sortBy === "date" ? "price" : sortBy === "price" ? "name" : "date"
-  const nextSortLabel = nextSortBy === "date" ? "Due soon" : nextSortBy === "price" ? "Highest cost" : "A–Z"
+  const nextSortLabel = nextSortBy === "date" ? t("allSubscriptions.sortDueSoon") : nextSortBy === "price" ? t("allSubscriptions.sortHighestCost") : t("allSubscriptions.sortAZ")
 
   const togglePriceView = (view: PriceView) => {
     setPriceView(view)
@@ -196,7 +199,7 @@ export function AllSubscriptions({
         {/* Header */}
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-text-primary">Your Subscriptions</h1>
+            <h1 className="text-2xl font-semibold text-text-primary">{t("allSubscriptions.title")}</h1>
             <div className="flex rounded-full bg-surface p-0.5" role="radiogroup" aria-label="Price view">
               <button
                 role="radio"
@@ -209,7 +212,7 @@ export function AllSubscriptions({
                     : "text-text-secondary"
                 )}
               >
-                mo
+                {t("allSubscriptions.mo")}
               </button>
               <button
                 role="radio"
@@ -222,7 +225,7 @@ export function AllSubscriptions({
                     : "text-text-secondary"
                 )}
               >
-                yr
+                {t("allSubscriptions.yr")}
               </button>
             </div>
           </div>
@@ -230,10 +233,10 @@ export function AllSubscriptions({
           {allActive.length > 0 && (
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl font-bold tabular-nums text-primary sm:text-3xl">
-                {formatCurrency(totalDisplay, true)}
+                {formatCurrency(totalDisplay, { whole: true })}
               </span>
               <span className="text-sm font-medium text-text-tertiary">
-                /{priceView === "yearly" ? "year" : "month"} across {allActive.length} {allActive.length === 1 ? "subscription" : "subscriptions"}
+                {priceView === "yearly" ? t("allSubscriptions.perYear") : t("allSubscriptions.perMonth")} {t("allSubscriptions.across", { count: allActive.length })}
               </span>
             </div>
           )}
@@ -247,7 +250,7 @@ export function AllSubscriptions({
               type="text"
               name="subscription-search"
               aria-label="Search subscriptions"
-              placeholder="Search subscriptions…"
+              placeholder={t("allSubscriptions.searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value)
@@ -275,7 +278,7 @@ export function AllSubscriptions({
         {active.length > 0 && (
           <div className="flex flex-col gap-3">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
-              Active ({active.length})
+              {t("allSubscriptions.active")} ({active.length})
             </h2>
             <div className="flex">
               <div className="w-1 bg-primary" aria-hidden="true" />
@@ -301,7 +304,7 @@ export function AllSubscriptions({
             <div className="flex items-center gap-2">
               <XCircle className="h-4 w-4 text-text-muted" aria-hidden="true" />
               <h2 className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-                Cancelled ({cancelled.length})
+                {t("allSubscriptions.cancelled")} ({cancelled.length})
               </h2>
             </div>
             <div className="flex">
@@ -329,9 +332,9 @@ export function AllSubscriptions({
               <Search className="h-7 w-7 text-primary" aria-hidden="true" />
             </div>
             <div className="flex flex-col items-center gap-1">
-              <span className="text-lg font-semibold text-text-primary">No subscriptions yet</span>
+              <span className="text-lg font-semibold text-text-primary">{t("allSubscriptions.noSubscriptions")}</span>
               <span className="text-sm text-text-tertiary text-center max-w-[240px]">
-                Track your first subscription to see it here.
+                {t("allSubscriptions.noSubscriptionsHint")}
               </span>
             </div>
             {onAddSubscription && (
@@ -340,7 +343,7 @@ export function AllSubscriptions({
                 className="flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
               >
                 <Plus className="h-4 w-4" aria-hidden="true" />
-                Add subscription
+                {t("dashboard.addSubscription")}
               </button>
             )}
           </div>
@@ -349,7 +352,7 @@ export function AllSubscriptions({
         {/* No Search Results */}
         {subscriptions.length > 0 && active.length === 0 && cancelled.length === 0 && (
           <div className="flex flex-col items-center gap-2 py-16" role="status" aria-live="polite">
-            <span className="text-text-secondary">No subscriptions matching {"\u201C"}{searchTerm}{"\u201D"}</span>
+            <span className="text-text-secondary">{t("allSubscriptions.noResults", { query: searchTerm })}</span>
           </div>
         )}
       </div>
