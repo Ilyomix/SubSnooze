@@ -13,7 +13,10 @@
     "skip": "Passer",
     "continue": "Continuer",
     "confirm": "Confirmer",
-    "close": "Fermer"
+    "close": "Fermer",
+    "stepOf": "\u00c9tape {current} sur {total}",
+    "added": "Ajout\u00e9\u202f!",
+    "addAnotherQuestion": "Ajouter un autre abonnement\u202f?"
   },
   "tabs": {
     "home": "Accueil",
@@ -24,7 +27,7 @@
     "greeting": "Salut, {name}",
     "monthlyLabel": "Mensuel",
     "savedLabel": "\u00c9conomis\u00e9",
-    "activeSubscriptions": "{count} {count, plural, one {abonnement actif} other {abonnements actifs}}",
+    "activeSubscriptions": "{count, plural, one {abonnement actif} other {abonnements actifs}}",
     "cancelledNiceWork": "{count} r\u00e9sili\u00e9(s) \u2014 bien jou\u00e9",
     "cancelToSave": "R\u00e9siliez vos abos inutiles pour \u00e9conomiser",
     "noSubscriptions": "Aucun abonnement",

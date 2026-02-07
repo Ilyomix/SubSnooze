@@ -5,6 +5,7 @@ import { DetailShell } from "@/components/layout"
 import { Button, SubscriptionFormFields, ServiceIcon, StepProgress } from "@/components/ui"
 import type { SubscriptionFormData } from "@/components/ui"
 import { calculateNextRenewalDate, parseLocalDate } from "@/lib/date-utils"
+import { useI18n } from "@/lib/i18n"
 import type { BillingCycle } from "@/types/database"
 
 interface ServiceInfo {
@@ -34,6 +35,8 @@ export function AddSubscriptionStep2({
   embedded = false,
   showProgress = true,
 }: AddSubscriptionStep2Props) {
+  const { t } = useI18n()
+
   // Pre-fill price from database if available
   const defaultPrice = service.priceMonthly
     ? service.priceMonthly.toFixed(2)
@@ -51,28 +54,28 @@ export function AddSubscriptionStep2({
 
   const content = (
     <div className="flex min-h-full flex-col">
-      <div className="flex flex-1 flex-col gap-8 px-6 pt-4 pb-32">
+      <div className="flex flex-1 flex-col gap-6 px-6 pt-4 pb-32">
         {embedded && (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-center gap-2 pt-2">
             <ServiceIcon
               name={service.name}
               logoColor={service.logoColor}
               logoUrl={service.logo.startsWith("http") ? service.logo : undefined}
               domain={service.domain ?? undefined}
-              size={36}
+              size={48}
             />
-            <span className="text-[15px] font-semibold text-text-primary truncate">{service.name}</span>
+            <span className="text-lg font-semibold text-text-primary truncate">{service.name}</span>
           </div>
         )}
 
         {showProgress && (
-          <StepProgress current={2} total={2} subtitle="Almost there, add the details" />
+          <StepProgress current={2} total={2} subtitle={t("addSubscription.step2Subtitle")} />
         )}
 
         <SubscriptionFormFields
           value={formData}
           onChange={setFormData}
-          priceLabel={(cycle: BillingCycle) => cycle === "yearly" ? "Yearly price" : "Monthly price"}
+          priceLabel={(cycle: BillingCycle) => cycle === "yearly" ? t("addSubscription.yearlyPrice") : t("addSubscription.monthlyPrice")}
           autoCalculateRenewalOnCycleChange
           pricingHints={{ monthly: service.priceMonthly, yearly: service.priceYearly }}
         />
@@ -91,7 +94,7 @@ export function AddSubscriptionStep2({
             disabled={!isValidPrice || !isValidDate}
             className="w-full"
           >
-            Save subscription
+            {t("addSubscription.saveSubscription")}
           </Button>
         </div>
       </div>

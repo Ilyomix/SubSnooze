@@ -39,7 +39,8 @@ export function Dashboard({
   error,
   onRetry,
 }: DashboardProps) {
-  const { t, currency } = useI18n()
+  const { t, currency, locale } = useI18n()
+  const localeTag = locale === "fr" ? "fr-FR" : "en-US"
   const [showAllGood, setShowAllGood] = useState(false)
 
   // Cached display values for smooth NumberFlow animations
@@ -112,6 +113,7 @@ export function Dashboard({
             <div className="flex flex-col gap-1">
               <NumberFlow
                 value={displayMonthly}
+                locales={localeTag}
                 format={{ style: "currency", currency, maximumFractionDigits: 0 }}
                 transformTiming={{ duration: 750, easing: "ease-out" }}
                 spinTiming={{ duration: 750, easing: "ease-out" }}
@@ -139,6 +141,7 @@ export function Dashboard({
             <div className="flex flex-col gap-1">
               <NumberFlow
                 value={displaySaved}
+                locales={localeTag}
                 format={{ style: "currency", currency, maximumFractionDigits: 0 }}
                 transformTiming={{ duration: 750, easing: "ease-out" }}
                 spinTiming={{ duration: 750, easing: "ease-out" }}

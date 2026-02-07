@@ -126,9 +126,9 @@ export function SubscriptionFormFields({
         )}
         {!readOnly && !priceError && priceNum > 0 && (
           <p className="px-[18px] pb-2 -mt-2 text-xs text-text-tertiary">
-            {value.billingCycle === "monthly" && `${formatCurrency(priceNum * 12)}/yr`}
-            {value.billingCycle === "yearly" && `${formatCurrency(priceNum / 12)}/mo`}
-            {value.billingCycle === "weekly" && `${formatCurrency(priceNum * 4.33)}/mo`}
+            {value.billingCycle === "monthly" && `${formatCurrency(priceNum * 12)}${t("allSubscriptions.perYear")}`}
+            {value.billingCycle === "yearly" && `${formatCurrency(priceNum / 12)}${t("allSubscriptions.perMonth")}`}
+            {value.billingCycle === "weekly" && `${formatCurrency(priceNum * 4.33)}${t("allSubscriptions.perMonth")}`}
           </p>
         )}
       </div>

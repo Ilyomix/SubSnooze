@@ -13,7 +13,10 @@
     "skip": "Skip",
     "continue": "Continue",
     "confirm": "Confirm",
-    "close": "Close"
+    "close": "Close",
+    "stepOf": "Step {current} of {total}",
+    "added": "Added!",
+    "addAnotherQuestion": "Want to add another subscription?"
   },
   "tabs": {
     "home": "Home",
@@ -24,7 +27,7 @@
     "greeting": "Hi, {name}",
     "monthlyLabel": "Monthly",
     "savedLabel": "Saved",
-    "activeSubscriptions": "{count} active {count, plural, one {subscription} other {subscriptions}}",
+    "activeSubscriptions": "active {count, plural, one {subscription} other {subscriptions}}",
     "cancelledNiceWork": "{count} cancelled \u2014 nice work",
     "cancelToSave": "Cancel unused subs to save",
     "noSubscriptions": "No subscriptions yet",
