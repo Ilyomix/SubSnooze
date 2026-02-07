@@ -233,11 +233,20 @@ export default function Home() {
     const params = new URLSearchParams(window.location.search)
     const upgrade = params.get("upgrade")
     if (upgrade === "success") {
-      toast(t("toast.welcomePro"), "success")
-      refreshProfile()
+      setModal(null) // Close upgrade modal immediately
       trackUpgradeComplete()
       // Clean URL
       window.history.replaceState({}, "", window.location.pathname)
+      // Webhook may not have processed yet — retry profile refresh until premium is set
+      const tryRefresh = async (attempts: number) => {
+        await refreshProfile()
+        if (attempts > 0) {
+          // Check again after a delay if premium hasn't been set by the webhook yet
+          setTimeout(() => tryRefresh(attempts - 1), 2000)
+        }
+      }
+      toast(t("toast.welcomePro"), "success")
+      tryRefresh(3)
     } else if (upgrade === "cancelled") {
       toast(t("toast.upgradeCancelled"), "info")
       window.history.replaceState({}, "", window.location.pathname)

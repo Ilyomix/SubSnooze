@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { LoginForm, SignupForm } from "@/components/auth"
 import { createClient } from "@/lib/supabase/client"
@@ -36,12 +37,20 @@ function HowItWorksStep({ number, title, description }: { number: number; title:
 }
 
 export default function LoginPage() {
+  const router = useRouter()
   const [view, setView] = useState<AuthView>("landing")
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const supabase = createClient()
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) router.replace("/")
+    })
+  }, [supabase, router])
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault()
