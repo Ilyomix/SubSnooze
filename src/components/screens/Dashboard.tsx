@@ -99,46 +99,56 @@ export function Dashboard({
         </h1>
 
         {/* Summary Cards */}
-        <div className="flex gap-3" aria-live="polite" aria-atomic="true">
-          {/* Money Saved — primary card */}
-          <div className="flex flex-1 flex-col gap-2 rounded-2xl bg-primary p-5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
-              <PiggyBank className="h-5 w-5 text-white" aria-hidden="true" />
+        <div className="grid grid-cols-2 gap-3" aria-live="polite" aria-atomic="true">
+          {/* Monthly Spend — primary focus card */}
+          <div className="flex flex-col justify-between rounded-2xl bg-black/80 p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 sm:h-9 sm:w-9 sm:rounded-xl">
+                <CreditCard className="h-4 w-4 text-white sm:h-5 sm:w-5" aria-hidden="true" />
+              </div>
+              <span className="text-xs font-semibold uppercase tracking-wide text-white/50">Monthly</span>
             </div>
-            <NumberFlow
-              value={displaySaved}
-              format={{ style: "currency", currency: CURRENCY_CODE, maximumFractionDigits: 0 }}
-              transformTiming={{ duration: 750, easing: "ease-out" }}
-              spinTiming={{ duration: 750, easing: "ease-out" }}
-              className="text-3xl font-bold tabular-nums text-white"
-            />
-            <span className="text-xs font-medium text-white/70">
-              {cancelled.length > 0
-                ? `Saved — nice work`
-                : "Saved this year"}
-            </span>
-          </div>
-
-          {/* Monthly Spend */}
-          <div className="flex flex-1 flex-col gap-2 rounded-2xl bg-black/80 p-5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
-              <CreditCard className="h-5 w-5 text-white" aria-hidden="true" />
-            </div>
-            <NumberFlow
-              value={displayMonthly}
-              format={{ style: "currency", currency: CURRENCY_CODE, maximumFractionDigits: 0 }}
-              transformTiming={{ duration: 750, easing: "ease-out" }}
-              spinTiming={{ duration: 750, easing: "ease-out" }}
-              className="text-3xl font-bold tabular-nums text-white"
-            />
-            <span className="text-xs font-medium text-white/60">
+            <div className="flex flex-col gap-1">
               <NumberFlow
-                value={displayActive}
+                value={displayMonthly}
+                format={{ style: "currency", currency: CURRENCY_CODE, maximumFractionDigits: 0 }}
                 transformTiming={{ duration: 750, easing: "ease-out" }}
                 spinTiming={{ duration: 750, easing: "ease-out" }}
-                className="tabular-nums"
-              />{" "}active {activeCount === 1 ? "sub" : "subs"}/mo
-            </span>
+                className="text-2xl font-bold tabular-nums text-white sm:text-3xl"
+              />
+              <span className="text-[11px] font-medium text-white/50 sm:text-xs">
+                <NumberFlow
+                  value={displayActive}
+                  transformTiming={{ duration: 750, easing: "ease-out" }}
+                  spinTiming={{ duration: 750, easing: "ease-out" }}
+                  className="tabular-nums"
+                />{" "}active {activeCount === 1 ? "subscription" : "subscriptions"}
+              </span>
+            </div>
+          </div>
+
+          {/* Money Saved — reward card */}
+          <div className="flex flex-col justify-between rounded-2xl bg-primary p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 sm:h-9 sm:w-9 sm:rounded-xl">
+                <PiggyBank className="h-4 w-4 text-white sm:h-5 sm:w-5" aria-hidden="true" />
+              </div>
+              <span className="text-xs font-semibold uppercase tracking-wide text-white/60">Saved</span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <NumberFlow
+                value={displaySaved}
+                format={{ style: "currency", currency: CURRENCY_CODE, maximumFractionDigits: 0 }}
+                transformTiming={{ duration: 750, easing: "ease-out" }}
+                spinTiming={{ duration: 750, easing: "ease-out" }}
+                className="text-2xl font-bold tabular-nums text-white sm:text-3xl"
+              />
+              <span className="text-[11px] font-medium text-white/60 sm:text-xs">
+                {cancelled.length > 0
+                  ? `${cancelled.length} cancelled — nice work`
+                  : "Cancel unused subs to save"}
+              </span>
+            </div>
           </div>
         </div>
 

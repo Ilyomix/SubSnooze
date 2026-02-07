@@ -194,19 +194,16 @@ export function AllSubscriptions({
     <AppShell activeTab={activeTab} onTabChange={onTabChange} onNotificationClick={onNotificationClick} notificationCount={notificationCount}>
       <div className="flex flex-col gap-5 px-6 pt-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-text-primary">Your Subscriptions</h1>
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-bold tabular-nums text-primary">
-              {formatCurrency(totalDisplay, true)}/{priceView === "yearly" ? "yr" : "mo"}
-            </span>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-semibold text-text-primary">Your Subscriptions</h1>
             <div className="flex rounded-full bg-surface p-0.5" role="radiogroup" aria-label="Price view">
               <button
                 role="radio"
                 aria-checked={priceView === "monthly"}
                 onClick={() => togglePriceView("monthly")}
                 className={cn(
-                  "rounded-full px-2 py-1 text-xs font-semibold transition-colors",
+                  "rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
                   priceView === "monthly"
                     ? "bg-primary text-white"
                     : "text-text-secondary"
@@ -219,7 +216,7 @@ export function AllSubscriptions({
                 aria-checked={priceView === "yearly"}
                 onClick={() => togglePriceView("yearly")}
                 className={cn(
-                  "rounded-full px-2 py-1 text-xs font-semibold transition-colors",
+                  "rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
                   priceView === "yearly"
                     ? "bg-primary text-white"
                     : "text-text-secondary"
@@ -229,6 +226,17 @@ export function AllSubscriptions({
               </button>
             </div>
           </div>
+          {/* Total amount — prominent on its own line */}
+          {allActive.length > 0 && (
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-bold tabular-nums text-primary sm:text-3xl">
+                {formatCurrency(totalDisplay, true)}
+              </span>
+              <span className="text-sm font-medium text-text-tertiary">
+                /{priceView === "yearly" ? "year" : "month"} across {allActive.length} {allActive.length === 1 ? "subscription" : "subscriptions"}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Search Bar + Sort */}
