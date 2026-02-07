@@ -1,8 +1,8 @@
 # SubSnooze — Deep Production Audit
 
-> Date: 2026-02-07
-> Overall status: **~95% feature-complete, ~75% production-ready**
-> Key blockers: Custom email, Stripe hardening, scroll bugs, security fixes
+> Date: 2026-02-07 (updated)
+> Overall status: **~90% feature-complete, ~70% production-ready**
+> Key blockers: Custom email, Stripe product setup, missing billing page, Pro plan visibility, scroll bugs, security fixes
 
 ---
 
@@ -11,13 +11,14 @@
 1. [Critical Bugs](#1-critical-bugs)
 2. [Supabase Auth & Email](#2-supabase-auth--email)
 3. [Stripe Production Readiness](#3-stripe-production-readiness)
-4. [Scroll-to-Top Bug](#4-scroll-to-top-bug)
-5. [Security Issues](#5-security-issues)
-6. [UX/UI Issues](#6-uxui-issues)
-7. [Code Quality](#7-code-quality)
-8. [Missing Features](#8-missing-features)
-9. [Infrastructure & Ops](#9-infrastructure--ops)
-10. [Priority Action Plan](#10-priority-action-plan)
+4. [Pro Plan Visibility & Billing Page](#4-pro-plan-visibility--billing-page)
+5. [Scroll-to-Top Bug](#5-scroll-to-top-bug)
+6. [Security Issues](#6-security-issues)
+7. [UX/UI Issues](#7-uxui-issues)
+8. [Code Quality](#8-code-quality)
+9. [Missing Features](#9-missing-features)
+10. [Infrastructure & Ops](#10-infrastructure--ops)
+11. [Priority Action Plan](#11-priority-action-plan)
 
 ---
 
@@ -150,7 +151,77 @@ SUPABASE_SMTP_PASS=
 
 ---
 
-## 4. Scroll-to-Top Bug
+## 4. Pro Plan Visibility & Billing Page
+
+### 4.1 How Users Discover Pro Today
+
+| Touchpoint | What Happens | Problem |
+|------------|-------------|---------|
+| **Settings → "Upgrade to Pro"** | Opens UpgradeModal | Only visible if user navigates to Settings |
+| **Hit 5-subscription limit** | UpgradeModal auto-opens | User must fail first to learn Pro exists |
+| **Dashboard** | **Nothing** — zero Pro mention | No upsell banner, no "5/5 used" indicator |
+| **AllSubscriptions** | **Nothing** | No "unlock unlimited" prompt |
+| **Onboarding** | **Nothing** | New users never hear about Pro |
+| **Public pricing page** | **Does not exist** | Checklist claims "S9 ✅" but no PricingPage component or `/pricing` route exists |
+
+**Verdict:** Free users have almost no organic way to discover Pro exists until they hit a wall.
+
+### 4.2 Missing: Dedicated Billing / Subscription Status Page
+
+There is **no billing page, account page, or plan management screen** anywhere in the app.
+
+**What exists today (in Settings, `Settings.tsx:754-806`):**
+- **Pro users**: See a "SubSnooze Pro — Lifetime access" badge + "Manage Billing" button (→ Stripe portal)
+- **Free users**: See "Upgrade to Pro" button (→ UpgradeModal)
+
+**What's missing:**
+| Component | Status | Impact |
+|-----------|--------|--------|
+| `/billing` or `/plan` route | Does not exist | No dedicated plan management |
+| Current plan card (Free vs Pro) | Only in Settings, minimal | User can't easily see their tier |
+| Payment history / receipts | Not in app | Must leave to Stripe portal |
+| Upgrade date display | Not shown | `stripe_payment_id` stored but never displayed |
+| Refund request flow | Not in app | Must email support manually |
+| Feature comparison (Free vs Pro) | Only in UpgradeModal | Disappears after closing modal |
+| Usage indicator (e.g. "3/5 subs used") | Does not exist | Free users don't know how close to limit |
+| Post-upgrade confirmation screen | Does not exist | Just a toast: "Welcome to Pro!" |
+
+### 4.3 Missing: Stripe Product Configuration
+
+The code references `STRIPE_PRICE_ID_PRO_LIFETIME` from env vars, but:
+- No product exists in Stripe Dashboard yet
+- No price object created
+- `pricing.ts` hardcodes display values (`$39`, `lifetime`) but these aren't synced from Stripe
+- The `PRO_FEATURES` list claims "SMS + Push + Email reminders" — but SMS doesn't work and email reminders are dead code
+- "Priority support" is listed as a Pro feature — but there's no support system or ticket system
+
+### 4.4 Missing: Pro Upsell in Dashboard
+
+`Dashboard.tsx` has **zero references** to `isPremium`, `isAtFreeLimit`, or `upgrade`. No upsell banner, no usage indicator, nothing.
+
+For an ADHD-friendly app, the Dashboard should show:
+- A clear "3/5 subscriptions used" progress indicator for free users
+- A subtle banner when approaching the limit (4/5 or 5/5)
+- Post-upgrade: a "Pro" badge somewhere visible
+
+### 4.5 Recommended Implementation
+
+**P0 — Before launch:**
+1. Create a `BillingPage` screen showing current plan, upgrade date, usage
+2. Add a usage indicator to Dashboard ("3/5 subscriptions" for free users)
+3. Create the actual Stripe product + price in Dashboard
+4. Fix `PRO_FEATURES` list (remove SMS claim, clarify email status)
+5. Add error feedback for Stripe portal failure (`Settings.tsx:774` — empty catch block)
+
+**P1 — Important:**
+6. Create a public `/pricing` page (or at minimum make the feature comparison accessible outside the modal)
+7. Mention Pro during onboarding
+8. Add "Unlock unlimited" prompt in AllSubscriptions when approaching limit
+9. Show post-upgrade confirmation screen (not just a toast)
+
+---
+
+## 5. Scroll-to-Top Bug
 
 ### 4.1 Root Cause
 
@@ -191,27 +262,27 @@ The `popstate` handler restores the screen and tab but **never calls** `restoreS
 
 ---
 
-## 5. Security Issues
+## 6. Security Issues
 
-### 5.1 Cancel URL Bypass (Critical — see 1.1)
+### 6.1 Cancel URL Bypass (Critical — see 1.1)
 
-### 5.2 console.log Leaks Internal Data
+### 6.2 console.log Leaks Internal Data
 **Files:**
 - `src/lib/analytics/web-vitals.ts:9` — logs metrics to browser console
 - `src/app/api/stripe/webhook/route.ts:57,74,98,125` — logs user IDs and payment status
 
 **Fix:** Remove or gate behind `NODE_ENV === 'development'`.
 
-### 5.3 dangerouslySetInnerHTML in Layout
+### 6.3 dangerouslySetInnerHTML in Layout
 **File:** `src/app/layout.tsx:81`
 
 Used for the dark-mode FOUC-prevention script. Currently safe (hardcoded string), but fragile. Consider using `next/script` with `strategy="beforeInteractive"` instead.
 
 ---
 
-## 6. UX/UI Issues
+## 7. UX/UI Issues
 
-### 6.1 Currency Selector Doesn't Convert Prices
+### 7.1 Currency Selector Doesn't Convert Prices
 Changing currency in Settings just swaps the symbol ($ → €) without converting values. A $10/mo subscription shows as €10/mo — misleading.
 
 **Options:**
@@ -219,26 +290,26 @@ Changing currency in Settings just swaps the symbol ($ → €) without converti
 - B) Store prices per-currency and clarify the setting is for **new** subscriptions only
 - C) Add a disclaimer: "Currency symbol only — prices are stored as entered"
 
-### 6.2 No Read-Only Subscription Detail View
+### 7.2 No Read-Only Subscription Detail View
 Users must enter edit mode to see full subscription details. Consider a detail view that shows info without edit affordances.
 
-### 6.3 Generic Error Messages
+### 7.3 Generic Error Messages
 `toast(t("toast.couldntAdd"), "error")` — doesn't tell users WHY (network error? validation? free tier limit?). Should differentiate error types.
 
-### 6.4 Silent Stripe Portal Failure (see 3.2)
+### 7.4 Silent Stripe Portal Failure (see 3.2)
 Button click → nothing happens. Should show error toast.
 
-### 6.5 Cancel Tracking Not Exposed
+### 7.5 Cancel Tracking Not Exposed
 `cancel_attempt_date` and `cancel_verified` are tracked in DB but never shown to users. Consider a "Cancellation pending — verify by [date]" status.
 
-### 6.6 SMS Toggle Shows "Coming Soon" Forever
+### 7.6 SMS Toggle Shows "Coming Soon" Forever
 `email_reminders_enabled` works (even though backend doesn't use it), but SMS toggle shows "Coming soon" with no timeline. Consider removing it entirely until implemented.
 
 ---
 
-## 7. Code Quality
+## 8. Code Quality
 
-### 7.1 Duplicated Price Calculation Logic (5 files)
+### 8.1 Duplicated Price Calculation Logic (5 files)
 The weekly→monthly conversion (`* 4.33`) is copy-pasted in 5 locations. Should be a single utility:
 ```tsx
 // src/lib/price-utils.ts
@@ -251,11 +322,11 @@ export function toMonthlyPrice(price: number, cycle: BillingCycle): number {
 }
 ```
 
-### 7.2 Empty Catch Blocks
+### 8.2 Empty Catch Blocks
 - `src/app/layout.tsx:71` — theme detection script swallows all errors
 - `src/components/screens/Settings.tsx:774` — Stripe portal errors silently caught
 
-### 7.3 No Integration/E2E/Component Tests
+### 8.3 No Integration/E2E/Component Tests
 - 51 unit tests exist (date-utils, rate-limit, services, utils)
 - 0 integration tests (auth flow, API routes, database)
 - 0 E2E tests (no Playwright/Cypress)
@@ -263,10 +334,17 @@ export function toMonthlyPrice(price: number, cycle: BillingCycle): number {
 
 ---
 
-## 8. Missing Features
+## 9. Missing Features
 
 | Feature | Status | Priority |
 |---------|--------|----------|
+| **Billing / Plan page** | Does not exist — no route, no component | **Critical** |
+| **Pro plan visibility in Dashboard** | Zero Pro references in Dashboard.tsx | **Critical** |
+| **Usage indicator (3/5 subs)** | Does not exist | **Critical** |
+| **Public pricing page** | Claimed done in checklist but no component/route found | **High** |
+| **Post-upgrade confirmation screen** | Only a toast, no dedicated screen | **High** |
+| **Stripe product/price creation** | Not created in Stripe Dashboard | **High** (blocks payments) |
+| **PRO_FEATURES list accuracy** | Claims SMS + Email but neither works | **High** (misleading) |
 | Email reminders (backend) | Not implemented — toggle is dead code | High |
 | Custom SMTP for auth emails | Not configured | High (blocks production scale) |
 | Webhook idempotency | Missing | High |
@@ -281,7 +359,7 @@ export function toMonthlyPrice(price: number, cycle: BillingCycle): number {
 
 ---
 
-## 9. Infrastructure & Ops
+## 10. Infrastructure & Ops
 
 | Item | Status |
 |------|--------|
@@ -295,39 +373,48 @@ export function toMonthlyPrice(price: number, cycle: BillingCycle): number {
 
 ---
 
-## 10. Priority Action Plan
+## 11. Priority Action Plan
 
-### P0 — Fix Before Launch
+### P0 — Critical / Fix Before Launch
 
-| # | Task | Effort |
-|---|------|--------|
-| 1 | Fix cancel URL XSS (`url.href` not original string) | 5 min |
-| 2 | Fix scroll-to-top: always reset on tab switch + add to popstate handler | 30 min |
-| 3 | Configure custom SMTP in Supabase (removes 3 email/hr limit) | 30 min (dashboard) |
-| 4 | Add Stripe webhook idempotency (event ID tracking) | 1-2 hrs |
-| 5 | Remove `console.log` from production paths or gate behind dev check | 15 min |
-| 6 | Add error feedback for Stripe portal failure in Settings | 10 min |
-| 7 | Either implement email reminders or remove the dead toggle | 2-4 hrs or 10 min |
+| # | Task | Effort | Category |
+|---|------|--------|----------|
+| 1 | **Create Billing/Plan page** — show current tier, usage (3/5), upgrade date, manage billing | 4-6 hrs | Stripe/UX |
+| 2 | **Add usage indicator to Dashboard** — "3/5 subscriptions" for free, Pro badge for premium | 1-2 hrs | UX |
+| 3 | **Create Stripe product + price** in Dashboard, configure webhook endpoint | 30 min | Stripe (dashboard) |
+| 4 | **Fix PRO_FEATURES** — remove "SMS" claim, clarify email status | 15 min | Honesty |
+| 5 | **Fix scroll-to-top** — always reset on tab/view switch + add to popstate handler | 30 min | Bug |
+| 6 | **Configure custom SMTP** in Supabase (removes 3 email/hr limit) | 30 min | Email (dashboard) |
+| 7 | **Add Stripe webhook idempotency** (event ID tracking) | 1-2 hrs | Security |
+| 8 | **Fix cancel URL XSS** (`url.href` not original string) | 5 min | Security |
+| 9 | **Fix silent Stripe portal failure** — add error toast in Settings catch block | 10 min | UX |
+| 10 | **Remove `console.log`** from production paths or gate behind dev check | 15 min | Security |
+| 11 | **Either implement email reminders or remove the dead toggle** | 2-4 hrs or 10 min | Email |
 
 ### P1 — Important for V1
 
-| # | Task | Effort |
-|---|------|--------|
-| 8 | Extract price calculation to shared utility (fix 4.33 → 52/12) | 30 min |
-| 9 | Add Stripe Dashboard products/prices/webhooks | 30 min (dashboard) |
-| 10 | Set up staging + production on Vercel | 1 hr (dashboard) |
-| 11 | Acquire custom domain | 10 min |
-| 12 | Add detailed error messages (not generic toasts) | 1 hr |
-| 13 | Clarify currency selector behavior | 30 min |
+| # | Task | Effort | Category |
+|---|------|--------|----------|
+| 12 | **Create public Pricing page** — feature comparison, CTA to upgrade | 2-3 hrs | Marketing |
+| 13 | **Add Pro mention in onboarding** — step showing Free vs Pro | 1 hr | Conversion |
+| 14 | **Add "Unlock unlimited" in AllSubscriptions** when approaching limit | 30 min | Conversion |
+| 15 | **Post-upgrade confirmation screen** (not just a toast) | 1-2 hrs | UX |
+| 16 | **Extract price calculation** to shared utility (fix 4.33 → 52/12) | 30 min | Code quality |
+| 17 | **Set up staging + production** on Vercel | 1 hr | Infra (dashboard) |
+| 18 | **Acquire custom domain** | 10 min | Infra |
+| 19 | **Add detailed error messages** (not generic toasts) | 1 hr | UX |
+| 20 | **Clarify currency selector** behavior (symbol-only disclaimer) | 30 min | UX |
 
 ### P2 — Nice to Have
 
-| # | Task | Effort |
-|---|------|--------|
-| 14 | Add integration tests for auth + Stripe flows | 4-8 hrs |
-| 15 | Add E2E tests (Playwright) | 4-8 hrs |
-| 16 | Set up uptime monitoring | 30 min |
-| 17 | Add read-only subscription detail view | 2 hrs |
-| 18 | Remove or implement SMS toggle | 10 min |
-| 19 | Expose cancel tracking status in UI | 1 hr |
-| 20 | Add `next/script` instead of dangerouslySetInnerHTML | 15 min |
+| # | Task | Effort | Category |
+|---|------|--------|----------|
+| 21 | Add integration tests for auth + Stripe flows | 4-8 hrs | Testing |
+| 22 | Add E2E tests (Playwright) | 4-8 hrs | Testing |
+| 23 | Set up uptime monitoring | 30 min | Infra |
+| 24 | Add read-only subscription detail view | 2 hrs | UX |
+| 25 | Remove or implement SMS toggle | 10 min | Cleanup |
+| 26 | Expose cancel tracking status in UI | 1 hr | UX |
+| 27 | Add `next/script` instead of dangerouslySetInnerHTML | 15 min | Security |
+| 28 | Payment history in-app (beyond Stripe portal) | 3-4 hrs | Billing |
+| 29 | Refund request flow in-app | 2-3 hrs | Billing |
