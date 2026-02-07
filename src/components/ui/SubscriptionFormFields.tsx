@@ -97,12 +97,12 @@ export function SubscriptionFormFields({
     <Card padding="none" className="overflow-hidden">
       {/* Price Row */}
       <div>
-        <label htmlFor="price" className="flex cursor-pointer items-center justify-between px-[18px] py-4">
+        <label htmlFor="price" className="flex cursor-pointer items-center justify-between px-4 py-4">
           <span className="text-[15px] font-medium text-text-primary">{resolvedPriceLabel}</span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-baseline gap-0.5">
             <span className={`text-[15px] font-semibold ${readOnly ? "text-text-muted" : "text-text-primary"}`}>{currencySymbol}</span>
             {readOnly ? (
-              <span className="text-[15px] font-semibold text-text-muted">{value.price}</span>
+              <span className="text-[15px] font-semibold tabular-nums text-text-muted">{value.price}</span>
             ) : (
               <input
                 id="price"
@@ -122,10 +122,10 @@ export function SubscriptionFormFields({
           </div>
         </label>
         {priceError && (
-          <p className="px-[18px] pb-2 -mt-2 text-xs text-accent" role="alert">{priceError}</p>
+          <p className="px-4 pb-3 -mt-2 text-xs text-accent" role="alert">{priceError}</p>
         )}
         {!readOnly && !priceError && priceNum > 0 && (
-          <p className="px-[18px] pb-2 -mt-2 text-xs text-text-tertiary">
+          <p className="px-4 pb-3 -mt-2 text-right text-xs text-text-tertiary">
             {value.billingCycle === "monthly" && `${formatCurrency(priceNum * 12)}${t("allSubscriptions.perYear")}`}
             {value.billingCycle === "yearly" && `${formatCurrency(priceNum / 12)}${t("allSubscriptions.perMonth")}`}
             {value.billingCycle === "weekly" && `${formatCurrency(priceNum * 4.33)}${t("allSubscriptions.perMonth")}`}
@@ -135,7 +135,7 @@ export function SubscriptionFormFields({
       <div className="h-px bg-divider" />
 
       {/* Billing Cycle Row */}
-      <label htmlFor="billingCycle" className="flex cursor-pointer items-center justify-between px-[18px] py-4">
+      <label htmlFor="billingCycle" className="flex cursor-pointer items-center justify-between px-4 py-4">
         <span className="text-[15px] font-medium text-text-primary">{t("subscriptionForm.billingCycle")}</span>
         {readOnly ? (
           <span className="text-[15px] font-semibold capitalize text-text-muted">
@@ -159,11 +159,11 @@ export function SubscriptionFormFields({
           </div>
         )}
       </label>
-        <div className="h-px bg-divider" />
+      <div className="h-px bg-divider" />
 
       {/* Renewal Date Row */}
       <div>
-        <label htmlFor="renewalDate" className="flex cursor-pointer items-center justify-between px-[18px] py-4">
+        <label htmlFor="renewalDate" className="flex cursor-pointer items-center justify-between px-4 py-4">
           <span className="text-[15px] font-medium text-text-primary">{renewalLabel}</span>
           {readOnly ? (
             <span className="text-[15px] font-semibold text-text-muted">{formattedDate}</span>
@@ -179,14 +179,14 @@ export function SubscriptionFormFields({
                 min={today}
                 onChange={(e) => handleRenewalDateChange(e.target.value)}
                 onBlur={() => setDateTouched(true)}
-                className="w-[12ch] appearance-none bg-transparent pr-5 text-right text-[15px] font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-datetime-edit-fields-wrapper]:p-0"
+                className="w-[14ch] appearance-none bg-transparent pr-6 text-right text-[15px] font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-datetime-edit-fields-wrapper]:p-0"
               />
               <Calendar className="pointer-events-none absolute right-0 h-4 w-4 text-text-muted" />
             </div>
           )}
         </label>
         {dateError && (
-          <p className="px-[18px] pb-2 -mt-2 text-xs text-accent" role="alert">{dateError}</p>
+          <p className="px-4 pb-3 -mt-2 text-xs text-accent" role="alert">{dateError}</p>
         )}
       </div>
     </Card>
