@@ -45,10 +45,13 @@ export default function LoginPage() {
 
   const supabase = createClient()
 
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to dashboard (preserving query params like ?upgrade=success)
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) router.replace("/")
+      if (user) {
+        const params = window.location.search
+        router.replace(`/${params}`)
+      }
     })
   }, [supabase, router])
 

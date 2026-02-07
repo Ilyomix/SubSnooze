@@ -38,7 +38,8 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
     } else {
       trackLogin("email")
       // Full page load so middleware validates the session cookie and lets us through
-      window.location.href = "/"
+      // Preserve query params (e.g. ?upgrade=success from Stripe redirect)
+      window.location.href = `/${window.location.search}`
     }
   }
 
@@ -51,10 +52,14 @@ export function LoginForm({ onSwitchToSignup, onForgotPassword }: LoginFormProps
     setLoading(true)
     setError(null)
 
+    // Preserve query params (e.g. ?upgrade=success) through the OAuth flow
+    const callbackUrl = `${window.location.origin}/auth/callback`
+    const nextPath = window.location.search ? `/${window.location.search}` : "/"
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${callbackUrl}?next=${encodeURIComponent(nextPath)}`,
       },
     })
 
