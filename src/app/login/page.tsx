@@ -65,8 +65,8 @@ export default function LoginPage() {
   if (view === "landing") {
     return (
       <div className="flex min-h-screen flex-col bg-background">
-        {/* Sticky Header */}
-        <header className="sticky top-0 z-40 flex items-center justify-between bg-background/80 px-6 py-4 backdrop-blur-sm">
+        {/* Sticky Header — safe-area for PWA status bar */}
+        <header className="sticky top-0 z-40 flex items-center justify-between bg-background/80 px-6 pb-4 pt-[max(1rem,env(safe-area-inset-top))] backdrop-blur-sm">
           <span className="text-xl font-bold text-primary">SubSnooze</span>
           <button
             onClick={() => setView("login")}
@@ -231,8 +231,8 @@ export default function LoginPage() {
   // Auth views
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* Header */}
-      <header className="flex items-center justify-between p-6">
+      {/* Header — safe-area for PWA status bar */}
+      <header className="flex items-center justify-between px-6 pb-4 pt-[max(1.5rem,env(safe-area-inset-top))]">
         {view !== "check-email" && (
           <button
             onClick={() => setView(view === "login" || view === "signup" ? "landing" : "login")}

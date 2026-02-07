@@ -103,12 +103,17 @@ export function SubscriptionRow({ subscription, onClick, showReminderStage = tru
             </Badge>
           )}
           <div className="flex items-center gap-2">
-            <span className={cn(
-              "font-semibold tabular-nums text-text-primary",
+            <div className={cn(
+              "flex flex-col items-end",
               isCancelled && "line-through"
             )}>
-              {formatCurrency(subscription.price)}
-            </span>
+              <span className="font-semibold tabular-nums text-text-primary">
+                {formatCurrency(subscription.price)}
+              </span>
+              <span className="text-[11px] text-text-muted">
+                /{subscription.billingCycle === "yearly" ? "yr" : subscription.billingCycle === "weekly" ? "wk" : "mo"}
+              </span>
+            </div>
             <ChevronRight className="h-5 w-5 text-text-muted" aria-hidden="true" />
           </div>
         </div>

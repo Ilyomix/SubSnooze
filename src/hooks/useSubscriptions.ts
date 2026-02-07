@@ -58,10 +58,23 @@ export function useSubscriptions() {
         },
         (payload) => {
           if (payload.eventType === "INSERT") {
-            setSubscriptions((prev) => [
-              ...prev,
-              dbToSubscription(payload.new as Parameters<typeof dbToSubscription>[0]),
-            ])
+            const newSub = dbToSubscription(payload.new as Parameters<typeof dbToSubscription>[0])
+            setSubscriptions((prev) => {
+              // Skip if this subscription already exists (optimistic replace already ran)
+              if (prev.some((sub) => sub.id === newSub.id)) return prev
+              // If there's a temp placeholder for this insert, replace it
+              const hasTemp = prev.some((sub) => sub.id.startsWith("temp-"))
+              if (hasTemp) {
+                // Find the matching temp by name (most reliable heuristic)
+                const tempMatch = prev.find(
+                  (sub) => sub.id.startsWith("temp-") && sub.name === newSub.name
+                )
+                if (tempMatch) {
+                  return prev.map((sub) => (sub.id === tempMatch.id ? newSub : sub))
+                }
+              }
+              return [...prev, newSub]
+            })
           } else if (payload.eventType === "UPDATE") {
             setSubscriptions((prev) =>
               prev.map((sub) =>
@@ -118,10 +131,16 @@ export function useSubscriptions() {
 
     try {
       const newSub = await api.createSubscription(insertData)
-      // Replace temp with real data
-      setSubscriptions((prev) =>
-        prev.map((sub) => (sub.id === tempId ? dbToSubscription(newSub) : sub))
-      )
+      // Replace temp with real data, deduplicating if realtime already added it
+      setSubscriptions((prev) => {
+        const realtimeAlreadyAdded = prev.some((sub) => sub.id === newSub.id)
+        if (realtimeAlreadyAdded) {
+          // Realtime beat us — just remove the temp entry
+          return prev.filter((sub) => sub.id !== tempId)
+        }
+        // Normal case — replace temp with real data
+        return prev.map((sub) => (sub.id === tempId ? dbToSubscription(newSub) : sub))
+      })
       return newSub
     } catch (err) {
       // Rollback on error
