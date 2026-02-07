@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { headers } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
 import { getStripe } from "@/lib/stripe/server"
 
@@ -31,7 +32,10 @@ export async function POST() {
 
     // 3. Create Billing Portal session
     const stripe = getStripe()
-    const origin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    const headersList = await headers()
+    const host = headersList.get("x-forwarded-host") || headersList.get("host") || "localhost:3000"
+    const protocol = headersList.get("x-forwarded-proto") || "https"
+    const origin = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`
 
     const session = await stripe.billingPortal.sessions.create({
       customer: profile.stripe_customer_id,

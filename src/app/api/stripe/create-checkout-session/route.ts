@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { headers } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
 import { getStripe } from "@/lib/stripe/server"
 import { getStripePriceId } from "@/lib/stripe/pricing"
@@ -50,7 +51,10 @@ export async function POST() {
     }
 
     // 4. Create Checkout Session (one-time payment for lifetime Pro)
-    const origin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    const headersList = await headers()
+    const host = headersList.get("x-forwarded-host") || headersList.get("host") || "localhost:3000"
+    const protocol = headersList.get("x-forwarded-proto") || "https"
+    const origin = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
