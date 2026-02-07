@@ -503,7 +503,8 @@ export default function Home() {
               returnToPrevious()
             } catch (error) {
               console.error("Failed to restore subscription:", error)
-              toast(t("toast.couldntRestore"), "error")
+              const msg = !navigator.onLine ? t("toast.noConnection") : t("toast.couldntRestore")
+              toast(msg, "error")
             }
           }}
           onDelete={async () => {
@@ -514,7 +515,8 @@ export default function Home() {
               returnToPrevious()
             } catch (error) {
               console.error("Failed to delete subscription:", error)
-              toast(t("toast.couldntRemove"), "error")
+              const msg = !navigator.onLine ? t("toast.noConnection") : t("toast.couldntRemove")
+              toast(msg, "error")
             }
           }}
           onSave={async (data) => {
@@ -528,7 +530,8 @@ export default function Home() {
               returnToPrevious()
             } catch (error) {
               console.error("Failed to update subscription:", error)
-              toast(t("toast.couldntSave"), "error")
+              const msg = !navigator.onLine ? t("toast.noConnection") : t("toast.couldntSave")
+              toast(msg, "error")
             }
           }}
           onCancelProceed={async () => {
@@ -536,7 +539,8 @@ export default function Home() {
               await recordCancelAttempt(selectedSub.id)
             } catch (error) {
               console.error("Failed to record cancel attempt:", error)
-              toast(t("toast.somethingWentWrong"), "error")
+              const msg = !navigator.onLine ? t("toast.noConnection") : t("toast.couldntRecordCancel")
+              toast(msg, "error")
             }
           }}
           onCancelDecideLater={async () => {
@@ -546,7 +550,8 @@ export default function Home() {
               toast(t("toast.decideLaterReminder"), "info")
             } catch (error) {
               console.error("Failed to schedule decide-later reminder:", error)
-              toast(t("toast.somethingWentWrong"), "error")
+              const msg = !navigator.onLine ? t("toast.noConnection") : t("toast.couldntScheduleReminder")
+              toast(msg, "error")
             }
           }}
           onCancelConfirm={async () => {
@@ -556,7 +561,8 @@ export default function Home() {
               trackCancelSubscription({ name: selectedSub.name, monthlyPrice })
             } catch (error) {
               console.error("Failed to verify cancellation:", error)
-              toast(t("toast.couldntConfirmCancel"), "error")
+              const msg = !navigator.onLine ? t("toast.noConnection") : t("toast.couldntConfirmCancel")
+              toast(msg, "error")
             }
           }}
           onCancelNotYet={async () => {
@@ -564,7 +570,8 @@ export default function Home() {
               await resetCancelAttempt(selectedSub.id)
             } catch (error) {
               console.error("Failed to reset cancel attempt:", error)
-              toast(t("toast.somethingWentWrong"), "error")
+              const msg = !navigator.onLine ? t("toast.noConnection") : t("toast.couldntResetCancel")
+              toast(msg, "error")
             }
           }}
           onCancelComplete={() => {

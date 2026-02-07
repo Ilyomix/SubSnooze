@@ -12,6 +12,7 @@ import { subscriptionsToCSV, downloadCSV } from "@/lib/export-csv"
 import { useDarkMode } from "@/hooks/useDarkMode"
 import { useToast } from "@/hooks/useToast"
 import { trackExportCSV, trackUpgradeClick } from "@/lib/analytics/events"
+import { PRICING } from "@/lib/stripe/pricing"
 import { useI18n, SUPPORTED_LOCALES, SUPPORTED_CURRENCIES, LOCALE_LABELS, CURRENCY_LABELS, type Locale, type CurrencyCode } from "@/lib/i18n"
 import type { Database, ReminderPreset } from "@/types/database"
 import type { SupabaseClient } from "@supabase/supabase-js"
@@ -753,10 +754,47 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
           </Card>
         </div>
 
-        {/* Subscription / Upgrade */}
-        <Card padding="none" className="overflow-hidden">
-          {isPremium ? (
-            <>
+        {/* Plan Comparison */}
+        <div className="flex flex-col gap-3">
+          <h2 className="text-[13px] font-medium text-text-secondary">
+            {t("settings.yourPlan")}
+          </h2>
+          {!isPremium && (
+            <Card className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 flex-1">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("settings.freePlan")}</span>
+                  {PRICING.FREE_FEATURES.map((feature) => (
+                    <div key={feature} className="flex items-center gap-2">
+                      <Check className="h-3.5 w-3.5 shrink-0 text-text-muted" />
+                      <span className="text-sm text-text-secondary">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mx-3 w-px self-stretch bg-divider" />
+                <div className="flex flex-col gap-3 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <Star className="h-3 w-3 text-primary" fill="currentColor" />
+                    <span className="text-xs font-semibold uppercase tracking-wide text-primary">Pro</span>
+                  </div>
+                  {PRICING.PRO_FEATURES.map((feature) => (
+                    <div key={feature} className="flex items-center gap-2">
+                      <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      <span className="text-sm text-text-primary">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={() => { trackUpgradeClick(); onUpgrade() }}
+                className="w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                {t("upgrade.getPro", { price: PRICING.PRO_PRICE_DISPLAY })}
+              </button>
+            </Card>
+          )}
+          {isPremium && (
+            <Card padding="none" className="overflow-hidden">
               <div className="flex items-center gap-3 px-[18px] py-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                   <Star className="h-4 w-4 text-primary" fill="currentColor" />
@@ -765,6 +803,15 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                   <span className="text-[15px] font-medium text-primary">{t("settings.subSnoozePro")}</span>
                   <span className="text-xs text-text-tertiary">{t("settings.lifetimeAccess")}</span>
                 </div>
+              </div>
+              <div className="h-px bg-divider" />
+              <div className="px-[18px] py-3">
+                {PRICING.PRO_FEATURES.map((feature) => (
+                  <div key={feature} className="flex items-center gap-2 py-1">
+                    <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+                    <span className="text-sm text-text-secondary">{feature}</span>
+                  </div>
+                ))}
               </div>
               <div className="h-px bg-divider" />
               <button
@@ -793,24 +840,9 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
                 </div>
                 <ChevronRight className="h-5 w-5 text-text-muted" />
               </button>
-            </>
-          ) : (
-            <button
-              onClick={() => { trackUpgradeClick(); onUpgrade() }}
-              className="flex w-full items-center justify-between px-[18px] py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-2xl"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                  <Star className="h-4 w-4 text-primary" fill="currentColor" />
-                </div>
-                <span className="text-[15px] font-medium text-text-primary">
-                  {t("settings.upgradeToPro")}
-                </span>
-              </div>
-              <ChevronRight className="h-5 w-5 text-text-muted" />
-            </button>
+            </Card>
           )}
-        </Card>
+        </div>
 
         {/* Pricing, About, FAQ, Changelog */}
         <Card padding="none" className="overflow-hidden">
