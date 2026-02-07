@@ -116,7 +116,7 @@ export function SubscriptionManagement({
           <SubscriptionFormFields
             value={formData}
             onChange={setFormData}
-            priceLabel={(cycle) => cycle === "yearly" ? t("addSubscription.yearlyPrice") : t("addSubscription.monthlyPrice")}
+            priceLabel={(cycle) => cycle === "yearly" ? t("addSubscription.yearlyPrice") : cycle === "weekly" ? t("addSubscription.weeklyPrice") : t("addSubscription.monthlyPrice")}
             renewalLabel={isCancelled ? t("subscriptionForm.lastRenewal") : t("subscriptionForm.nextRenewal")}
             readOnly={isCancelled}
             autoCalculateRenewalOnCycleChange
