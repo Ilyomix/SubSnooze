@@ -75,7 +75,7 @@ export function AddSubscriptionStep2({
         <SubscriptionFormFields
           value={formData}
           onChange={setFormData}
-          priceLabel={(cycle: BillingCycle) => cycle === "yearly" ? t("addSubscription.yearlyPrice") : t("addSubscription.monthlyPrice")}
+          priceLabel={(cycle: BillingCycle) => cycle === "yearly" ? t("addSubscription.yearlyPrice") : cycle === "weekly" ? t("addSubscription.weeklyPrice") : t("addSubscription.monthlyPrice")}
           autoCalculateRenewalOnCycleChange
           pricingHints={{ monthly: service.priceMonthly, yearly: service.priceYearly }}
         />

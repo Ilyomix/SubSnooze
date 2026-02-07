@@ -128,7 +128,7 @@ export function SubscriptionFormFields({
           <p className="px-4 pb-3 -mt-2 text-right text-xs text-text-tertiary">
             {value.billingCycle === "monthly" && `${formatCurrency(priceNum * 12)}${t("allSubscriptions.perYear")}`}
             {value.billingCycle === "yearly" && `${formatCurrency(priceNum / 12)}${t("allSubscriptions.perMonth")}`}
-            {value.billingCycle === "weekly" && `${formatCurrency(priceNum * 4.33)}${t("allSubscriptions.perMonth")}`}
+            {value.billingCycle === "weekly" && `${formatCurrency(priceNum * (52 / 12))}${t("allSubscriptions.perMonth")}`}
           </p>
         )}
       </div>
@@ -179,7 +179,7 @@ export function SubscriptionFormFields({
                 min={today}
                 onChange={(e) => handleRenewalDateChange(e.target.value)}
                 onBlur={() => setDateTouched(true)}
-                className="w-[14ch] appearance-none bg-transparent pr-6 text-right text-[15px] font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-datetime-edit-fields-wrapper]:p-0"
+                className="min-w-24 appearance-none bg-transparent pr-7 text-right text-[15px] font-semibold text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-datetime-edit-fields-wrapper]:p-0"
               />
               <Calendar className="pointer-events-none absolute right-0 h-4 w-4 text-text-muted" />
             </div>
