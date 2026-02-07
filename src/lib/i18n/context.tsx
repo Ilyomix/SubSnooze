@@ -107,12 +107,39 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
       if (!params) return value
 
-      // Replace {param} placeholders
-      return value.replace(/\{(\w+)\}/g, (_, name) =>
+      // First resolve ICU plural patterns: {var, plural, one {text} other {texts}}
+      let result = value.replace(
+        /\{(\w+),\s*plural,\s*((?:[^{}]|\{[^{}]*\})*)\}/g,
+        (_match: string, variable: string, formsStr: string) => {
+          const count = Number(params[variable] ?? 0)
+          const forms: Record<string, string> = {}
+          const formRegex = /(?:=(\d+)|(\w+))\s*\{([^{}]*)\}/g
+          let m: RegExpExecArray | null
+          while ((m = formRegex.exec(formsStr)) !== null) {
+            const k = m[1] !== undefined ? `=${m[1]}` : m[2]
+            forms[k] = m[3]
+          }
+          if (forms[`=${count}`] !== undefined) return forms[`=${count}`]
+          const category =
+            locale === "fr"
+              ? count === 0 || count === 1
+                ? "one"
+                : "other"
+              : count === 1
+                ? "one"
+                : "other"
+          return forms[category] ?? forms["other"] ?? ""
+        }
+      )
+
+      // Then replace simple {param} placeholders
+      result = result.replace(/\{(\w+)\}/g, (_, name) =>
         params[name] !== undefined ? String(params[name]) : `{${name}}`
       )
+
+      return result
     },
-    [messages]
+    [messages, locale]
   )
 
   // Currency formatting

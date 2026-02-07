@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { useEffect, useMemo, useState } from "react"
+import { useI18n } from "@/lib/i18n"
 
 interface StepProgressProps {
   current: number
@@ -11,6 +12,7 @@ interface StepProgressProps {
 }
 
 export function StepProgress({ current, total, subtitle, className }: StepProgressProps) {
+  const { t } = useI18n()
   const safeTotal = Math.max(1, Math.floor(total))
   const safeCurrent = Math.max(1, Math.min(safeTotal, Math.floor(current)))
 
@@ -26,8 +28,8 @@ export function StepProgress({ current, total, subtitle, className }: StepProgre
   }, [])
 
   return (
-    <div className={cn("flex flex-col items-center gap-2", className)} aria-label={`Step ${safeCurrent} of ${safeTotal}`}>
-      <span className="text-[13px] font-medium text-text-secondary">Step {safeCurrent} of {safeTotal}</span>
+    <div className={cn("flex flex-col items-center gap-2", className)} aria-label={t("common.stepOf", { current: safeCurrent, total: safeTotal })}>
+      <span className="text-[13px] font-medium text-text-secondary">{t("common.stepOf", { current: safeCurrent, total: safeTotal })}</span>
 
       <div
         role="progressbar"

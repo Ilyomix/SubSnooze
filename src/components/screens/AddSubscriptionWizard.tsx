@@ -5,6 +5,7 @@ import { Plus } from "lucide-react"
 import type { BillingCycle } from "@/types/database"
 import { DetailShell } from "@/components/layout"
 import { StepProgress } from "@/components/ui"
+import { useI18n } from "@/lib/i18n"
 import { AddSubscriptionStep1 } from "./AddSubscriptionStep1"
 import { AddSubscriptionStep2 } from "./AddSubscriptionStep2"
 import { getServiceBySlug, getServiceLogoUrl, getFallbackLogoUrl, getInitials, stringToColor, nameToDomain } from "@/lib/services"
@@ -41,6 +42,7 @@ interface AddSubscriptionWizardProps {
 }
 
 export function AddSubscriptionWizard({ onBack, onAdd, onDoneForNow, canAddMore, onHitLimit }: AddSubscriptionWizardProps) {
+  const { t } = useI18n()
   const [selectedService, setSelectedService] = useState<string | null>(null)
   const [customServiceName, setCustomServiceName] = useState<string | null>(null)
   const [showAddAnother, setShowAddAnother] = useState(false)
@@ -154,8 +156,8 @@ export function AddSubscriptionWizard({ onBack, onAdd, onDoneForNow, canAddMore,
           </svg>
         </div>
         <div className="text-center">
-          <h2 className="text-xl font-bold text-text-primary">Added!</h2>
-          <p className="mt-1 text-sm text-text-secondary">Want to add another subscription?</p>
+          <h2 className="text-xl font-bold text-text-primary">{t("common.added")}</h2>
+          <p className="mt-1 text-sm text-text-secondary">{t("common.addAnotherQuestion")}</p>
         </div>
         <div className="flex w-full max-w-xs flex-col gap-3">
           <button
@@ -171,7 +173,7 @@ export function AddSubscriptionWizard({ onBack, onAdd, onDoneForNow, canAddMore,
             }}
             className="w-full rounded-xl bg-primary py-4 text-base font-semibold text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
-            Add another
+            {t("addSubscription.addAnother")}
           </button>
           <button
             onClick={() => {
@@ -180,7 +182,7 @@ export function AddSubscriptionWizard({ onBack, onAdd, onDoneForNow, canAddMore,
             }}
             className="w-full rounded-xl border border-divider py-4 text-base font-semibold text-text-primary hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
-            Done for now
+            {t("addSubscription.doneForNow")}
           </button>
         </div>
       </div>
@@ -189,7 +191,7 @@ export function AddSubscriptionWizard({ onBack, onAdd, onDoneForNow, canAddMore,
 
   return (
     <DetailShell
-      title="Add Subscription"
+      title={t("addSubscription.title")}
       onBack={headerBack}
       headerRight={(
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
@@ -202,7 +204,7 @@ export function AddSubscriptionWizard({ onBack, onAdd, onDoneForNow, canAddMore,
           <StepProgress
             current={step}
             total={2}
-            subtitle={step === 1 ? "Choose a service to track" : "Almost there, add the details"}
+            subtitle={step === 1 ? t("addSubscription.step1Subtitle") : t("addSubscription.step2Subtitle")}
           />
         </div>
       </div>

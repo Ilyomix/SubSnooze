@@ -521,27 +521,27 @@ export function Settings({ activeTab, onTabChange, onUpgrade, onNotificationClic
             </div>
             <div className="h-px bg-divider" />
             {/* Currency selector */}
-            <div className="px-[18px] py-4">
-              <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center justify-between px-[18px] py-4">
+              <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                   <CreditCard className="h-4 w-4 text-primary" />
                 </div>
                 <span className="text-[15px] font-medium text-text-primary">{t("settings.currencyLabel")}</span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {SUPPORTED_CURRENCIES.map((cur) => (
-                  <button
-                    key={cur}
-                    onClick={() => handleCurrencyChange(cur)}
-                    className={`rounded-lg px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                      currency === cur
-                        ? "bg-primary/10 text-primary"
-                        : "text-text-secondary hover:text-text-primary hover:bg-background/50"
-                    }`}
-                  >
-                    {CURRENCY_LABELS[cur]}
-                  </button>
-                ))}
+              <div className="relative flex items-center">
+                <select
+                  value={currency}
+                  onChange={(e) => handleCurrencyChange(e.target.value as CurrencyCode)}
+                  aria-label={t("settings.currencyLabel")}
+                  className="appearance-none bg-transparent pr-7 text-right text-[15px] font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded cursor-pointer"
+                >
+                  {SUPPORTED_CURRENCIES.map((cur) => (
+                    <option key={cur} value={cur}>
+                      {CURRENCY_LABELS[cur]}
+                    </option>
+                  ))}
+                </select>
+                <ChevronRight className="pointer-events-none absolute right-0 h-4 w-4 text-text-muted rotate-90" />
               </div>
             </div>
           </Card>
