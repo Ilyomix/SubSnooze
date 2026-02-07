@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import { ChevronDown, Calendar } from "lucide-react"
+import { useState, useMemo } from "react"
+import { Calendar } from "lucide-react"
 import { Card } from "./Card"
+import { SegmentedControl } from "./SegmentedControl"
 import { calculateNextRenewalDate, formatLocalDate } from "@/lib/date-utils"
 import { useI18n, CURRENCY_SYMBOLS, type CurrencyCode } from "@/lib/i18n"
 import type { BillingCycle } from "@/types/database"
@@ -56,6 +57,12 @@ export function SubscriptionFormFields({
     dateTouched && !readOnly && value.renewalDate === ""
       ? t("subscriptionForm.selectDate")
       : null
+
+  const cycleOptions = useMemo(() => [
+    { value: "monthly" as BillingCycle, label: t("subscriptionForm.monthly") },
+    { value: "yearly" as BillingCycle, label: t("subscriptionForm.yearly") },
+    { value: "weekly" as BillingCycle, label: t("subscriptionForm.weekly") },
+  ], [t])
 
   const handlePriceChange = (newPrice: string) => {
     // Only allow digits and at most one decimal point (max 2 decimal places)
@@ -135,30 +142,21 @@ export function SubscriptionFormFields({
       <div className="h-px bg-divider" />
 
       {/* Billing Cycle Row */}
-      <label htmlFor="billingCycle" className="flex cursor-pointer items-center justify-between px-4 py-4">
+      <div className="flex items-center justify-between px-4 py-4">
         <span className="text-[15px] font-medium text-text-primary">{t("subscriptionForm.billingCycle")}</span>
         {readOnly ? (
           <span className="text-[15px] font-semibold capitalize text-text-muted">
-            {value.billingCycle}
+            {t(`subscriptionForm.${value.billingCycle}`)}
           </span>
         ) : (
-          <div className="relative flex items-center">
-            <select
-              id="billingCycle"
-              name="billingCycle"
-              aria-label="Billing cycle"
-              value={value.billingCycle}
-              onChange={(e) => handleCycleChange(e.target.value as BillingCycle)}
-              className="min-w-24 appearance-none bg-transparent pr-7 text-right text-[15px] font-semibold capitalize text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
-            >
-              <option value="monthly">{t("subscriptionForm.monthly")}</option>
-              <option value="yearly">{t("subscriptionForm.yearly")}</option>
-              <option value="weekly">{t("subscriptionForm.weekly")}</option>
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-0 h-4 w-4 text-text-muted" />
-          </div>
+          <SegmentedControl
+            name="billingCycle"
+            options={cycleOptions}
+            value={value.billingCycle}
+            onChange={handleCycleChange}
+          />
         )}
-      </label>
+      </div>
       <div className="h-px bg-divider" />
 
       {/* Renewal Date Row */}
